@@ -453,7 +453,9 @@ async function runAnalysis() {
   setStatus(`Fetching ${name} data…`, true);
 
   try {
-    const resp = await fetch(`${API_BASE}/analyze?league=${code}`);
+    const today = new Date();
+const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
+const resp = await fetch(`${API_BASE}/analyze?league=${code}&date=${encodeURIComponent(todayStr)}`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
 
