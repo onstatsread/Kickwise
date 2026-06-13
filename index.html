@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kickwise — Match Predictions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pitch:    #0A3D1F;
+    --turf:     #0F5132;
+    --lime:     #AAFF3C;
+    --white:    #F5F7F2;
+    --grey:     #8A9B82;
+    --dark:     #07200F;
+    --card:     #0D2918;
+    --border:   rgba(170,255,60,0.15);
+    --match:    #27AE60;
+    --nomatch:  #C0392B;
+    --double:   #8E44AD;
+    --under:    #E67E22;
+    --handicap: #2980B9;
+    --low:      #16A085;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--dark);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--pitch);
+    border-bottom: 2px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--lime);
+    line-height: 1;
+  }
+  .logo span { color: var(--white); }
+
+  .tagline {
+    font-size: 11px;
+    color: var(--grey);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    padding: 20px;
+    background: var(--pitch);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .date-bar {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--lime);
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+
+  select {
+    width: 100%;
+    background: var(--card);
+    color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 40px 12px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--lime); }
+
+  .select-arrow {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--lime);
+    pointer-events: none;
+    font-size: 12px;
+  }
+
+  .run-btn {
+    background: var(--lime);
+    color: var(--dark);
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+  }
+  .run-btn:active { transform: scale(0.98); opacity: 0.9; }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Status / Loading ── */
+  #status {
+    padding: 16px 20px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--grey);
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--lime);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+    display: none;
+  }
+  .spinner.active { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Empty / Error states ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--grey);
+  }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; color: var(--white); margin-bottom: 6px; }
+  .empty p { font-size: 14px; line-height: 1.5; }
+
+  /* ── Match Cards ── */
+  #results { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 12px; }
+
+  .league-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--lime);
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .match-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  .match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--turf);
+    border-bottom: 1px solid var(--border);
+  }
+  .match-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--lime);
+    letter-spacing: 0.5px;
+  }
+  .match-teams {
+    text-align: right;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .match-teams .vs { color: var(--grey); font-weight: 400; margin: 0 6px; }
+
+  /* Result rows */
+  .result-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-section:last-child { border-bottom: none; }
+
+  .result-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .result-label::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 10px;
+    background: var(--lime);
+    border-radius: 2px;
+  }
+  .result-label.rev::before { background: var(--under); }
+
+  .result-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .pill-label {
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .pill.match    { background: rgba(39,174,96,0.2);  color: #6EE7A0; border: 1px solid rgba(39,174,96,0.4); }
+  .pill.nomatch  { background: rgba(192,57,43,0.2);  color: #F1948A; border: 1px solid rgba(192,57,43,0.4); }
+  .pill.double   { background: rgba(142,68,173,0.2); color: #D7A9F0; border: 1px solid rgba(142,68,173,0.4); }
+  .pill.under    { background: rgba(230,126,34,0.2); color: #F0B27A; border: 1px solid rgba(230,126,34,0.4); }
+  .pill.handicap { background: rgba(41,128,185,0.2); color: #85C1E9; border: 1px solid rgba(41,128,185,0.4); }
+  .pill.low      { background: rgba(22,160,133,0.2); color: #76D7C4; border: 1px solid rgba(22,160,133,0.4); }
+  .pill.neutral  { background: rgba(138,155,130,0.15); color: var(--grey); border: 1px solid rgba(138,155,130,0.2); }
+  .pill.empty    { background: transparent; color: var(--grey); border: 1px dashed rgba(138,155,130,0.2); font-style: italic; font-weight: 400; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--grey);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Desktop ── */
+  @media(min-width:640px) {
+    .controls { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
+    .select-wrap { flex: 1; min-width: 260px; }
+    .run-btn { width: auto; padding: 13px 28px; flex-shrink: 0; }
+    #results { padding: 16px 24px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Kick<span>wise</span></div>
+    <div class="tagline">Match Prediction Engine</div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="date-bar" id="dateBar">—</div>
+  <div class="select-wrap">
+    <select id="leagueSelect"></select>
+    <span class="select-arrow">▼</span>
+  </div>
+  <button class="run-btn" id="runBtn" onclick="runAnalysis()">
+    ⚡ Analyze Today
+  </button>
+</div>
+
+<div id="status">
+  <div class="spinner" id="spinner"></div>
+  <span id="statusText">Select a league and tap Analyze Today</span>
+</div>
+
+<div id="results"></div>
+
+<footer>Kickwise · Data from SoccerStats · Predictions via A_mix2 Model</footer>
+
+<script>
+// ── League list ──────────────────────────────────────────────
+const LEAGUES = [
+  ["Australia - NPL NSW",            "australia11"],
+  ["Australia - NPL Queensland",     "australia4"],
+  ["Australia - NPL Victoria",       "australia3"],
+  ["Australia - NPL W. Australia",   "australia5"],
+  ["Australia - Victoria Premier",   "australia13"],
+  ["Austria - Bundesliga",           "austria"],
+  ["Austria - 2. Liga",              "austria2"],
+  ["Belarus - Vysshaya Liga",        "belarus"],
+  ["Belgium - Pro League",           "belgium"],
+  ["Belgium - Challenger Pro",       "belgium2"],
+  ["Brazil - Serie A",               "brazil"],
+  ["Bulgaria - Parva Liga",          "bulgaria"],
+  ["China - Super League",           "china"],
+  ["China - League One",             "china2"],
+  ["Colombia - Primera A",           "colombia"],
+  ["Croatia - 1. HNL",               "croatia"],
+  ["Czech Republic - 1. Liga",       "czechrepublic"],
+  ["Czech Republic - FNL",           "czechrepublic2"],
+  ["Denmark - Superligaen",          "denmark"],
+  ["Ecuador - Liga Pro",             "ecuador"],
+  ["England - Championship",         "england2"],
+  ["England - League One",           "england3"],
+  ["England - League Two",           "england4"],
+  ["England - Premier League",       "england"],
+  ["Faroe Islands - Premier",        "faroeislands"],
+  ["Finland - Veikkausliiga",        "finland"],
+  ["France - Ligue 1",               "france"],
+  ["France - Ligue 2",               "france2"],
+  ["France - National",              "france3"],
+  ["Germany - 2. Bundesliga",        "germany2"],
+  ["Germany - 3. Liga",              "germany3"],
+  ["Germany - Bundesliga",           "germany"],
+  ["Greece - Super League",          "greece"],
+  ["Hungary - NB I",                 "hungary"],
+  ["Ireland - First Division",       "ireland2"],
+  ["Ireland - Premier Division",     "ireland"],
+  ["Italy - Serie A",                "italy"],
+  ["Italy - Serie B",                "italy2"],
+  ["Latvia - Virsliga",              "latvia"],
+  ["Lithuania - A Lyga",             "lithuania"],
+  ["Netherlands - Eerste Divisie",   "netherlands2"],
+  ["Netherlands - Eredivisie",       "netherlands"],
+  ["North Macedonia - First League", "northmacedonia"],
+  ["Northern Ireland - NIFL",        "northernireland"],
+  ["Norway - Eliteserien",           "norway"],
+  ["Poland - 1. Liga",               "poland2"],
+  ["Poland - Ekstraklasa",           "poland"],
+  ["Portugal - Liga Portugal",       "portugal"],
+  ["Portugal - Liga Portugal 2",     "portugal2"],
+  ["Romania - Liga 1",               "romania"],
+  ["Russia - FNL",                   "russia2"],
+  ["Russia - Premier League",        "russia"],
+  ["Scotland - Championship",        "scotland2"],
+  ["Scotland - Premiership",         "scotland"],
+  ["Serbia - Super Liga",            "serbia"],
+  ["Slovakia - 1. Liga",             "slovakia"],
+  ["Slovenia - Prva Liga",           "slovenia"],
+  ["South Africa - Premier Division","southafrica"],
+  ["South Korea - K League 1",       "southkorea"],
+  ["Spain - La Liga",                "spain"],
+  ["Spain - La Liga 2",              "spain2"],
+  ["Sweden - Allsvenskan",           "sweden"],
+  ["Switzerland - Super League",     "switzerland"],
+  ["Turkey - Super Lig",             "turkey"],
+  ["Ukraine - Premier League",       "ukraine"],
+  ["Wales - Cymru Premier",          "wales"],
+];
+
+// ── Backend API URL (update after deploying backend) ─────────
+const API_BASE = "https://kickwise-api.onrender.com";
+
+// ── Populate dropdown ────────────────────────────────────────
+const sel = document.getElementById("leagueSelect");
+LEAGUES.forEach(([name, code]) => {
+  const opt = document.createElement("option");
+  opt.value = code;
+  opt.textContent = name;
+  if (code === "belarus") opt.selected = true;
+  sel.appendChild(opt);
+});
+
+// ── Date display ─────────────────────────────────────────────
+const dateBar = document.getElementById("dateBar");
+dateBar.textContent = new Date().toLocaleDateString("en-GB", {
+  weekday:"long", day:"numeric", month:"long", year:"numeric"
+});
+
+// ── Pill renderer ─────────────────────────────────────────────
+function pillClass(val) {
+  if (!val || val.trim() === "" || val === "None" || val === "N/A") return "empty";
+  val = val.toLowerCase();
+  if (val.includes("not match")) return "nomatch";
+  if (val === "match")           return "match";
+  if (val.includes("double"))    return "double";
+  if (val.includes("under"))     return "under";
+  if (val.includes("handicap"))  return "handicap";
+  if (val.includes("low"))       return "low";
+  return "neutral";
+}
+
+function pill(label, val) {
+  const cls   = pillClass(val);
+  const text  = (!val || val.trim() === "" || val === "None") ? "—" : val;
+  return `<div class="pill ${cls}"><span class="pill-label">${label}</span>${text}</div>`;
+}
+
+// ── Status helpers ────────────────────────────────────────────
+function setStatus(msg, loading=false) {
+  document.getElementById("statusText").textContent = msg;
+  document.getElementById("spinner").classList.toggle("active", loading);
+}
+
+// ── Main analysis call ────────────────────────────────────────
+async function runAnalysis() {
+  const code = sel.value;
+  const name = sel.options[sel.selectedIndex].text;
+  const btn  = document.getElementById("runBtn");
+  const res  = document.getElementById("results");
+
+  btn.disabled = true;
+  res.innerHTML = "";
+  setStatus(`Fetching ${name} data…`, true);
+
+  try {
+    const resp = await fetch(`${API_BASE}/analyze?league=${code}`);
+    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
+    const data = await resp.json();
+
+    if (!data.matches || data.matches.length === 0) {
+      setStatus("Done");
+      res.innerHTML = `
+        <div class="empty">
+          <div class="icon">📅</div>
+          <h3>No fixtures today</h3>
+          <p>No matches found for ${name} today.<br>Try a different league.</p>
+        </div>`;
+      return;
+    }
+
+    setStatus(`${data.matches.length} match${data.matches.length>1?"es":""} found`);
+
+    res.innerHTML = `<div class="league-header">⚽ ${name}</div>`;
+
+    data.matches.forEach((m, i) => {
+      const card = document.createElement("div");
+      card.className = "match-card";
+      card.style.animationDelay = `${i * 60}ms`;
+      card.innerHTML = `
+        <div class="match-header">
+          <span class="match-time">${m.time || "TBD"}</span>
+          <span class="match-teams">${m.home} <span class="vs">vs</span> ${m.away}</span>
+        </div>
+        <div class="result-section">
+          <div class="result-label">Normal</div>
+          <div class="result-pills">
+            ${pill("D70",  m.d70)}
+            ${pill("B120", m.b120)}
+            ${pill("C120", m.c120)}
+          </div>
+        </div>
+        <div class="result-section">
+          <div class="result-label rev">Reversed · ${m.away} vs ${m.home}</div>
+          <div class="result-pills">
+            ${pill("D70",  m.d70r)}
+            ${pill("B120", m.b120r)}
+            ${pill("C120", m.c120r)}
+          </div>
+        </div>`;
+      res.appendChild(card);
+    });
+
+  } catch(err) {
+    setStatus("Error — see below");
+    res.innerHTML = `
+      <div class="empty">
+        <div class="icon">⚠️</div>
+        <h3>Could not load data</h3>
+        <p>${err.message}<br><br>The backend may be starting up.<br>Wait 30 seconds and try again.</p>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
