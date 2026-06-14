@@ -177,17 +177,20 @@ def run_model(home, away, team_data):
     return {"d70":d70, "b120":b120, "c120":c120}
 
 # ── API endpoint ───────────────────────────────────────────────
+from concurrent.futures import ThreadPoolExecutor
+
 @app.get("/analyze")
 def analyze(league: str = Query(...), date: str = Query(None)):
     team_data = fetch_stats(league)
     fixtures  = fetch_fixtures(league, date)
 
-    results = []
-    for fix in fixtures:
+    def process(fix):
         home, away = fix["home"], fix["away"]
-        r1 = run_model(home, away, team_data)
-        r2 = run_model(away, home, team_data)
-        results.append({
+        with ThreadPoolExecutor(max_workers=2) as inner:
+            f1 = inner.submit(run_model, home, away, team_data)
+            f2 = inner.submit(run_model, away, home, team_data)
+            r1, r2 = f1.result(), f2.result()
+        return {
             "time":  fix["time"],
             "home":  home,
             "away":  away,
@@ -197,10 +200,12 @@ def analyze(league: str = Query(...), date: str = Query(None)):
             "d70r":  r2["d70"],
             "b120r": r2["b120"],
             "c120r": r2["c120"],
-        })
+        }
 
-    return {"league": league, "date": str(date.today()), "matches": results}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(executor.map(process, fixtures))
 
+    return {"league": league, "matches": results}
 @app.get("/health")
 def health():
     return {"status": "ok", "date": str(date.today())}
