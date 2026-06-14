@@ -4,7 +4,7 @@ Deploy to Render.com (free tier)
 """
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
 from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
@@ -101,6 +101,9 @@ def fetch_stats(code):
         }
     return result
 
+TIME_RE = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
+
+
 def fetch_fixtures(code, date_str=None):
     if date_str:
         today1 = date_str
@@ -113,7 +116,7 @@ def fetch_fixtures(code, date_str=None):
     seen = set()
     try:
         soup = BeautifulSoup(
-            requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=15).text,
+            requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=6).text,
             "html.parser")
         for table in soup.find_all("table"):
             for row in table.find_all("tr"):
@@ -134,6 +137,19 @@ def fetch_fixtures(code, date_str=None):
                     if key not in seen:
                         seen.add(key)
                         matches.append({"time": "", "home": home, "away": away})
+
+        # Second pass: find kickoff times from the "upcoming matches" widget
+        for m in matches:
+            for table in soup.find_all("table"):
+                for row in table.find_all("tr"):
+                    text = row.get_text(" ", strip=True)
+                    if m["home"] in text and m["away"] in text:
+                        t = TIME_RE.search(text)
+                        if t:
+                            m["time"] = f"{t.group(1)}:{t.group(2)}"
+                            break
+                if m["time"]:
+                    break
     except Exception as e:
         print(f"  Fixtures error: {e}")
     return matches
@@ -228,7 +244,7 @@ def predict(league: str = Query(...), home: str = Query(...), away: str = Query(
     h = resolve_team(home, team_data)
     a = resolve_team(away, team_data)
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         f1 = executor.submit(run_model, h, a, team_data)
         f2 = executor.submit(run_model, a, h, team_data)
         r1, r2 = f1.result(), f2.result()
@@ -257,5 +273,4 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-}
-    
+    }
