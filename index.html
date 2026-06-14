@@ -329,33 +329,6 @@
 <script>
 // ── League list ──────────────────────────────────────────────
 const LEAGUES = [
-  ["Australia - NPL NSW",            "australia11"],
-  ["Australia - NPL Queensland",     "australia4"],
-  ["Australia - NPL Victoria",       "australia3"],
-  ["Australia - NPL W. Australia",   "australia5"],
-  ["Australia - Victoria Premier",   "australia13"],
-  ["Austria - Bundesliga",           "austria"],
-  ["Austria - 2. Liga",              "austria2"],
-  ["Belarus - Vysshaya Liga",        "belarus"],
-  ["Belgium - Pro League",           "belgium"],
-  ["Belgium - Challenger Pro",       "belgium2"],
-  ["Brazil - Serie A",               "brazil"],
-  ["Bulgaria - Parva Liga",          "bulgaria"],
-  ["China - Super League",           "china"],
-  ["China - League One",             "china2"],
-  ["Colombia - Primera A",           "colombia"],
-  ["Croatia - 1. HNL",               "croatia"],
-  ["Czech Republic - 1. Liga",       "czechrepublic"],
-  ["Czech Republic - FNL",           "czechrepublic2"],
-  ["Denmark - Superligaen",          "denmark"],
-  ["Ecuador - Liga Pro",             "ecuador"],
-  ["England - Championship",         "england2"],
-  ["England - League One",           "england3"],
-  ["England - League Two",           "england4"],
-  ["England - Premier League",       "england"],
-  ["Faroe Islands - Premier",        "faroeislands"],
-  ["Finland - Veikkausliiga",        "finland"],
-const LEAGUES = [
   ["Albania - Abissnet Superiore", "albania"],
   ["Andorra - Primera Divisio", "andorra"],
   ["Argentina - Liga Profesional - Apertura", "argentina"],
@@ -647,6 +620,10 @@ const LEAGUES = [
   ["Wales - Cymru Premier", "wales"],
 ];
 
+// ── Backend API URL (update after deploying backend) ─────────
+const API_BASE = "https://kickwise-v2.onrender.com";
+
+// ── Populate dropdown ────────────────────────────────────────
 const sel = document.getElementById("leagueSelect");
 LEAGUES.forEach(([name, code]) => {
   const opt = document.createElement("option");
@@ -655,35 +632,6 @@ LEAGUES.forEach(([name, code]) => {
   if (code === "belarus") opt.selected = true;
   sel.appendChild(opt);
 });
-// ── Backend API URL (update after deploying backend) ─────────
-const API_BASE = "https://kickwise-v2.onrender.com";
-
-// ── Populate dropdown ────────────────────────────────────────
- const sel = document.getElementById("leagueSelect");
-
-async function loadLeagues() {
-  sel.innerHTML = '<option>Loading leagues…</option>';
-  const today = new Date();
-  const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
-  try {
-    const resp = await fetch(`${API_BASE}/leagues_today?date=${encodeURIComponent(todayStr)}`);
-    const data = await resp.json();
-    sel.innerHTML = '';
-    if (!data.leagues || data.leagues.length === 0) {
-      sel.innerHTML = '<option>No leagues with matches today</option>';
-      return;
-    }
-    data.leagues.forEach(l => {
-      const opt = document.createElement("option");
-      opt.value = l.code;
-      opt.textContent = `${l.name} (${l.count} match${l.count>1?'es':''})`;
-      sel.appendChild(opt);
-    });
-  } catch (e) {
-    sel.innerHTML = '<option>Could not load leagues</option>';
-  }
-}
-loadLeagues();
 
 // ── Date display ─────────────────────────────────────────────
 const dateBar = document.getElementById("dateBar");
@@ -729,8 +677,8 @@ async function runAnalysis() {
 
   try {
     const today = new Date();
-const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
-const resp = await fetch(`${API_BASE}/analyze?league=${code}&date=${encodeURIComponent(todayStr)}`);
+    const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
+    const resp = await fetch(`${API_BASE}/analyze?league=${code}&date=${encodeURIComponent(todayStr)}`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
 
