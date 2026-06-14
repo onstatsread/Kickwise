@@ -673,12 +673,14 @@ async function runAnalysis() {
 
   btn.disabled = true;
   res.innerHTML = "";
-  setStatus(`Fetching ${name} data…`, true);
+
+  const today = new Date();
+  const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
+
+  setStatus(`Fetching ${name} fixtures…`, true);
 
   try {
-    const today = new Date();
-    const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
-    const resp = await fetch(`${API_BASE}/analyze?league=${code}&date=${encodeURIComponent(todayStr)}`);
+    const resp = await fetch(`${API_BASE}/fixtures?league=${code}&date=${encodeURIComponent(todayStr)}`);
     if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
     const data = await resp.json();
 
@@ -690,10 +692,9 @@ async function runAnalysis() {
           <h3>No fixtures today</h3>
           <p>No matches found for ${name} today.<br>Try a different league.</p>
         </div>`;
+      btn.disabled = false;
       return;
     }
-
-    setStatus(`${data.matches.length} match${data.matches.length>1?"es":""} found`);
 
     res.innerHTML = `<div class="league-header">⚽ ${name}</div>`;
 
@@ -708,24 +709,42 @@ async function runAnalysis() {
         </div>
         <div class="result-section">
           <div class="result-label">Normal</div>
-          <div class="result-pills">
-            ${pill("D70",  m.d70)}
-            ${pill("B120", m.b120)}
-            ${pill("C120", m.c120)}
+          <div class="result-pills" id="normal-${i}">
+            <div class="pill neutral">⏳ Calculating…</div>
           </div>
         </div>
         <div class="result-section">
           <div class="result-label rev">Reversed · ${m.away} vs ${m.home}</div>
-          <div class="result-pills">
-            ${pill("D70",  m.d70r)}
-            ${pill("B120", m.b120r)}
-            ${pill("C120", m.c120r)}
+          <div class="result-pills" id="reversed-${i}">
+            <div class="pill neutral">⏳ Calculating…</div>
           </div>
         </div>`;
       res.appendChild(card);
     });
 
-  } catch(err) {
+    for (let i = 0; i < data.matches.length; i++) {
+      const m = data.matches[i];
+      setStatus(`Calculating ${i + 1} of ${data.matches.length}: ${m.home} vs ${m.away}…`, true);
+
+      try {
+        const purl = `${API_BASE}/predict?league=${code}&home=${encodeURIComponent(m.home)}&away=${encodeURIComponent(m.away)}`;
+        const presp = await fetch(purl);
+        if (!presp.ok) throw new Error(`Server error: ${presp.status}`);
+        const p = await presp.json();
+
+        document.getElementById(`normal-${i}`).innerHTML =
+          pill("D70", p.d70) + pill("B120", p.b120) + pill("C120", p.c120);
+        document.getElementById(`reversed-${i}`).innerHTML =
+          pill("D70", p.d70r) + pill("B120", p.b120r) + pill("C120", p.c120r);
+      } catch (e) {
+        document.getElementById(`normal-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
+        document.getElementById(`reversed-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
+      }
+    }
+
+    setStatus(`Done — ${data.matches.length} match${data.matches.length > 1 ? "es" : ""}`);
+
+  } catch (err) {
     setStatus("Error — see below");
     res.innerHTML = `
       <div class="empty">
