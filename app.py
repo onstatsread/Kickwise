@@ -10,7 +10,72 @@ from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
 
-app = FastAPI(title="Kickwise API")
+def fetch_stats(code):
+    teams = {}
+    try:
+        soup = BeautifulSoup(
+            requests.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
+            "html.parser")
+        tables = soup.find_all("table")
+        section_count = 0
+        for tbl in tables:
+            valid_rows = []
+            for row in tbl.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 8:
+                    continue
+                team = cells[1].get_text(strip=True)
+                if not team:
+                    continue
+                try:
+                    gp = float(cells[2].get_text(strip=True))
+                    gf = float(cells[6].get_text(strip=True))
+                    ga = float(cells[7].get_text(strip=True))
+                except:
+                    continue
+                if gp <= 0:
+                    continue
+                valid_rows.append((team, gp, gf, ga))
+            if len(valid_rows) >= 10:
+                section_count += 1
+                for team, gp, gf, ga in valid_rows:
+                    if team not in teams:
+                        teams[team] = {}
+                    if section_count == 1:
+                        teams[team]["hgp"] = gp
+                        teams[team]["hgf"] = gf
+                        teams[team]["hga"] = ga
+                    elif section_count == 2:
+                        teams[team]["agp"] = gp
+                        teams[team]["agf"] = gf
+                        teams[team]["aga"] = ga
+            if section_count >= 2:
+                break
+    except Exception as e:
+        print(f"Stats error: {e}")
+
+    result = {}
+    for team, d in teams.items():
+        if "hgp" not in d or "agp" not in d:
+            continue
+        hgp, hgf, hga = d["hgp"], d["hgf"], d["hga"]
+        agp, agf, aga = d["agp"], d["agf"], d["aga"]
+        gp = hgp + agp
+        gf = hgf + agf
+        ga = hga + aga
+        result[team] = {
+            "gp": gp,
+            "gf": gf / gp if gp else 0,
+            "ga": ga / gp if gp else 0,
+            "tot": (gf + ga) / gp if gp else 0,
+            "hgf": hgf / hgp if hgp else 0,
+            "hga": hga / hgp if hgp else 0,
+            "htot": (hgf + hga) / hgp if hgp else 0,
+            "agf": agf / agp if agp else 0,
+            "aga": aga / agp if agp else 0,
+            "atot": (agf + aga) / agp if agp else 0,
+        }
+    return resultapp = FastAPI(title="Kickwise API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,65 +100,6 @@ def resolve_team(name, team_data):
 
 
 def fetch_stats(code):
-    teams = {}
-    try:
-        soup = BeautifulSoup(
-            requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=15).text,
-            "html.parser")
-        for tbl in soup.find_all("table"):
-            for row in tbl.find_all("tr"):
-                cells = row.find_all("td")
-                if len(cells) < 5:
-                    continue
-                name = cells[0].get_text(strip=True)
-                if not name or name.isdigit():
-                    continue
-                nums = []
-                for c in cells[1:]:
-                    try:
-                        nums.append(float(c.get_text(strip=True).replace(",", ".")))
-                    except:
-                        nums.append(None)
-                if len(nums) >= 3 and nums[0] and nums[0] > 0:
-                    gp = nums[0]
-                    gf = (nums[1] or 0) / gp
-                    ga = (nums[2] or 0) / gp
-                    teams[name] = {"gp": gp, "gf": gf, "ga": ga, "tot": gf + ga,
-                                   "hgf": gf, "hga": ga, "htot": gf + ga,
-                                   "agf": gf, "aga": ga, "atot": gf + ga}
-    except:
-        pass
-
-    for section in ["home", "away"]:
-        try:
-            s2 = BeautifulSoup(
-                requests.get(f"{BASE}/table.asp?league={code}&tid={section}", headers=HEADERS, timeout=10).text,
-                "html.parser")
-            for tbl in s2.find_all("table"):
-                for row in tbl.find_all("tr"):
-                    cells = row.find_all("td")
-                    if len(cells) < 4:
-                        continue
-                    name = cells[0].get_text(strip=True)
-                    if name not in teams:
-                        continue
-                    nums2 = []
-                    for c in cells[1:]:
-                        try:
-                            nums2.append(float(c.get_text(strip=True).replace(",", ".")))
-                        except:
-                            nums2.append(None)
-                    if len(nums2) >= 3 and nums2[0]:
-                        gp2 = nums2[0]
-                        gf2 = (nums2[1] or 0) / gp2
-                        ga2 = (nums2[2] or 0) / gp2
-                        if section == "home":
-                            teams[name].update({"hgf": gf2, "hga": ga2, "htot": gf2 + ga2})
-                        else:
-                            teams[name].update({"agf": gf2, "aga": ga2, "atot": gf2 + ga2})
-        except:
-            pass
-    return teams
 
 
 def fetch_fixtures(code, date_str=None):
