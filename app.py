@@ -38,7 +38,7 @@ def fetch_stats(code):
     teams = {}
     try:
         soup = BeautifulSoup(
-            requests.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
+            requests.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=6).text,
             "html.parser")
         tables = soup.find_all("table")
         section_count = 0
@@ -113,7 +113,7 @@ def fetch_fixtures(code, date_str=None):
     seen = set()
     try:
         soup = BeautifulSoup(
-            requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=15).text,
+            requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=6).text,
             "html.parser")
         for table in soup.find_all("table"):
             for row in table.find_all("tr"):
@@ -569,7 +569,7 @@ def leagues_today(date: str = Query(None)):
             fixtures = []
         return {"name": name, "code": code, "count": len(fixtures)} if fixtures else None
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=50) as executor:
         results = list(executor.map(check, LEAGUE_CODES.items()))
 
     available = [r for r in results if r]
