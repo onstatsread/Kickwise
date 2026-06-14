@@ -220,3 +220,12 @@ def analyze(league: str = Query(...), date: str = Query(None)):
 @app.get("/health")
 def health():
     return {"status": "ok", "date": str(date.today())}
+    @app.get("/debug")
+def debug(league: str = Query(...)):
+    team_data = fetch_stats(league)
+    fixtures  = fetch_fixtures(league)
+    return {
+        "team_count": len(team_data),
+        "team_names": list(team_data.keys()),
+        "fixtures": fixtures
+        }
