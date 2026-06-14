@@ -265,3 +265,89 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "fixtures": fixtures,
         "resolved": resolved
     }
+    LEAGUE_CODES = {
+    "Australia - NPL NSW": "australia11",
+    "Australia - NPL Queensland": "australia4",
+    "Australia - NPL Victoria": "australia3",
+    "Australia - NPL W. Australia": "australia5",
+    "Australia - Victoria Premier": "australia13",
+    "Austria - Bundesliga": "austria",
+    "Austria - 2. Liga": "austria2",
+    "Belarus - Vysshaya Liga": "belarus",
+    "Belgium - Pro League": "belgium",
+    "Belgium - Challenger Pro": "belgium2",
+    "Brazil - Serie A": "brazil",
+    "Bulgaria - Parva Liga": "bulgaria",
+    "China - Super League": "china",
+    "China - League One": "china2",
+    "Colombia - Primera A": "colombia",
+    "Croatia - 1. HNL": "croatia",
+    "Czech Republic - 1. Liga": "czechrepublic",
+    "Czech Republic - FNL": "czechrepublic2",
+    "Denmark - Superligaen": "denmark",
+    "Ecuador - Liga Pro": "ecuador",
+    "England - Championship": "england2",
+    "England - League One": "england3",
+    "England - League Two": "england4",
+    "England - Premier League": "england",
+    "Faroe Islands - Premier": "faroeislands",
+    "Finland - Veikkausliiga": "finland",
+    "France - Ligue 1": "france",
+    "France - Ligue 2": "france2",
+    "France - National": "france3",
+    "Germany - 2. Bundesliga": "germany2",
+    "Germany - 3. Liga": "germany3",
+    "Germany - Bundesliga": "germany",
+    "Greece - Super League": "greece",
+    "Hungary - NB I": "hungary",
+    "Ireland - First Division": "ireland2",
+    "Ireland - Premier Division": "ireland",
+    "Italy - Serie A": "italy",
+    "Italy - Serie B": "italy2",
+    "Latvia - Virsliga": "latvia",
+    "Lithuania - A Lyga": "lithuania",
+    "Netherlands - Eerste Divisie": "netherlands2",
+    "Netherlands - Eredivisie": "netherlands",
+    "North Macedonia - First League": "northmacedonia",
+    "Northern Ireland - NIFL": "northernireland",
+    "Norway - Eliteserien": "norway",
+    "Poland - 1. Liga": "poland2",
+    "Poland - Ekstraklasa": "poland",
+    "Portugal - Liga Portugal": "portugal",
+    "Portugal - Liga Portugal 2": "portugal2",
+    "Romania - Liga 1": "romania",
+    "Russia - FNL": "russia2",
+    "Russia - Premier League": "russia",
+    "Scotland - Championship": "scotland2",
+    "Scotland - Premiership": "scotland",
+    "Serbia - Super Liga": "serbia",
+    "Slovakia - 1. Liga": "slovakia",
+    "Slovenia - Prva Liga": "slovenia",
+    "South Africa - Premier Division": "southafrica",
+    "South Korea - K League 1": "southkorea",
+    "Spain - La Liga": "spain",
+    "Spain - La Liga 2": "spain2",
+    "Sweden - Allsvenskan": "sweden",
+    "Switzerland - Super League": "switzerland",
+    "Turkey - Super Lig": "turkey",
+    "Ukraine - Premier League": "ukraine",
+    "Wales - Cymru Premier": "wales",
+}
+
+
+@app.get("/leagues_today")
+def leagues_today(date: str = Query(None)):
+    def check(item):
+        name, code = item
+        try:
+            fixtures = fetch_fixtures(code, date)
+        except:
+            fixtures = []
+        return {"name": name, "code": code, "count": len(fixtures)} if fixtures else None
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(check, LEAGUE_CODES.items()))
+
+    available = [r for r in results if r]
+    available.sort(key=lambda x: x["name"])
+    return {"leagues": available}
