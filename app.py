@@ -225,7 +225,7 @@ def analyze(league: str = Query(...), date: str = Query(None)):
     def process(fix):
         home = resolve_team(fix["home"], team_data)
         away = resolve_team(fix["away"], team_data)
-        with ThreadPoolExecutor(max_workers=2) as inner:
+        with ThreadPoolExecutor(max_workers=1) as inner:
             f1 = inner.submit(run_model, home, away, team_data)
             f2 = inner.submit(run_model, away, home, team_data)
             r1, r2 = f1.result(), f2.result()
@@ -241,7 +241,7 @@ def analyze(league: str = Query(...), date: str = Query(None)):
             "c120r": r2["c120"],
         }
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         results = list(executor.map(process, fixtures))
 
     return {"league": league, "matches": results}
