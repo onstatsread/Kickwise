@@ -118,6 +118,8 @@ def fetch_fixtures(code, date_str=None):
         soup = BeautifulSoup(
             requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=6).text,
             "html.parser")
+
+        # Method 1: form-history rows (date | TeamA - TeamB | -)
         for table in soup.find_all("table"):
             for row in table.find_all("tr"):
                 cells = row.find_all("td")
@@ -138,7 +140,28 @@ def fetch_fixtures(code, date_str=None):
                         seen.add(key)
                         matches.append({"time": "", "home": home, "away": away})
 
-        # Second pass: find kickoff times from the "upcoming matches" widget
+        # Method 2: rows with two team-page links + today's date in row text
+        for row in soup.find_all("tr"):
+            row_text = row.get_text(" ", strip=True)
+            if today1 not in row_text and today2 not in row_text:
+                continue
+            cells = row.find_all("td")
+            if len(cells) > 6:
+                continue  # skip big standings rows
+            links = []
+            for a in row.find_all("a"):
+                txt = a.get_text(strip=True)
+                href = a.get("href", "")
+                if txt and "team=" in href:
+                    links.append(txt)
+            if len(links) >= 2:
+                home, away = links[0], links[1]
+                key = (home, away)
+                if key not in seen and home != away:
+                    seen.add(key)
+                    matches.append({"time": "", "home": home, "away": away})
+
+        # Find kickoff times for all matches found
         for m in matches:
             for table in soup.find_all("table"):
                 for row in table.find_all("tr"):
@@ -285,5 +308,5 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-                }
+                    }
         
