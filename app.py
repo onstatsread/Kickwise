@@ -108,8 +108,17 @@ def fetch_stats(code):
     return result
 
 TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
-DATE_RE  = re.compile(r'\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b')
 SCORE_RE = re.compile(r'\d+\s*[:\-]\s*\d+')
+DAY_RE   = re.compile(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*')
+
+
+def clean_team_name(name):
+    name = DAY_RE.sub("", name).strip()
+    # Cut off at first score-like pattern or long number sequence (stats junk)
+    m = SCORE_RE.search(name)
+    if m:
+        name = name[:m.start()].strip()
+    return name
 
 
 def fetch_fixtures(code, date_str=None):
@@ -124,106 +133,80 @@ def fetch_fixtures(code, date_str=None):
 
     try:
         resp = requests.get(f"{BASE}/latest.asp?league={code}",
-                            headers=HEADERS, timeout=6)
-        html = resp.text
-        soup = BeautifulSoup(html, "html.parser")
+                            headers=HEADERS, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Method 1: scan every table row for today's date + unplayed match (score = "-")
         for table in soup.find_all("table"):
-            rows = table.find_all("tr")
-            for row in rows:
+            for row in table.find_all("tr"):
                 cells = row.find_all("td")
                 if len(cells) < 2:
                     continue
-                row_text = row.get_text(" ", strip=True)
 
-                # Must contain today's date string
-                if today1 not in row_text:
+                # Date must be in the FIRST cell only (not anywhere in the row,
+                # to avoid matching unrelated stats text elsewhere in the row)
+                first_cell_text = cells[0].get_text(" ", strip=True)
+                if today1 not in first_cell_text:
+                    continue
+                # Reject if first cell is way too long (means it's not a clean date cell)
+                if len(first_cell_text) > 20:
                     continue
 
-                # Score must be unplayed "-" (not "1:2" etc)
+                # Score must be unplayed "-"
                 score_cell = cells[-1].get_text(strip=True)
                 if score_cell != "-":
                     continue
-                if SCORE_RE.search(score_cell):
+
+                # Match teams should be in cells[1], format "TeamA - TeamB"
+                if len(cells) < 2:
+                    continue
+                match_cell_text = cells[1].get_text(" ", strip=True)
+                if " - " not in match_cell_text:
+                    continue
+                # Reject overly long match cell (means stats junk got merged in)
+                if len(match_cell_text) > 60:
                     continue
 
-                # Find team names from the match cell
-                # Try cell[1] first, then scan all cells for " - " separator
-                match_found = False
-                for cell in cells:
-                    txt = cell.get_text(" ", strip=True)
-                    # Remove the date part and time
-                    txt = DATE_RE.sub("", txt).strip()
-                    txt = TIME_RE.sub("", txt).strip()
-                    if " - " in txt:
-                        parts = txt.split(" - ", 1)
-                        home = parts[0].strip()
-                        away = parts[1].strip()
-                        if home and away and home != away and len(home) > 1 and len(away) > 1:
-                            key = (home, away)
-                            if key not in seen:
-                                seen.add(key)
-                                # Find time
-                                t = TIME_RE.search(row_text)
-                                time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
-                                matches.append({"time": time_str, "home": home, "away": away})
-                            match_found = True
-                            break
+                parts = match_cell_text.split(" - ", 1)
+                home = clean_team_name(parts[0])
+                away = clean_team_name(parts[1])
 
-        # Method 2: scan all links with "team=" in href — more reliable for some leagues
+                if not home or not away or home == away:
+                    continue
+                if len(home) < 2 or len(away) < 2 or len(home) > 30 or len(away) > 30:
+                    continue
+
+                key = (home, away)
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                t = TIME_RE.search(first_cell_text)
+                time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
+                matches.append({"time": time_str, "home": home, "away": away})
+
+        # Fallback: team-link based detection (only if Method 1 found nothing)
         if not matches:
             for row in soup.find_all("tr"):
-                row_text = row.get_text(" ", strip=True)
-                if today1 not in row_text:
-                    continue
-                # Check score is "-"
                 cells = row.find_all("td")
-                if not cells:
+                if len(cells) < 2 or len(cells) > 6:
+                    continue
+                first_cell_text = cells[0].get_text(" ", strip=True)
+                if today1 not in first_cell_text or len(first_cell_text) > 20:
                     continue
                 score_cell = cells[-1].get_text(strip=True)
-                if score_cell != "-" or SCORE_RE.search(score_cell):
+                if score_cell != "-":
                     continue
-                # Get team names from links
                 team_links = [a.get_text(strip=True) for a in row.find_all("a")
                               if "team=" in (a.get("href") or "")]
                 if len(team_links) >= 2:
-                    home, away = team_links[0], team_links[1]
-                    key = (home, away)
-                    if key not in seen and home != away:
-                        seen.add(key)
-                        t = TIME_RE.search(row_text)
-                        time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
-                        matches.append({"time": time_str, "home": home, "away": away})
-
-        # Method 3: form mini-tables inside league table rows
-        # These look like: "19 Jun | Team A - Team B | -"
-        if not matches:
-            for tag in soup.find_all(string=re.compile(re.escape(today1))):
-                parent = tag.parent
-                for _ in range(5):  # walk up a few levels
-                    if parent is None:
-                        break
-                    text = parent.get_text(" ", strip=True)
-                    if today1 in text and " - " in text:
-                        # Find the match line containing today
-                        for line in text.split("\n"):
-                            if today1 in line and " - " in line:
-                                # Remove date/time
-                                line = DATE_RE.sub("", line)
-                                line = TIME_RE.sub("", line).strip()
-                                if " - " in line:
-                                    parts = line.split(" - ", 1)
-                                    home = parts[0].strip()
-                                    away_raw = parts[1].strip()
-                                    # Away might have extra stuff after it
-                                    away = away_raw.split("|")[0].strip()
-                                    if home and away and home != away and len(home) > 1:
-                                        key = (home, away)
-                                        if key not in seen:
-                                            seen.add(key)
-                                            matches.append({"time": "", "home": home, "away": away})
-                    parent = parent.parent
+                    home, away = clean_team_name(team_links[0]), clean_team_name(team_links[1])
+                    if home and away and home != away:
+                        key = (home, away)
+                        if key not in seen:
+                            seen.add(key)
+                            t = TIME_RE.search(first_cell_text)
+                            time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
+                            matches.append({"time": time_str, "home": home, "away": away})
 
     except Exception as e:
         print(f"  Fixtures error: {e}")
