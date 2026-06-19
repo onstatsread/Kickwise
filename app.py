@@ -108,17 +108,11 @@ def fetch_stats(code):
     return result
 
 TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
-SCORE_RE = re.compile(r'\d+\s*[:\-]\s*\d+')
 DAY_RE   = re.compile(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*')
 
 
 def clean_team_name(name):
-    name = DAY_RE.sub("", name).strip()
-    # Cut off at first score-like pattern or long number sequence (stats junk)
-    m = SCORE_RE.search(name)
-    if m:
-        name = name[:m.start()].strip()
-    return name
+    return DAY_RE.sub("", name).strip()
 
 
 def fetch_fixtures(code, date_str=None):
@@ -139,40 +133,33 @@ def fetch_fixtures(code, date_str=None):
         for table in soup.find_all("table"):
             for row in table.find_all("tr"):
                 cells = row.find_all("td")
-                if len(cells) < 2:
+                if len(cells) < 3:
                     continue
 
-                # Date must be in the FIRST cell only (not anywhere in the row,
-                # to avoid matching unrelated stats text elsewhere in the row)
-                first_cell_text = cells[0].get_text(" ", strip=True)
-                if today1 not in first_cell_text:
-                    continue
-                # Reject if first cell is way too long (means it's not a clean date cell)
-                if len(first_cell_text) > 20:
+                # First cell text must EXACTLY match (or start with) today's date,
+                # and be short (just date, maybe + day name / time)
+                c0 = cells[0].get_text(" ", strip=True)
+                c0_clean = DAY_RE.sub("", c0).strip()
+                if not (c0_clean == today1 or c0_clean.startswith(today1 + " ")):
                     continue
 
-                # Score must be unplayed "-"
-                score_cell = cells[-1].get_text(strip=True)
-                if score_cell != "-":
+                # Last cell must be exactly "-" (unplayed match marker)
+                c_last = cells[-1].get_text(strip=True)
+                if c_last != "-":
                     continue
 
-                # Match teams should be in cells[1], format "TeamA - TeamB"
-                if len(cells) < 2:
-                    continue
-                match_cell_text = cells[1].get_text(" ", strip=True)
-                if " - " not in match_cell_text:
-                    continue
-                # Reject overly long match cell (means stats junk got merged in)
-                if len(match_cell_text) > 60:
+                # The match-teams cell: try cells[1], require it to be SHORT and contain " - "
+                c1 = cells[1].get_text(" ", strip=True)
+                if " - " not in c1 or len(c1) > 50:
                     continue
 
-                parts = match_cell_text.split(" - ", 1)
-                home = clean_team_name(parts[0])
-                away = clean_team_name(parts[1])
+                home_raw, away_raw = c1.split(" - ", 1)
+                home = clean_team_name(home_raw)
+                away = clean_team_name(away_raw)
 
                 if not home or not away or home == away:
                     continue
-                if len(home) < 2 or len(away) < 2 or len(home) > 30 or len(away) > 30:
+                if len(home) > 25 or len(away) > 25:
                     continue
 
                 key = (home, away)
@@ -180,33 +167,9 @@ def fetch_fixtures(code, date_str=None):
                     continue
                 seen.add(key)
 
-                t = TIME_RE.search(first_cell_text)
+                t = TIME_RE.search(c0)
                 time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
                 matches.append({"time": time_str, "home": home, "away": away})
-
-        # Fallback: team-link based detection (only if Method 1 found nothing)
-        if not matches:
-            for row in soup.find_all("tr"):
-                cells = row.find_all("td")
-                if len(cells) < 2 or len(cells) > 6:
-                    continue
-                first_cell_text = cells[0].get_text(" ", strip=True)
-                if today1 not in first_cell_text or len(first_cell_text) > 20:
-                    continue
-                score_cell = cells[-1].get_text(strip=True)
-                if score_cell != "-":
-                    continue
-                team_links = [a.get_text(strip=True) for a in row.find_all("a")
-                              if "team=" in (a.get("href") or "")]
-                if len(team_links) >= 2:
-                    home, away = clean_team_name(team_links[0]), clean_team_name(team_links[1])
-                    if home and away and home != away:
-                        key = (home, away)
-                        if key not in seen:
-                            seen.add(key)
-                            t = TIME_RE.search(first_cell_text)
-                            time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
-                            matches.append({"time": time_str, "home": home, "away": away})
 
     except Exception as e:
         print(f"  Fixtures error: {e}")
