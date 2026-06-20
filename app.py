@@ -4,7 +4,7 @@ Deploy to Render.com (free tier)
 """
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time, pathlib, threading
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
 from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
@@ -28,141 +28,6 @@ HEADERS = {
 }
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
-
-
-# ── Persistent LibreOffice listener (UNO bridge) ───────────────
-import threading
-import pathlib
-
-_soffice_proc = None
-_uno_lock = threading.Lock()
-UNO_PORT = 2002
-
-
-def start_soffice_listener():
-    global _soffice_proc
-    try:
-        _soffice_proc = subprocess.Popen([
-            "soffice", "--headless", "--invisible", "--nocrashreport",
-            "--nodefault", "--norestore", "--nologo", "--nofirststartwizard",
-            f"--accept=socket,host=localhost,port={UNO_PORT};urp;"
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"Started soffice listener, pid={_soffice_proc.pid}")
-    except Exception as e:
-        print(f"Failed to start soffice listener: {e}")
-
-
-def get_uno_context(timeout=15):
-    import uno
-    local_ctx = uno.getComponentContext()
-    resolver = local_ctx.ServiceManager.createInstanceWithContext(
-        "com.sun.star.bridge.UnoUrlResolver", local_ctx)
-    last_err = None
-    waited = 0.0
-    while waited < timeout:
-        try:
-            ctx = resolver.resolve(
-                f"uno:socket,host=localhost,port={UNO_PORT};urp;StarOffice.ComponentContext")
-            return ctx
-        except Exception as e:
-            last_err = e
-            time.sleep(0.5)
-            waited += 0.5
-    raise RuntimeError(f"Could not connect to soffice listener: {last_err}")
-
-
-def run_model_uno(home, away, team_data):
-    """Fast path: use persistent LibreOffice via UNO bridge."""
-    from com.sun.star.beans import PropertyValue
-
-    def make_prop(name, value):
-        p = PropertyValue()
-        p.Name = name
-        p.Value = value
-        return p
-
-    if home not in team_data or away not in team_data:
-        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A"}
-
-    data = sorted([
-        (n, d["gp"], d["gf"], d["ga"], d["tot"],
-         d["hgf"], d["hga"], d["htot"], d["agf"], d["aga"], d["atot"])
-        for n, d in team_data.items()], key=lambda x: x[0])
-
-    lhs = statistics.mean([d[5] for d in data]) or 1
-    lhc = statistics.mean([d[6] for d in data]) or 1
-    las = statistics.mean([d[8] for d in data]) or 1
-    lac = statistics.mean([d[9] for d in data]) or 1
-
-    with _uno_lock:
-        import uno
-        ctx = get_uno_context()
-        smgr = ctx.ServiceManager
-        desktop = smgr.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
-
-        file_url = pathlib.Path(os.path.abspath(MODEL)).as_uri()
-        props = [make_prop("Hidden", True)]
-        doc = desktop.loadComponentFromURL(file_url, "_blank", 0, tuple(props))
-
-        try:
-            sheet = doc.Sheets.getByIndex(0)
-
-            # Clear C6:V42
-            clear_range = sheet.getCellRangeByName("C6:V42")
-            clear_range.clearContents(1023)  # clear all content types
-
-            for i, d in enumerate(data):
-                r = 6 + i
-                hs, hc, ht = d[5], d[6], d[7]
-                as_, ac, at_ = d[8], d[9], d[10]
-                sheet.getCellByPosition(2, r - 1).setString(d[0])     # C
-                sheet.getCellByPosition(3, r - 1).setValue(d[1])      # D
-                sheet.getCellByPosition(4, r - 1).setValue(round(d[2], 4))   # E
-                sheet.getCellByPosition(5, r - 1).setValue(round(d[3], 4))   # F
-                sheet.getCellByPosition(6, r - 1).setValue(round(d[4], 4))   # G
-                sheet.getCellByPosition(7, r - 1).setString("  ")           # H
-                sheet.getCellByPosition(8, r - 1).setValue(round(hs, 4))    # I
-                sheet.getCellByPosition(9, r - 1).setValue(round(hc, 4))    # J
-                sheet.getCellByPosition(10, r - 1).setValue(round(ht, 4))   # K
-                sheet.getCellByPosition(11, r - 1).setString("  ")          # L
-                sheet.getCellByPosition(12, r - 1).setValue(round(as_, 4))  # M
-                sheet.getCellByPosition(13, r - 1).setValue(round(ac, 4))   # N
-                sheet.getCellByPosition(14, r - 1).setValue(round(at_, 4))  # O
-                sheet.getCellByPosition(15, r - 1).setValue(round(hs / lhs, 4))  # P
-                sheet.getCellByPosition(16, r - 1).setValue(round(hc / lhc, 4))  # Q
-                sheet.getCellByPosition(17, r - 1).setValue(round(as_ / las, 4)) # R
-                sheet.getCellByPosition(18, r - 1).setValue(round(ac / lac, 4))  # S
-                sheet.getCellByPosition(19, r - 1).setValue(round(max((hs - as_) / d[1], 0), 4))  # T
-                sheet.getCellByPosition(21, r - 1).setValue(round((ht + at_) / 2, 4))  # V
-
-            sheet.getCellRangeByName("B69").setString(home)
-            sheet.getCellRangeByName("C69").setString(away)
-
-            doc.calculateAll()
-
-            def cell_str(ref):
-                v = sheet.getCellRangeByName(ref).getString()
-                return v if v else ""
-
-            d70 = cell_str("D70")
-            b120 = cell_str("B120")
-            c120 = cell_str("C120")
-            b46 = cell_str("B46")
-            d64 = cell_str("D64")
-
-            if b120 in ("#NAME?", "#N/A", ""):
-                parts = [x for x in [cell_str("B119"), cell_str("C119"), cell_str("D119")]
-                         if x and x not in ("run", "#NAME?", "#N/A")]
-                b120 = " /".join(parts)
-
-            if b46 in ("#NAME?", "#N/A", ""):
-                parts = [x for x in [cell_str("C114"), cell_str("O84"), cell_str("O85")]
-                         if x and x not in ("#NAME?", "#N/A")]
-                b46 = ", ".join(parts)
-
-            return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64}
-        finally:
-            doc.close(False)
 
 
 def resolve_team(name, team_data):
@@ -312,7 +177,7 @@ def fetch_fixtures(code, date_str=None):
     return matches
 
 
-def run_model_subprocess(home, away, team_data):
+def run_model(home, away, team_data):
     if home not in team_data or away not in team_data:
         return {"d70": "N/A", "b120": "N/A", "c120": "N/A"}
 
@@ -399,35 +264,6 @@ def run_model_subprocess(home, away, team_data):
     return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64}
 
 
-_uno_ready = False
-
-def init_uno_listener():
-    global _uno_ready
-    start_soffice_listener()
-    time.sleep(3)
-    try:
-        get_uno_context(timeout=20)
-        _uno_ready = True
-        print("UNO listener ready")
-    except Exception as e:
-        print(f"UNO listener failed to start: {e}")
-        _uno_ready = False
-
-
-threading.Thread(target=init_uno_listener, daemon=True).start()
-
-
-def run_model(home, away, team_data):
-    global _uno_ready
-    if _uno_ready:
-        try:
-            return run_model_uno(home, away, team_data)
-        except Exception as e:
-            print(f"UNO path failed ({e}), falling back to subprocess")
-            _uno_ready = False
-    return run_model_subprocess(home, away, team_data)
-
-
 @app.get("/fixtures")
 def fixtures_endpoint(league: str = Query(...), date: str = Query(None)):
     matches = fetch_fixtures(league, date)
@@ -440,7 +276,7 @@ def predict(league: str = Query(...), home: str = Query(...), away: str = Query(
     h = resolve_team(home, team_data)
     a = resolve_team(away, team_data)
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         f1 = executor.submit(run_model, h, a, team_data)
         f2 = executor.submit(run_model, a, h, team_data)
         r1, r2 = f1.result(), f2.result()
