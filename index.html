@@ -734,11 +734,11 @@ async function runAnalysis() {
         const p = await presp.json();
 
         document.getElementById(`normal-${i}`).innerHTML =
-          pill("D70", p.d70) + pill("B120", p.b120) + pill("C120", p.c120) +
-          pill("B46", p.b46) + pill("D64", p.d64);
+          pill("D69", p.d70) + pill("B120", p.b120) + pill("C120", p.c120) +
+          pill("B46", p.b46) + pill("D64", p.d64) + pill("B118", p.b118) + pill("AA15", p.aa15);
         document.getElementById(`reversed-${i}`).innerHTML =
-          pill("D70", p.d70r) + pill("B120", p.b120r) + pill("C120", p.c120r) +
-          pill("B46", p.b46r) + pill("D64", p.d64r);
+          pill("D69", p.d70r) + pill("B120", p.b120r) + pill("C120", p.c120r) +
+          pill("B46", p.b46r) + pill("D64", p.d64r) + pill("B118", p.b118r) + pill("AA15", p.aa15r);
 
         // ── Smart prediction logic ─────────────────────────────
         const smartDiv = document.getElementById(`smart-${i}`);
