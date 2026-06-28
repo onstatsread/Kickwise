@@ -747,6 +747,10 @@ async function runAnalysis() {
           return s === "match" || (s.includes("match") && !s.includes("not"));
         };
         const c120Match = isMatch(p.c120) || isMatch(p.c120r);
+
+        // Use D69 from whichever direction has C120 = "match"
+        const d70Main = isMatch(p.c120) ? (p.d70 || "") : (p.d70r || p.d70 || "");
+
         const d64Both   = (p.d64 || "").toLowerCase().includes("both") ||
                           (p.d64r || "").toLowerCase().includes("both");
         const d64One    = (p.d64 || "").toLowerCase().includes("one") ||
@@ -755,8 +759,21 @@ async function runAnalysis() {
         const b120Double = b120Combined.includes("double");
         const b120Under  = b120Combined.includes("under");
 
+        // B46 — extract just the goals part (e.g. "3goals", "4goals")
+        const b46Combined = ((p.b46 || "") + " " + (p.b46r || "")).toLowerCase();
+        const b46Goals = (() => {
+          const m = b46Combined.match(/(\d+goals)/);
+          return m ? m[1] : "";
+        })();
+
+        // AA15 — valid when either says "yes", "yes1", or "both"
+        const aa15Valid = (v) => {
+          const s = (v || "").toLowerCase();
+          return s === "yes" || s === "yes1" || s === "both";
+        };
+        const aa15Ok = aa15Valid(p.aa15) || aa15Valid(p.aa15r);
+
         let smartResult = null;
-        const d70Main = p.d70 || p.d70r || "";
 
         if (c120Match) {
           const labels = [];
@@ -770,12 +787,13 @@ async function runAnalysis() {
           }
           const validLabels = labels.filter(Boolean);
 
-          if (validLabels.length === 1) {
-            const lbl = validLabels[0];
+          if (validLabels.length > 0) {
+            const lbl = validLabels.join(" + ");
             cls = lbl.includes("double") ? "double" : (lbl.includes("handicap") ? "handicap" : "under");
-            smartResult = { label: d70Main + " / " + lbl, cls: cls };
-          } else if (validLabels.length > 1) {
-            smartResult = { label: d70Main + " / " + validLabels.join(" + "), cls: "neutral" };
+
+            // Add B46 goals only when AA15 is valid AND b46 has a goals value
+            const goalsSuffix = (aa15Ok && b46Goals) ? " / " + b46Goals : "";
+            smartResult = { label: d70Main + " / " + lbl + goalsSuffix, cls: cls };
           }
         }
 
