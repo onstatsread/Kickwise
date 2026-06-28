@@ -130,46 +130,79 @@ def fetch_fixtures(code, date_str=None):
                             headers=HEADERS, timeout=8)
         soup = BeautifulSoup(resp.text, "html.parser")
 
+        # Pass 1 — collect matches from form history table rows
         for table in soup.find_all("table"):
             for row in table.find_all("tr"):
                 cells = row.find_all("td")
                 if len(cells) < 3:
                     continue
-
-                # First cell text must EXACTLY match (or start with) today's date,
-                # and be short (just date, maybe + day name / time)
                 c0 = cells[0].get_text(" ", strip=True)
                 c0_clean = DAY_RE.sub("", c0).strip()
                 if not (c0_clean == today1 or c0_clean.startswith(today1 + " ")):
                     continue
-
-                # Last cell must be exactly "-" (unplayed match marker)
                 c_last = cells[-1].get_text(strip=True)
                 if c_last != "-":
                     continue
-
-                # The match-teams cell: try cells[1], require it to be SHORT and contain " - "
                 c1 = cells[1].get_text(" ", strip=True)
                 if " - " not in c1 or len(c1) > 50:
                     continue
-
                 home_raw, away_raw = c1.split(" - ", 1)
                 home = clean_team_name(home_raw)
                 away = clean_team_name(away_raw)
-
                 if not home or not away or home == away:
                     continue
                 if len(home) > 25 or len(away) > 25:
                     continue
-
                 key = (home, away)
                 if key in seen:
                     continue
                 seen.add(key)
-
+                # Try to get time from this row's first cell
                 t = TIME_RE.search(c0)
                 time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
                 matches.append({"time": time_str, "home": home, "away": away})
+
+        # Pass 2 — look for times in the upcoming fixtures section at top of page
+        # SoccerStats shows upcoming matches in a table with structure:
+        # Time | Home - Away | - |
+        # These rows contain ONLY a time (HH:MM) in the first cell
+        time_map = {}
+        for table in soup.find_all("table"):
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 3:
+                    continue
+                c0 = cells[0].get_text(strip=True)
+                # First cell should be ONLY a time like "19:45" or "20:00"
+                if not TIME_RE.fullmatch(c0) and not re.fullmatch(r'\d{1,2}:\d{2}', c0):
+                    continue
+                c_last = cells[-1].get_text(strip=True)
+                if c_last != "-":
+                    continue
+                # Find team names
+                for cell in cells[1:]:
+                    txt = cell.get_text(" ", strip=True)
+                    if " - " in txt and len(txt) < 50:
+                        parts = txt.split(" - ", 1)
+                        h = clean_team_name(parts[0])
+                        a = clean_team_name(parts[1])
+                        if h and a and h != a:
+                            time_map[(h, a)] = c0
+                            time_map[(a, h)] = c0  # also map reversed
+                        break
+
+        # Apply times from Pass 2 to matches found in Pass 1
+        for m in matches:
+            if not m["time"]:
+                key = (m["home"], m["away"])
+                if key in time_map:
+                    m["time"] = time_map[key]
+                else:
+                    # Fuzzy match — check if any time_map key partially matches
+                    for (h, a), t in time_map.items():
+                        if (m["home"] in h or h in m["home"]) and                            (m["away"] in a or a in m["away"]):
+                            m["time"] = t
+                            break
 
     except Exception as e:
         print(f"  Fixtures error: {e}")
