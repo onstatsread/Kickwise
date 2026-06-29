@@ -1,833 +1,378 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kickwise — Match Predictions</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --pitch:    #0A3D1F;
-    --turf:     #0F5132;
-    --lime:     #AAFF3C;
-    --white:    #F5F7F2;
-    --grey:     #8A9B82;
-    --dark:     #07200F;
-    --card:     #0D2918;
-    --border:   rgba(170,255,60,0.15);
-    --match:    #27AE60;
-    --nomatch:  #C0392B;
-    --double:   #8E44AD;
-    --under:    #E67E22;
-    --handicap: #2980B9;
-    --low:      #16A085;
-  }
+"""
+Kickwise Backend — FastAPI server
+Deploy to Render.com (free tier)
+"""
+from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
+from datetime import date
+from bs4 import BeautifulSoup
+from openpyxl import load_workbook
+from concurrent.futures import ThreadPoolExecutor
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+app = FastAPI(title="Kickwise API")
 
-  body {
-    background: var(--dark);
-    color: var(--white);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    min-height: 100vh;
-  }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
-  /* ── Header ── */
-  header {
-    background: var(--pitch);
-    border-bottom: 2px solid var(--border);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .logo {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--lime);
-    line-height: 1;
-  }
-  .logo span { color: var(--white); }
-
-  .tagline {
-    font-size: 11px;
-    color: var(--grey);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  /* ── Controls ── */
-  .controls {
-    padding: 20px;
-    background: var(--pitch);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .date-bar {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--lime);
-  }
-
-  .select-wrap {
-    position: relative;
-  }
-
-  select {
-    width: 100%;
-    background: var(--card);
-    color: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 40px 12px 14px;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    appearance: none;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  select:focus { border-color: var(--lime); }
-
-  .select-arrow {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--lime);
-    pointer-events: none;
-    font-size: 12px;
-  }
-
-  .run-btn {
-    background: var(--lime);
-    color: var(--dark);
-    border: none;
-    border-radius: 8px;
-    padding: 14px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: opacity 0.2s, transform 0.1s;
-    width: 100%;
-  }
-  .run-btn:active { transform: scale(0.98); opacity: 0.9; }
-  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* ── Status / Loading ── */
-  #status {
-    padding: 16px 20px;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--grey);
-  }
-
-  .spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--border);
-    border-top-color: var(--lime);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-    display: none;
-  }
-  .spinner.active { display: block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Empty / Error states ── */
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--grey);
-  }
-  .empty .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; color: var(--white); margin-bottom: 6px; }
-  .empty p { font-size: 14px; line-height: 1.5; }
-
-  /* ── Match Cards ── */
-  #results { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 12px; }
-
-  .league-header {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--lime);
-    padding: 8px 0 4px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
-  }
-
-  .match-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-
-  .match-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: var(--turf);
-    border-bottom: 1px solid var(--border);
-  }
-  .match-time {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--lime);
-    letter-spacing: 0.5px;
-  }
-  .match-teams {
-    text-align: right;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-  }
-  .match-teams .vs { color: var(--grey); font-weight: 400; margin: 0 6px; }
-
-  /* Result rows */
-  .result-section {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .result-section:last-child { border-bottom: none; }
-
-  .result-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--grey);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .result-label::before {
-    content: '';
-    display: block;
-    width: 3px;
-    height: 10px;
-    background: var(--lime);
-    border-radius: 2px;
-  }
-  .result-label.rev::before { background: var(--under); }
-
-  .result-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-  .pill-label {
-    font-size: 10px;
-    font-weight: 400;
-    opacity: 0.75;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .pill.match    { background: rgba(39,174,96,0.2);  color: #6EE7A0; border: 1px solid rgba(39,174,96,0.4); }
-  .pill.nomatch  { background: rgba(192,57,43,0.2);  color: #F1948A; border: 1px solid rgba(192,57,43,0.4); }
-  .pill.double   { background: rgba(142,68,173,0.2); color: #D7A9F0; border: 1px solid rgba(142,68,173,0.4); }
-  .pill.under    { background: rgba(230,126,34,0.2); color: #F0B27A; border: 1px solid rgba(230,126,34,0.4); }
-  .pill.handicap { background: rgba(41,128,185,0.2); color: #85C1E9; border: 1px solid rgba(41,128,185,0.4); }
-  .pill.low      { background: rgba(22,160,133,0.2); color: #76D7C4; border: 1px solid rgba(22,160,133,0.4); }
-  .pill.neutral  { background: rgba(138,155,130,0.15); color: var(--grey); border: 1px solid rgba(138,155,130,0.2); }
-  .pill.empty    { background: transparent; color: var(--grey); border: 1px dashed rgba(138,155,130,0.2); font-style: italic; font-weight: 400; }
-
-  /* ── Footer ── */
-  footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 11px;
-    color: var(--grey);
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── Desktop ── */
-  @media(min-width:640px) {
-    .controls { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
-    .select-wrap { flex: 1; min-width: 260px; }
-    .run-btn { width: auto; padding: 13px 28px; flex-shrink: 0; }
-    #results { padding: 16px 24px 40px; }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div>
-    <div class="logo">Kick<span>wise</span></div>
-    <div class="tagline">Match Prediction Engine</div>
-  </div>
-</header>
-
-<div class="controls">
-  <div class="date-bar" id="dateBar">—</div>
-  <div class="select-wrap">
-    <select id="leagueSelect"></select>
-    <span class="select-arrow">▼</span>
-  </div>
-  <button class="run-btn" id="runBtn" onclick="runAnalysis()">
-    ⚡ Analyze Today
-  </button>
-</div>
-
-<div id="status">
-  <div class="spinner" id="spinner"></div>
-  <span id="statusText">Select a league and tap Analyze Today</span>
-</div>
-
-<div id="results"></div>
-
-<footer>Kickwise · Data from SoccerStats · Predictions via A_mix2 Model</footer>
-
-<script>
-// ── League list ──────────────────────────────────────────────
-const LEAGUES = [
-  ["Albania - Abissnet Superiore", "albania"],
-  ["Andorra - Primera Divisio", "andorra"],
-  ["Argentina - Liga Profesional - Apertura", "argentina"],
-  ["Argentina - Liga Profesional - Clausura", "argentina2"],
-  ["Argentina - Primera B", "argentina4"],
-  ["Argentina - Primera B - Clausura", "argentina5"],
-  ["Argentina - Primera Nacional", "argentina3"],
-  ["Armenia - Premier League", "armenia"],
-  ["Australia - A-League", "australia"],
-  ["Australia - A-League Women", "australia2"],
-  ["Australia - NPL Capital Territory", "australia10"],
-  ["Australia - NPL New South Wales", "australia11"],
-  ["Australia - NPL Northern NSW", "australia7"],
-  ["Australia - NPL Queensland", "australia4"],
-  ["Australia - NPL South Australia", "australia6"],
-  ["Australia - NPL Tasmania", "australia8"],
-  ["Australia - NPL Victoria", "australia3"],
-  ["Australia - NPL Western Australia", "australia5"],
-  ["Australia - Queensland Premier League", "australia16"],
-  ["Australia - Victoria Premier League", "australia13"],
-  ["Australia - WA State League", "australia14"],
-  ["Austria - 2. Liga", "austria2"],
-  ["Austria - Bundesliga", "austria"],
-  ["Austria - Bundesliga Women", "austria8"],
-  ["Austria - Regionalliga Ost", "austria7"],
-  ["Austria - Regionalliga West", "austria5"],
-  ["Azerbaijan - First Division", "azerbaijan2"],
-  ["Azerbaijan - Premier League", "azerbaijan"],
-  ["Bahrain - Premier League", "bahrain"],
-  ["Bangladesh - Premier League", "bangladesh"],
-  ["Belarus - Vysshaya Liga", "belarus"],
-  ["Belgium - Challenger Pro League", "belgium2"],
-  ["Belgium - Pro League", "belgium"],
-  ["Belgium - U21 Pro League", "belgium6"],
-  ["Bolivia - Division Profesional", "bolivia"],
-  ["Bosnia - Premier Liga", "bosnia"],
-  ["Bosnia - Prva Liga FBiH", "bosnia2"],
-  ["Brazil - Brasileiro Women", "brazil5"],
-  ["Brazil - Brasiliense", "brazil11"],
-  ["Brazil - Goiano", "brazil8"],
-  ["Brazil - Matogrossense", "brazil12"],
-  ["Brazil - Mineiro", "brazil7"],
-  ["Brazil - Parabaino", "brazil17"],
-  ["Brazil - Paulista A1", "brazil14"],
-  ["Brazil - Paulista A2", "brazil15"],
-  ["Brazil - Paulista A3", "brazil16"],
-  ["Brazil - Sergipano", "brazil19"],
-  ["Brazil - Serie A", "brazil"],
-  ["Brazil - Serie B", "brazil2"],
-  ["Brazil - Serie C", "brazil3"],
-  ["Brazil - Tocantinense", "brazil21"],
-  ["Bulgaria - Parva Liga", "bulgaria"],
-  ["Bulgaria - Vtora Liga", "bulgaria2"],
-  ["Canada - Premier League", "canada"],
-  ["Chile - Liga de Ascenso", "chile2"],
-  ["Chile - Liga de Primera", "chile"],
-  ["China - League One", "china2"],
-  ["China - League Two", "china3"],
-  ["China - Super League", "china"],
-  ["Colombia - Primera A - Apertura", "colombia"],
-  ["Colombia - Primera A - Clausura", "colombia2"],
-  ["Colombia - Primera B - Apertura", "colombia3"],
-  ["Colombia - Primera B - Clausura", "colombia4"],
-  ["Costa Rica - Primera Div. - Apertura", "costarica"],
-  ["Costa Rica - Primera Div. - Clausura", "costarica2"],
-  ["Croatia - 1. HNL", "croatia"],
-  ["Croatia - 1. NL", "croatia2"],
-  ["Cyprus - Cyprus League", "cyprus"],
-  ["Czech Republic - 1. Liga", "czechrepublic"],
-  ["Czech Republic - 1. Liga Women", "czechrepublic4"],
-  ["Czech Republic - FNL", "czechrepublic2"],
-  ["Czech Republic - U19 League", "czechrepublic3"],
-  ["Denmark - 1st Division", "denmark2"],
-  ["Denmark - 2nd Division", "denmark3"],
-  ["Denmark - Superligaen", "denmark"],
-  ["Ecuador - Liga Pro", "ecuador"],
-  ["Egypt - Premier League", "egypt"],
-  ["England - Championship", "england2"],
-  ["England - Isthmian League", "england8"],
-  ["England - League One", "england3"],
-  ["England - League Two", "england4"],
-  ["England - National League", "england5"],
-  ["England - National League North", "england6"],
-  ["England - National League South", "england7"],
-  ["England - Northern League", "england9"],
-  ["England - Premier League", "england"],
-  ["England - Premier League 2", "england15"],
-  ["England - Professional Development League", "england19"],
-  ["England - Southern Central", "england10"],
-  ["England - Southern South", "england11"],
-  ["England - WSL 2", "england18"],
-  ["England - Women Super League", "england17"],
-  ["Estonia - Meistriliiga", "estonia"],
-  ["Faroe Islands - 1. Deild", "faroeislands2"],
-  ["Faroe Islands - Premier League", "faroeislands"],
-  ["Finland - Kakkonen Group A", "finland4"],
-  ["Finland - Kakkonen Group B", "finland5"],
-  ["Finland - Kakkonen Group C", "finland6"],
-  ["Finland - Kansallinen Liiga Women", "finland7"],
-  ["Finland - Veikkausliiga", "finland"],
-  ["Finland - Ykkonen", "finland3"],
-  ["Finland - Ykkosliiga", "finland2"],
-  ["France - Ligue 1", "france"],
-  ["France - Ligue 2", "france2"],
-  ["France - National", "france3"],
-  ["France - Premiere Ligue Women", "france14"],
-  ["Georgia - Erovnuli Liga", "georgia"],
-  ["Georgia - Erovnuli Liga 2", "georgia2"],
-  ["Germany - 2. Bundesliga", "germany2"],
-  ["Germany - 2. Bundesliga Women", "germany24"],
-  ["Germany - 3. Liga", "germany3"],
-  ["Germany - Bundesliga", "germany"],
-  ["Germany - Bundesliga Women", "germany23"],
-  ["Germany - Oberliga Baden-Wurttemberg", "germany9"],
-  ["Germany - Oberliga Bayern Nord", "germany21"],
-  ["Germany - Oberliga Bayern Sud", "germany22"],
-  ["Germany - Oberliga Hamburg", "germany10"],
-  ["Germany - Oberliga Hessen", "germany15"],
-  ["Germany - Oberliga Mittelrhein", "germany19"],
-  ["Germany - Oberliga Niederrhein", "germany11"],
-  ["Germany - Oberliga Niedersachsen", "germany17"],
-  ["Germany - Regionalliga Bayern", "germany8"],
-  ["Germany - Regionalliga Nord", "germany4"],
-  ["Germany - Regionalliga Nordost", "germany5"],
-  ["Germany - Regionalliga Sudwest", "germany7"],
-  ["Germany - Regionalliga West", "germany6"],
-  ["Greece - Super League", "greece"],
-  ["Guatemala - Liga Nacional - Apertura", "guatemala"],
-  ["Guatemala - Liga Nacional - Clausura", "guatemala2"],
-  ["Hong Kong - Premier League", "hongkong"],
-  ["Hungary - NB I", "hungary"],
-  ["Hungary - NB I Women", "hungary3"],
-  ["Hungary - NB II", "hungary2"],
-  ["Iceland - 1. Deild", "iceland2"],
-  ["Iceland - 2. Deild", "iceland3"],
-  ["Iceland - Besta deild", "iceland"],
-  ["Iceland - Besta deild Women", "iceland5"],
-  ["India - Super League", "india"],
-  ["Indonesia - Liga 1", "indonesia"],
-  ["Iran - Pro League", "iran"],
-  ["Ireland - First Division", "ireland2"],
-  ["Ireland - Premier Division", "ireland"],
-  ["Ireland - Women National League", "ireland3"],
-  ["Israel - Ligat HaAl", "israel"],
-  ["Italy - Primavera 1", "italy15"],
-  ["Italy - Serie A", "italy"],
-  ["Italy - Serie A Women", "italy17"],
-  ["Italy - Serie B", "italy2"],
-  ["Italy - Serie B Women", "italy18"],
-  ["Italy - Serie C Group A", "italy3"],
-  ["Italy - Serie C Group B", "italy4"],
-  ["Italy - Serie C Group C", "italy5"],
-  ["Italy - Serie D Group A", "italy6"],
-  ["Italy - Serie D Group B", "italy7"],
-  ["Italy - Serie D Group C", "italy8"],
-  ["Italy - Serie D Group D", "italy9"],
-  ["Italy - Serie D Group E", "italy10"],
-  ["Italy - Serie D Group F", "italy11"],
-  ["Italy - Serie D Group G", "italy12"],
-  ["Italy - Serie D Group H", "italy13"],
-  ["Italy - Serie D Group I", "italy14"],
-  ["Jamaica - Premier League", "jamaica"],
-  ["Japan - Nadeshiko League 1", "japan5"],
-  ["Japan - WE League", "japan4"],
-  ["Jordan - Premier League", "jordan"],
-  ["Kazakhstan - Premier League", "kazakhstan"],
-  ["Kuwait - Premier League", "kuwait"],
-  ["Latvia - 1. Liga", "latvia2"],
-  ["Latvia - Virsliga", "latvia"],
-  ["Lithuania - 1st League", "lithuania2"],
-  ["Lithuania - A Lyga", "lithuania"],
-  ["Malaysia - Super League", "malaysia"],
-  ["Mexico - Liga MX - Apertura", "mexico"],
-  ["Mexico - Liga MX - Clausura", "mexico2"],
-  ["Moldova - Divizia Nationala", "moldova"],
-  ["Montenegro - First League", "montenegro"],
-  ["Morocco - Botola Pro", "morocco"],
-  ["Netherlands - Derde Divisie Group A", "netherlands4"],
-  ["Netherlands - Derde Divisie Group B", "netherlands5"],
-  ["Netherlands - Eerste Divisie", "netherlands2"],
-  ["Netherlands - Eredivisie", "netherlands"],
-  ["Netherlands - Eredivisie Women", "netherlands6"],
-  ["Netherlands - Tweede Divisie", "netherlands3"],
-  ["North Macedonia - First League", "northmacedonia"],
-  ["Northern Ireland - NIFL Championship", "northernireland2"],
-  ["Northern Ireland - NIFL Premiership", "northernireland"],
-  ["Norway - 1. Division Women", "norway12"],
-  ["Norway - 1st Division", "norway2"],
-  ["Norway - Division 2 Group 1", "norway3"],
-  ["Norway - Division 2 Group 2", "norway4"],
-  ["Norway - Division 3 Group 1", "norway5"],
-  ["Norway - Division 3 Group 2", "norway6"],
-  ["Norway - Division 3 Group 3", "norway7"],
-  ["Norway - Division 3 Group 4", "norway8"],
-  ["Norway - Division 3 Group 5", "norway9"],
-  ["Norway - Division 3 Group 6", "norway10"],
-  ["Norway - Eliteserien", "norway"],
-  ["Norway - Toppserien Women", "norway11"],
-  ["Paraguay - Division Intermedia", "paraguay3"],
-  ["Paraguay - Primera Div. - Apertura", "paraguay"],
-  ["Paraguay - Primera Div. - Clausura", "paraguay2"],
-  ["Peru - Liga 1 - Apertura", "peru"],
-  ["Peru - Liga 1 - Clausura", "peru2"],
-  ["Philippines - PFL", "philippines"],
-  ["Poland - 1. Liga", "poland2"],
-  ["Poland - 2. Liga", "poland3"],
-  ["Poland - Ekstraklasa", "poland"],
-  ["Poland - Ekstraliga Women", "poland4"],
-  ["Portugal - First Division Women", "portugal8"],
-  ["Portugal - Liga Portugal", "portugal"],
-  ["Portugal - Liga Portugal 2", "portugal2"],
-  ["Qatar - Division 2", "qatar2"],
-  ["Qatar - Stars League", "qatar"],
-  ["Romania - Liga 1", "romania"],
-  ["Romania - Liga 2", "romania2"],
-  ["Romania - Superliga Women", "romania3"],
-  ["Russia - FNL", "russia2"],
-  ["Russia - Premier League", "russia"],
-  ["San Marino - Campionato Sammarinese", "sanmarino"],
-  ["Saudi Arabia - Division 1", "saudiarabia2"],
-  ["Saudi Arabia - Professional League", "saudiarabia"],
-  ["Scotland - Championship", "scotland2"],
-  ["Scotland - League One", "scotland3"],
-  ["Scotland - League Two", "scotland4"],
-  ["Scotland - Premiership", "scotland"],
-  ["Scotland - SWPL 1 Women", "scotland7"],
-  ["Serbia - Prva Liga", "serbia2"],
-  ["Serbia - Super Liga", "serbia"],
-  ["Singapore - Premier League", "singapore"],
-  ["Slovakia - 1. Liga", "slovakia"],
-  ["Slovakia - 1. Liga Women", "slovakia3"],
-  ["Slovakia - 2. Liga", "slovakia2"],
-  ["Slovenia - Prva Liga", "slovenia"],
-  ["South Africa - First Division", "southafrica2"],
-  ["South Africa - Premier Division", "southafrica"],
-  ["South Korea - K League 1", "southkorea"],
-  ["South Korea - K League 2", "southkorea2"],
-  ["South Korea - WK League Women", "southkorea4"],
-  ["Spain - LaLiga", "spain"],
-  ["Spain - LaLiga2", "spain2"],
-  ["Spain - Primera RFEF Group 1", "spain3"],
-  ["Spain - Primera RFEF Group 2", "spain4"],
-  ["Spain - Segunda RFEF Group 1", "spain5"],
-  ["Spain - Segunda RFEF Group 2", "spain6"],
-  ["Spain - Segunda RFEF Group 3", "spain7"],
-  ["Spain - Segunda RFEF Group 4", "spain8"],
-  ["Spain - Segunda RFEF Group 5", "spain9"],
-  ["Sweden - Allsvenskan", "sweden"],
-  ["Sweden - Allsvenskan Women", "sweden11"],
-  ["Sweden - Div 1 Norra", "sweden3"],
-  ["Sweden - Div 1 Sodra", "sweden4"],
-  ["Sweden - Div 2 Norra Gotaland", "sweden5"],
-  ["Sweden - Div 2 Norra Svealand", "sweden6"],
-  ["Sweden - Div 2 Norrland", "sweden7"],
-  ["Sweden - Div 2 Sodra Gotaland", "sweden10"],
-  ["Sweden - Div 2 Sodra Svealand", "sweden8"],
-  ["Sweden - Div 2 Vastra Gotaland", "sweden9"],
-  ["Sweden - Elitettan Women", "sweden12"],
-  ["Sweden - Superettan", "sweden2"],
-  ["Switzerland - Challenge League", "switzerland2"],
-  ["Switzerland - Promotion League", "switzerland3"],
-  ["Switzerland - Super League", "switzerland"],
-  ["Switzerland - Women Super League", "switzerland4"],
-  ["Thailand - Thai League 1", "thailand"],
-  ["Turkiye - 1. Lig", "turkey2"],
-  ["Turkiye - 2. Lig Red Group", "turkey4"],
-  ["Turkiye - 2. Lig White Group", "turkey3"],
-  ["Turkiye - 3. Lig Group 1", "turkey5"],
-  ["Turkiye - 3. Lig Group 2", "turkey6"],
-  ["Turkiye - 3. Lig Group 3", "turkey7"],
-  ["Turkiye - 3. Lig Group 4", "turkey8"],
-  ["Turkiye - Super Lig", "turkey"],
-  ["UAE - Pro League", "uae"],
-  ["USA - MLS", "usa"],
-  ["USA - NWSL", "usa6"],
-  ["USA - USL Championship", "usa2"],
-  ["USA - USL League One", "usa3"],
-  ["USA - USL Super League", "usa7"],
-  ["Ukraine - Persha Liga", "ukraine2"],
-  ["Ukraine - Premier League", "ukraine"],
-  ["Ukraine - U19 League", "ukraine5"],
-  ["Uruguay - Liga AUF - Apertura", "uruguay"],
-  ["Uruguay - Liga AUF - Clausura", "uruguay3"],
-  ["Uruguay - Liga AUF - Intermediate", "uruguay2"],
-  ["Venezuela - Liga FUTVE - Apertura", "venezuela"],
-  ["Venezuela - Liga FUTVE - Clausura", "venezuela2"],
-  ["Vietnam - National League Women", "vietnam3"],
-  ["Vietnam - V League", "vietnam"],
-  ["Wales - Cymru Premier", "wales"],
-];
-
-// ── Backend API URL (update after deploying backend) ─────────
-const API_BASE = "https://kickwise-v2.onrender.com";
-
-// ── Populate dropdown ────────────────────────────────────────
-const sel = document.getElementById("leagueSelect");
-LEAGUES.forEach(([name, code]) => {
-  const opt = document.createElement("option");
-  opt.value = code;
-  opt.textContent = name;
-  if (code === "belarus") opt.selected = true;
-  sel.appendChild(opt);
-});
-
-// ── Date display ─────────────────────────────────────────────
-const dateBar = document.getElementById("dateBar");
-dateBar.textContent = new Date().toLocaleDateString("en-GB", {
-  weekday:"long", day:"numeric", month:"long", year:"numeric"
-});
-
-// ── Pill renderer ─────────────────────────────────────────────
-function pillClass(val) {
-  if (!val || val.trim() === "" || val === "None" || val === "N/A") return "empty";
-  val = val.toLowerCase();
-  if (val.includes("not match")) return "nomatch";
-  if (val === "match")           return "match";
-  if (val.includes("double"))    return "double";
-  if (val.includes("under"))     return "under";
-  if (val.includes("handicap"))  return "handicap";
-  if (val.includes("low"))       return "low";
-  return "neutral";
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.soccerstats.com/",
+    "Connection": "keep-alive",
 }
+BASE    = "https://www.soccerstats.com"
+MODEL   = "A_mix2.xlsx"
 
-function pill(label, val) {
-  const cls   = pillClass(val);
-  const text  = (!val || val.trim() === "" || val === "None") ? "—" : val;
-  return `<div class="pill ${cls}"><span class="pill-label">${label}</span>${text}</div>`;
-}
 
-// ── Status helpers ────────────────────────────────────────────
-function setStatus(msg, loading=false) {
-  document.getElementById("statusText").textContent = msg;
-  document.getElementById("spinner").classList.toggle("active", loading);
-}
+def resolve_team(name, team_data):
+    if name in team_data:
+        return name
+    for k in team_data:
+        if name in k or k in name:
+            return k
+    matches = difflib.get_close_matches(name, team_data.keys(), n=1, cutoff=0.6)
+    return matches[0] if matches else name
 
-// ── Main analysis call ────────────────────────────────────────
-async function runAnalysis() {
-  const code = sel.value;
-  const name = sel.options[sel.selectedIndex].text;
-  const btn  = document.getElementById("runBtn");
-  const res  = document.getElementById("results");
 
-  btn.disabled = true;
-  res.innerHTML = "";
+def fetch_stats(code):
+    teams = {}
+    try:
+        soup = BeautifulSoup(
+            requests.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
+            "html.parser")
+        tables = soup.find_all("table")
+        section_count = 0
+        for tbl in tables:
+            valid_rows = []
+            for row in tbl.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 8:
+                    continue
+                team = cells[1].get_text(strip=True)
+                if not team:
+                    continue
+                try:
+                    gp = float(cells[2].get_text(strip=True))
+                    gf = float(cells[6].get_text(strip=True))
+                    ga = float(cells[7].get_text(strip=True))
+                except:
+                    continue
+                if gp <= 0:
+                    continue
+                valid_rows.append((team, gp, gf, ga))
+            if len(valid_rows) >= 10:
+                section_count += 1
+                for team, gp, gf, ga in valid_rows:
+                    if team not in teams:
+                        teams[team] = {}
+                    if section_count == 1:
+                        teams[team]["hgp"] = gp
+                        teams[team]["hgf"] = gf
+                        teams[team]["hga"] = ga
+                    elif section_count == 2:
+                        teams[team]["agp"] = gp
+                        teams[team]["agf"] = gf
+                        teams[team]["aga"] = ga
+            if section_count >= 2:
+                break
+    except Exception as e:
+        print(f"Stats error: {e}")
 
-  const today = new Date();
-  const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
+    result = {}
+    for team, d in teams.items():
+        if "hgp" not in d or "agp" not in d:
+            continue
+        hgp, hgf, hga = d["hgp"], d["hgf"], d["hga"]
+        agp, agf, aga = d["agp"], d["agf"], d["aga"]
+        gp = hgp + agp
+        gf = hgf + agf
+        ga = hga + aga
+        result[team] = {
+            "gp": gp,
+            "gf": gf / gp if gp else 0,
+            "ga": ga / gp if gp else 0,
+            "tot": (gf + ga) / gp if gp else 0,
+            "hgf": hgf / hgp if hgp else 0,
+            "hga": hga / hgp if hgp else 0,
+            "htot": (hgf + hga) / hgp if hgp else 0,
+            "agf": agf / agp if agp else 0,
+            "aga": aga / agp if agp else 0,
+            "atot": (agf + aga) / agp if agp else 0,
+        }
+    return result
 
-  setStatus(`Fetching ${name} fixtures…`, true);
+TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
+DAY_RE   = re.compile(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*')
 
-  try {
-    const resp = await fetch(`${API_BASE}/fixtures?league=${code}&date=${encodeURIComponent(todayStr)}`);
-    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
-    const data = await resp.json();
 
-    if (!data.matches || data.matches.length === 0) {
-      setStatus("Done");
-      res.innerHTML = `
-        <div class="empty">
-          <div class="icon">📅</div>
-          <h3>No fixtures today</h3>
-          <p>No matches found for ${name} today.<br>Try a different league.</p>
-        </div>`;
-      btn.disabled = false;
-      return;
+def clean_team_name(name):
+    return DAY_RE.sub("", name).strip()
+
+
+def fetch_fixtures(code, date_str=None):
+    if date_str:
+        today1 = date_str.strip()
+    else:
+        d = date.today()
+        today1 = f"{d.day} {d.strftime('%b')}"
+
+    matches = []
+    seen = set()
+
+    try:
+        resp = requests.get(f"{BASE}/latest.asp?league={code}",
+                            headers=HEADERS, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Pass 1 — collect matches from form history table rows
+        for table in soup.find_all("table"):
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 3:
+                    continue
+                c0 = cells[0].get_text(" ", strip=True)
+                c0_clean = DAY_RE.sub("", c0).strip()
+                if not (c0_clean == today1 or c0_clean.startswith(today1 + " ")):
+                    continue
+                c_last = cells[-1].get_text(strip=True)
+                if c_last != "-":
+                    continue
+                c1 = cells[1].get_text(" ", strip=True)
+                if " - " not in c1 or len(c1) > 50:
+                    continue
+                home_raw, away_raw = c1.split(" - ", 1)
+                home = clean_team_name(home_raw)
+                away = clean_team_name(away_raw)
+                if not home or not away or home == away:
+                    continue
+                if len(home) > 25 or len(away) > 25:
+                    continue
+                key = (home, away)
+                if key in seen:
+                    continue
+                seen.add(key)
+                # Try to get time from this row's first cell
+                t = TIME_RE.search(c0)
+                time_str = f"{t.group(1)}:{t.group(2)}" if t else ""
+                matches.append({"time": time_str, "home": home, "away": away})
+
+        # Pass 2 — look for times in the upcoming fixtures section at top of page
+        # SoccerStats shows upcoming matches in a table with structure:
+        # Time | Home - Away | - |
+        # These rows contain ONLY a time (HH:MM) in the first cell
+        time_map = {}
+        for table in soup.find_all("table"):
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 3:
+                    continue
+                c0 = cells[0].get_text(strip=True)
+                # First cell should be ONLY a time like "19:45" or "20:00"
+                if not re.match(r'^\d{1,2}:\d{2}$', c0):
+                    continue
+                c_last = cells[-1].get_text(strip=True)
+                if c_last != "-":
+                    continue
+                # Find team names
+                for cell in cells[1:]:
+                    txt = cell.get_text(" ", strip=True)
+                    if " - " in txt and len(txt) < 50:
+                        parts = txt.split(" - ", 1)
+                        h = clean_team_name(parts[0])
+                        a = clean_team_name(parts[1])
+                        if h and a and h != a:
+                            time_map[(h, a)] = c0
+                            time_map[(a, h)] = c0  # also map reversed
+                        break
+
+        # Apply times from Pass 2 to matches found in Pass 1
+        for m in matches:
+            if not m["time"]:
+                key = (m["home"], m["away"])
+                if key in time_map:
+                    m["time"] = time_map[key]
+                else:
+                    # Fuzzy match — check if any time_map key partially matches
+                    for (h, a), t in time_map.items():
+                        if (m["home"] in h or h in m["home"]) and                            (m["away"] in a or a in m["away"]):
+                            m["time"] = t
+                            break
+
+    except Exception as e:
+        print(f"  Fixtures error: {e}")
+
+    return matches
+
+
+def run_model(home, away, team_data):
+    if home not in team_data or away not in team_data:
+        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A"}
+
+    data = sorted([
+        (n, d["gp"], d["gf"], d["ga"], d["tot"],
+         d["hgf"], d["hga"], d["htot"], d["agf"], d["aga"], d["atot"])
+        for n, d in team_data.items()], key=lambda x: x[0])
+
+    lhs = statistics.mean([d[5] for d in data]) or 1
+    lhc = statistics.mean([d[6] for d in data]) or 1
+    las = statistics.mean([d[8] for d in data]) or 1
+    lac = statistics.mean([d[9] for d in data]) or 1
+
+    wb = load_workbook(MODEL)
+    ws = wb.active
+    for row in ws.iter_rows(min_row=6, max_row=42, min_col=3, max_col=22):
+        for cell in row:
+            cell.value = None
+
+    for i, d in enumerate(data):
+        r = 6 + i
+        hs, hc, ht = d[5], d[6], d[7]
+        as_, ac, at_ = d[8], d[9], d[10]
+        ws.cell(r, 3).value  = d[0]
+        ws.cell(r, 4).value  = d[1]
+        ws.cell(r, 5).value  = round(d[2], 4)
+        ws.cell(r, 6).value  = round(d[3], 4)
+        ws.cell(r, 7).value  = round(d[4], 4)
+        ws.cell(r, 8).value  = "  "
+        ws.cell(r, 9).value  = round(hs, 4)
+        ws.cell(r, 10).value = round(hc, 4)
+        ws.cell(r, 11).value = round(ht, 4)
+        ws.cell(r, 12).value = "  "
+        ws.cell(r, 13).value = round(as_, 4)
+        ws.cell(r, 14).value = round(ac, 4)
+        ws.cell(r, 15).value = round(at_, 4)
+        ws.cell(r, 16).value = round(hs / lhs, 4)
+        ws.cell(r, 17).value = round(hc / lhc, 4)
+        ws.cell(r, 18).value = round(as_ / las, 4)
+        ws.cell(r, 19).value = round(ac / lac, 4)
+        ws.cell(r, 20).value = round(max((hs - as_) / d[1], 0), 4)
+        ws.cell(r, 22).value = round((ht + at_) / 2, 4)
+
+    ws["B69"] = home
+    ws["C69"] = away
+    ws.title  = "Sheet1"
+
+    tmp_dir  = tempfile.mkdtemp()
+    tmp_file = os.path.join(tmp_dir, "fm_tmp.xlsx")
+    out_dir  = os.path.join(tmp_dir, "out")
+    os.makedirs(out_dir)
+    wb.save(tmp_file)
+
+    subprocess.run(["libreoffice", "--headless", "--calc", "--convert-to", "xlsx",
+                    "--outdir", out_dir, tmp_file],
+                   capture_output=True, timeout=90)
+
+    out_file = os.path.join(out_dir, "fm_tmp.xlsx")
+    wb2 = load_workbook(out_file, data_only=True)
+    ws2 = wb2.active
+
+    d70  = str(ws2["D69"].value  or "")
+    c120 = str(ws2["C120"].value or "")
+
+    # B120 = TEXTJOIN of B119/C119/D119 ("double"/"under"/"run").
+    # Always rebuild from the three source cells directly so we reliably
+    # capture all 4 outcomes: empty, "double", "under", or "double /under".
+    b119_raw = str(ws2["B119"].value or "")
+    c119_raw = str(ws2["C119"].value or "")
+    d119_raw = str(ws2["D119"].value or "")
+    parts = [x for x in [b119_raw, c119_raw, d119_raw]
+             if x and x not in ("run", "#NAME?", "#N/A", "None")]
+    b120 = " /".join(parts)  # "" if none, "double" / "under" alone, or "double /under" combined
+
+    # Helper: safely read a cell, returning "" on any error value
+    def safe(ref, sheet=None):
+        s = sheet if sheet else ws2
+        v = str(s[ref].value or "")
+        return "" if v in ("#NAME?", "#N/A", "#VALUE!", "None") else v
+
+    # B118 = TEXTJOIN("/ ", L115, N111, O111) — always rebuild from source cells
+    b118_parts = [x for x in [safe("L115"), safe("N111"), safe("O111")] if x]
+    b118 = "/ ".join(b118_parts)
+
+    # B46 = TEXTJOIN(", ", C114, IFERROR(O84,""), IFERROR(O85,"")) — rebuild from source
+    b46_parts = [x for x in [safe("C114"), safe("O84"), safe("O85")] if x]
+    b46 = ", ".join(b46_parts)
+
+    d64 = safe("D64")
+
+    sheet2 = wb2["Sheet2"]
+    aa15 = safe("AA15", sheet2)
+
+    # B54 = TEXTJOIN(T99, T100) — rebuild from source cells
+    t99  = safe("T99")
+    t100 = safe("T100")
+    b54_parts = [x for x in [t99, t100] if x]
+    b54 = "/ ".join(b54_parts)
+
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64,
+            "b118": b118, "aa15": aa15, "b54": b54}
+
+
+@app.get("/fixtures")
+def fixtures_endpoint(league: str = Query(...), date: str = Query(None)):
+    matches = fetch_fixtures(league, date)
+    return {"league": league, "matches": matches}
+
+
+@app.get("/predict")
+def predict(league: str = Query(...), home: str = Query(...), away: str = Query(...)):
+    team_data = fetch_stats(league)
+    h = resolve_team(home, team_data)
+    a = resolve_team(away, team_data)
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        f1 = executor.submit(run_model, h, a, team_data)
+        f2 = executor.submit(run_model, a, h, team_data)
+        r1, r2 = f1.result(), f2.result()
+
+    return {
+        "home": h, "away": a,
+        "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
+        "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
+        "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
+        "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15r"], "b54r": r2["b54"],
     }
 
-    res.innerHTML = `<div class="league-header">⚽ ${name}</div>`;
 
-    data.matches.forEach((m, i) => {
-      const card = document.createElement("div");
-      card.className = "match-card";
-      card.style.animationDelay = `${i * 60}ms`;
-      card.innerHTML = `
-        <div class="match-header">
-          <span class="match-time">${m.time || "TBD"}</span>
-          <span class="match-teams">${m.home} <span class="vs">vs</span> ${m.away}</span>
-        </div>
-        <div class="result-section">
-          <div class="result-label">Normal</div>
-          <div class="result-pills" id="normal-${i}">
-            <div class="pill neutral">⏳ Calculating…</div>
-          </div>
-        </div>
-        <div class="result-section">
-          <div class="result-label rev">Reversed · ${m.away} vs ${m.home}</div>
-          <div class="result-pills" id="reversed-${i}">
-            <div class="pill neutral">⏳ Calculating…</div>
-          </div>
-        </div>
-        <div class="result-section" id="smart-${i}"></div>`;
-      res.appendChild(card);
-    });
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
-    for (let i = 0; i < data.matches.length; i++) {
-      const m = data.matches[i];
-      setStatus(`Calculating ${i + 1} of ${data.matches.length}: ${m.home} vs ${m.away}…`, true);
 
-      try {
-        const purl = `${API_BASE}/predict?league=${code}&home=${encodeURIComponent(m.home)}&away=${encodeURIComponent(m.away)}`;
-        const presp = await fetch(purl);
-        if (!presp.ok) throw new Error(`Server error: ${presp.status}`);
-        const p = await presp.json();
+@app.get("/debug")
+def debug(league: str = Query(...), date: str = Query(None)):
+    debug_info = {}
+    try:
+        resp = requests.get(f"{BASE}/homeaway.asp?league={league}", headers=HEADERS, timeout=10)
+        debug_info["homeaway_status"] = resp.status_code
+        debug_info["homeaway_length"] = len(resp.text)
+        debug_info["homeaway_snippet"] = resp.text[:500]
+    except Exception as e:
+        debug_info["homeaway_error"] = str(e)
 
-        document.getElementById(`normal-${i}`).innerHTML =
-          pill("D69", p.d70) + pill("B120", p.b120) + pill("C120", p.c120) +
-          pill("B46", p.b46) + pill("D64", p.d64) + pill("B118", p.b118) + pill("AA15", p.aa15);
-        document.getElementById(`reversed-${i}`).innerHTML =
-          pill("D69", p.d70r) + pill("B120", p.b120r) + pill("C120", p.c120r) +
-          pill("B46", p.b46r) + pill("D64", p.d64r) + pill("B118", p.b118r) + pill("AA15", p.aa15r);
+    try:
+        resp2 = requests.get(f"{BASE}/latest.asp?league={league}", headers=HEADERS, timeout=10)
+        debug_info["latest_status"] = resp2.status_code
+        debug_info["latest_length"] = len(resp2.text)
+    except Exception as e:
+        debug_info["latest_error"] = str(e)
 
-        // ── Smart prediction logic ─────────────────────────────
-        const smartDiv = document.getElementById(`smart-${i}`);
-        const isMatch = (v) => {
-          const s = (v || "").toLowerCase().trim();
-          return s === "match" || (s.includes("match") && !s.includes("not"));
-        };
-        const c120Match = isMatch(p.c120) || isMatch(p.c120r);
-
-        // Use D69 from whichever direction has C120 = "match"
-        const d70Main = isMatch(p.c120) ? (p.d70 || "") : (p.d70r || p.d70 || "");
-
-        const d64Both   = (p.d64 || "").toLowerCase().includes("both") ||
-                          (p.d64r || "").toLowerCase().includes("both");
-        const d64One    = (p.d64 || "").toLowerCase().includes("one") ||
-                          (p.d64r || "").toLowerCase().includes("one");
-        const b120Combined = ((p.b120 || "") + " " + (p.b120r || "")).toLowerCase();
-        const b120Double = b120Combined.includes("double");
-        const b120Under  = b120Combined.includes("under");
-
-        // B46 — extract just the goals part (e.g. "3goals", "4goals")
-        const b46Combined = ((p.b46 || "") + " " + (p.b46r || "")).toLowerCase();
-        const b46Goals = (() => {
-          const m = b46Combined.match(/(\d+\s*goals)/);
-          return m ? m[1].replace(/\s+/, "") : "";
-        })();
-
-        // AA15 — valid when either says "yes", "yes1", or "both"
-        const aa15Valid = (v) => {
-          const s = (v || "").toLowerCase();
-          return s === "yes" || s === "yes1" || s === "both";
-        };
-        const aa15Ok = aa15Valid(p.aa15) || aa15Valid(p.aa15r);
-
-        let smartResult = null;
-
-        if (c120Match) {
-          const labels = [];
-          let cls = "neutral";
-
-          if (b120Double) {
-            labels.push(d64Both ? "double" : (d64One ? "2-handicap" : null));
-          }
-          if (b120Under) {
-            labels.push(d64Both ? "under" : (d64One ? "under extend" : null));
-          }
-          const validLabels = labels.filter(Boolean);
-
-          if (validLabels.length > 0) {
-            const lbl = validLabels.join(" + ");
-            cls = lbl.includes("double") ? "double" : (lbl.includes("handicap") ? "handicap" : "under");
-
-            // Add B46 goals only when AA15 is valid AND b46 has a goals value
-            const goalsSuffix = (aa15Ok && b46Goals) ? " / " + b46Goals : "";
-            smartResult = { label: d70Main + " / " + lbl + goalsSuffix, cls: cls };
-          }
-        }
-
-        if (smartResult) {
-          smartDiv.innerHTML = `
-            <div style="margin-top:4px">
-              <div class="result-label" style="color:var(--lime);margin-bottom:6px">⚡ PREDICTION</div>
-              <div class="pill ${smartResult.cls}" style="font-size:14px;padding:8px 14px;font-weight:700">
-                ${smartResult.label}
-              </div>
-            </div>`;
-        } else {
-          smartDiv.innerHTML = "";
-        }
-      } catch (e) {
-        document.getElementById(`normal-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
-        document.getElementById(`reversed-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
-      }
+    team_data = fetch_stats(league)
+    fixtures  = fetch_fixtures(league, date)
+    resolved  = [{"home": resolve_team(f["home"], team_data),
+                   "away": resolve_team(f["away"], team_data),
+                   "raw_home": f["home"], "raw_away": f["away"]} for f in fixtures]
+    return {
+        "debug_info": debug_info,
+        "team_count": len(team_data),
+        "team_names": list(team_data.keys()),
+        "fixtures": fixtures,
+        "resolved": resolved
     }
-
-    setStatus(`Done — ${data.matches.length} match${data.matches.length > 1 ? "es" : ""}`);
-
-  } catch (err) {
-    setStatus("Error — see below");
-    res.innerHTML = `
-      <div class="empty">
-        <div class="icon">⚠️</div>
-        <h3>Could not load data</h3>
-        <p>${err.message}<br><br>The backend may be starting up.<br>Wait 30 seconds and try again.</p>
-      </div>`;
-  } finally {
-    btn.disabled = false;
-  }
-}
-</script>
-</body>
-</html>
