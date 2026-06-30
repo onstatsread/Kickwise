@@ -5,6 +5,7 @@ Deploy to Render.com (free tier)
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
+from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
@@ -212,7 +213,7 @@ def fetch_fixtures(code, date_str=None):
 
 def run_model(home, away, team_data):
     if home not in team_data or away not in team_data:
-        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A"}
+        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A", "odds": None}
 
     data = sorted([
         (n, d["gp"], d["gf"], d["ga"], d["tot"],
@@ -310,9 +311,14 @@ def run_model(home, away, team_data):
     b54_parts = [x for x in [t99, t100] if x]
     b54 = "/ ".join(b54_parts)
 
+    # Win/Draw/Away odds from the model's own computed expected goals (Sheet2!C5, D5)
+    lambda_home = sheet2["C5"].value
+    lambda_away = sheet2["D5"].value
+    odds = calc_odds(lambda_home, lambda_away)
+
     shutil.rmtree(tmp_dir, ignore_errors=True)
     return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64,
-            "b118": b118, "aa15": aa15, "b54": b54}
+            "b118": b118, "aa15": aa15, "b54": b54, "odds": odds}
 
 
 @app.get("/fixtures")
@@ -336,8 +342,10 @@ def predict(league: str = Query(...), home: str = Query(...), away: str = Query(
         "home": h, "away": a,
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
+        "odds": r1.get("odds"),
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
         "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
+        "oddsr": r2.get("odds"),
     }
 
 
