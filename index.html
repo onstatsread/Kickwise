@@ -735,13 +735,19 @@ async function runAnalysis() {
         const p = await presp.json();
 
         document.getElementById(`normal-${i}`).innerHTML =
-          pill("D69", p.d70) + pill("B120", p.b120) + pill("C120", p.c120) +
+          pill("D69", p.d70) + pill("D70", p.d70val) + pill("B120", p.b120) + pill("C120", p.c120) +
+          (p.b119 ? pill("B119", p.b119) : "") +
+          (p.d119 ? pill("D119", p.d119) : "") +
           pill("B46", p.b46) + pill("D64", p.d64) + pill("B118", p.b118) +
-          pill("AA15", p.aa15) + pill("B54", p.b54);
+          pill("AA15", p.aa15) + pill("B54", p.b54) +
+          pill("O73", p.o73) + pill("O74", p.o74);
         document.getElementById(`reversed-${i}`).innerHTML =
-          pill("D69", p.d70r) + pill("B120", p.b120r) + pill("C120", p.c120r) +
+          pill("D69", p.d70r) + pill("D70", p.d70valr) + pill("B120", p.b120r) + pill("C120", p.c120r) +
+          (p.b119r ? pill("B119", p.b119r) : "") +
+          (p.d119r ? pill("D119", p.d119r) : "") +
           pill("B46", p.b46r) + pill("D64", p.d64r) + pill("B118", p.b118r) +
-          pill("AA15", p.aa15r) + pill("B54", p.b54r);
+          pill("AA15", p.aa15r) + pill("B54", p.b54r) +
+          pill("O73", p.o73r) + pill("O74", p.o74r);
 
         // ── Win/Draw/Away odds ──────────────────────────────────
         const oddsDiv = document.getElementById(`odds-${i}`);
