@@ -271,7 +271,7 @@ def fetch_fixtures(code, date_str=None):
 
 def run_model(home, away, team_data):
     if home not in team_data or away not in team_data:
-        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A", "odds": None}
+        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A", "odds": None, "b119": "", "d119": "", "d70val": "", "o73": "", "o74": ""}
 
     data = sorted([
         (n, d["gp"], d["gf"], d["ga"], d["tot"],
@@ -374,9 +374,28 @@ def run_model(home, away, team_data):
     lambda_away = sheet2["D5"].value
     odds = calc_odds(lambda_home, lambda_away)
 
+    # B119, D119 — show only when not "run"
+    b119_raw = safe("B119")
+    d119_raw = safe("D119")
+    b119 = b119_raw if b119_raw not in ("run", "") else ""
+    d119 = d119_raw if d119_raw not in ("run", "") else ""
+
+    # D70
+    d70_val = safe("D70")
+
+    # Sheet2!O73 and O74
+    o73 = safe("O73", sheet2)
+    o74_raw = sheet2["O74"].value
+    try:
+        o74 = str(round(float(o74_raw), 1)) + "%" if o74_raw is not None else ""
+    except:
+        o74 = str(o74_raw or "")
+
     shutil.rmtree(tmp_dir, ignore_errors=True)
     return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64,
-            "b118": b118, "aa15": aa15, "b54": b54, "odds": odds}
+            "b118": b118, "aa15": aa15, "b54": b54, "odds": odds,
+            "b119": b119, "d119": d119, "d70val": d70_val,
+            "o73": o73, "o74": o74}
 
 
 @app.get("/fixtures")
@@ -401,9 +420,13 @@ def predict(league: str = Query(...), home: str = Query(...), away: str = Query(
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
+        "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
+        "o73": r1["o73"], "o74": r1["o74"],
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
         "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
         "oddsr": r2.get("odds"),
+        "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
+        "o73r": r2["o73"], "o74r": r2["o74"],
     }
 
 
