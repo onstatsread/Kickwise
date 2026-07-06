@@ -720,6 +720,7 @@ async function runAnalysis() {
           </div>
         </div>
         <div class="result-section" id="smart-${i}"></div>
+        <div class="result-section" id="smart2-${i}"></div>
         <div class="result-section" id="odds-${i}"></div>`;
       res.appendChild(card);
     });
@@ -831,6 +832,55 @@ async function runAnalysis() {
             </div>`;
         } else {
           smartDiv.innerHTML = "";
+        }
+
+        // ── Prediction 2: Rules based on O73, D69, D70, B120, C120, AA15, D64, B54, B46 ──
+        const smart2Div = document.getElementById(`smart2-${i}`);
+        const o73Val = (p.o73 || p.o73r || "").trim();
+        const d69n = (p.d70 || "").toLowerCase();
+        const d70n = (p.d70val || "").toLowerCase();
+        const d69r = (p.d70r || "").toLowerCase();
+        const d70r2 = (p.d70valr || "").toLowerCase();
+        const o73Low = o73Val.toLowerCase();
+
+        // Rule 1: D69+D70 both contain O73, B120=double (either), C120=match (either)
+        const r1_d69_ok = o73Low && (d69n.includes(o73Low) && d70n.includes(o73Low));
+        const r1_d69r_ok = o73Low && (d69r.includes(o73Low) && d70r2.includes(o73Low));
+        const r1_match = (r1_d69_ok || r1_d69r_ok) &&
+                         b120Combined.includes("double") &&
+                         c120Match;
+
+        // Rule 2: AA15 != "no", D64="both", B54 empty both, C120 match either,
+        //         O73 contained in D69 or D70 (either direction)
+        const aa15NotNo = !((p.aa15 || "").toLowerCase() === "no" &&
+                            (p.aa15r || "").toLowerCase() === "no");
+        const d64BothR2 = d64Both;
+        const b54Empty = !(p.b54 || "").trim() && !(p.b54r || "").trim();
+        const o73InD69D70 = o73Low && (
+          d69n.includes(o73Low) || d70n.includes(o73Low) ||
+          d69r.includes(o73Low) || d70r2.includes(o73Low)
+        );
+        const r2_match = aa15NotNo && d64BothR2 && b54Empty && c120Match && o73InD69D70;
+
+        let pred2 = "";
+        if (r1_match && r2_match) {
+          pred2 = o73Val + " / " + (p.b46 || p.b46r || "");
+        } else if (r1_match) {
+          pred2 = o73Val;
+        } else if (r2_match) {
+          pred2 = (p.b46 || p.b46r || "");
+        }
+
+        if (pred2) {
+          smart2Div.innerHTML = `
+            <div style="margin-top:4px">
+              <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
+              <div class="pill under" style="font-size:14px;padding:8px 14px;font-weight:700">
+                ${pred2}
+              </div>
+            </div>`;
+        } else {
+          smart2Div.innerHTML = "";
         }
       } catch (e) {
         document.getElementById(`normal-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
