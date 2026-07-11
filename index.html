@@ -872,11 +872,25 @@ async function runAnalysis() {
         }
 
         if (pred2) {
+          // B118 "same" check — only when pred2 is already showing
+          const b118n = (p.b118 || "").toLowerCase();
+          const b118r = (p.b118r || "").toLowerCase();
+          const b118nHome = b118n.includes("home g") || b118n.includes("home c");
+          const b118nAway = b118n.includes("away g") || b118n.includes("away c");
+          const b118rHome = b118r.includes("home g") || b118r.includes("home c") ||
+                            b118r.includes("home");
+          const b118rAway = b118r.includes("away g") || b118r.includes("away c") ||
+                            b118r.includes("away");
+          let sameSuffix = "";
+          if ((b118nHome && b118rHome) || (b118nAway && b118rAway)) {
+            sameSuffix = " / same";
+          }
+
           smart2Div.innerHTML = `
             <div style="margin-top:4px">
               <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
               <div class="pill under" style="font-size:14px;padding:8px 14px;font-weight:700">
-                ${pred2}
+                ${pred2}${sameSuffix}
               </div>
             </div>`;
         } else {
