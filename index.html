@@ -872,25 +872,35 @@ async function runAnalysis() {
         }
 
         if (pred2) {
-          // B118 "same" check — only when pred2 is already showing
-          const b118n = (p.b118 || "").toLowerCase();
-          const b118r = (p.b118r || "").toLowerCase();
-          const b118nHome = b118n.includes("home g") || b118n.includes("home c");
-          const b118nAway = b118n.includes("away g") || b118n.includes("away c");
-          const b118rHome = b118r.includes("home g") || b118r.includes("home c") ||
-                            b118r.includes("home");
-          const b118rAway = b118r.includes("away g") || b118r.includes("away c") ||
-                            b118r.includes("away");
-          let sameSuffix = "";
-          if ((b118nHome && b118rHome) || (b118nAway && b118rAway)) {
-            sameSuffix = " / same";
+          // Check if all D69 and D70 (normal + reversed) contain "handicap"
+          const allHandicap = d69n.includes("handicap") && d70n.includes("handicap") &&
+                              d69r.includes("handicap") && d70r2.includes("handicap");
+
+          let finalPred2 = pred2;
+          if (allHandicap && o73Val) {
+            finalPred2 = o73Val + " only";
+          } else {
+            // B118 "same" check — only when pred2 is showing and not overridden
+            const b118n = (p.b118 || "").toLowerCase();
+            const b118r2 = (p.b118r || "").toLowerCase();
+            const b118nHome = b118n.includes("home g") || b118n.includes("home c");
+            const b118nAway = b118n.includes("away g") || b118n.includes("away c");
+            const b118rHome = b118r2.includes("home g") || b118r2.includes("home c") ||
+                              b118r2.includes("home");
+            const b118rAway = b118r2.includes("away g") || b118r2.includes("away c") ||
+                              b118r2.includes("away");
+            let sameSuffix = "";
+            if ((b118nHome && b118rHome) || (b118nAway && b118rAway)) {
+              sameSuffix = " / same";
+            }
+            finalPred2 = pred2 + sameSuffix;
           }
 
           smart2Div.innerHTML = `
             <div style="margin-top:4px">
               <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
               <div class="pill under" style="font-size:14px;padding:8px 14px;font-weight:700">
-                ${pred2}${sameSuffix}
+                ${finalPred2}
               </div>
             </div>`;
         } else {
