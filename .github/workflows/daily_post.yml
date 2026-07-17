@@ -1,0 +1,32 @@
+name: Daily Kickwise Predictions
+
+on:
+  schedule:
+    # 23:00 UTC = 00:00 WAT (Nigeria midnight)
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  post_predictions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run daily predictions poster
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          BLOG_ID: ${{ secrets.BLOG_ID }}
+          BLOGGER_API_KEY: ${{ secrets.BLOGGER_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+        run: python daily_predictions.py
