@@ -305,19 +305,43 @@ def main():
 </div>
 """
 
-    total_matches = 0
+    # Collect ALL matches from all leagues first
+    all_matches = []
     for league_name, code in LEAGUE_CODES.items():
         fixtures = get_fixtures(code, date_str)
         if not fixtures:
             continue
         print(f"  📌 {league_name}: {len(fixtures)} match(es)")
-        all_html += f'\n<h3 style="color:#0A3D1F;border-bottom:2px solid #AAFF3C;padding-bottom:4px">⚽ {league_name}</h3>\n'
         for fix in fixtures:
-            pred = get_prediction(code, fix["home"], fix["away"])
-            match_html = format_match_html(league_name, fix, pred)
-            if match_html:
-                all_html += match_html
-                total_matches += 1
+            all_matches.append({
+                "league_name": league_name,
+                "code": code,
+                "fix": fix
+            })
+
+    # Sort all matches by time (TBD goes to end)
+    def sort_key(m):
+        t = m["fix"].get("time", "")
+        if not t or t == "TBD":
+            return "99:99"
+        return t
+    all_matches.sort(key=sort_key)
+
+    # Run predictions and build HTML
+    total_matches = 0
+    for m in all_matches:
+        pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
+        # Skip if all key predictions are N/A
+        if pred and all(
+            (pred.get(k) or "N/A") in ("N/A", "", "None")
+            for k in ["d70", "b120", "c120", "d64", "b46"]
+        ):
+            print(f"    ⚠️ Skipping {m['fix']['home']} vs {m['fix']['away']} (all N/A)")
+            continue
+        match_html = format_match_html(m["league_name"], m["fix"], pred)
+        if match_html:
+            all_html += match_html
+            total_matches += 1
 
     if total_matches == 0:
         print("No matches found today.")
