@@ -327,8 +327,9 @@ def main():
         return t
     all_matches.sort(key=sort_key)
 
-    # Run predictions and build HTML
+    # Run predictions and build HTML — sorted by time, no league grouping
     total_matches = 0
+    current_time = None
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
         # Skip if all key predictions are N/A
@@ -340,6 +341,11 @@ def main():
             continue
         match_html = format_match_html(m["league_name"], m["fix"], pred)
         if match_html:
+            # Add time separator header when time changes
+            match_time = m["fix"].get("time", "TBD")
+            if match_time != current_time:
+                current_time = match_time
+                all_html += f'\n<div style="background:#2C3E50;color:#AAFF3C;padding:8px 12px;margin:16px 0 4px;border-radius:4px;font-family:Arial;font-weight:bold;font-size:15px">🕐 {match_time}</div>\n'
             all_html += match_html
             total_matches += 1
 
