@@ -896,10 +896,16 @@ async function runAnalysis() {
             finalPred2 = pred2 + sameSuffix;
           }
 
+          const aa15IsNo = (p.aa15 || "").toLowerCase() === "no" ||
+                           (p.aa15r || "").toLowerCase() === "no";
+          const pred2Style = aa15IsNo
+            ? "background:#C0392B;color:white;border:1px solid #E74C3C"
+            : "";
+          const pred2Cls = aa15IsNo ? "" : "under";
           smart2Div.innerHTML = `
             <div style="margin-top:4px">
               <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
-              <div class="pill under" style="font-size:14px;padding:8px 14px;font-weight:700">
+              <div class="pill ${pred2Cls}" style="font-size:14px;padding:8px 14px;font-weight:700;${pred2Style}">
                 ${finalPred2}
               </div>
             </div>`;
