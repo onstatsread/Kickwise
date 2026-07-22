@@ -253,12 +253,18 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>""" if pred1 else ""
 
-    pred2_html = f"""
+    if pred2:
+        aa15_no = (pred.get("aa15","") or "").lower() == "no" or                   (pred.get("aa15r","") or "").lower() == "no"
+        pred2_bg    = "#C0392B" if aa15_no else "#1a3a47"
+        pred2_color = "#ffffff" if aa15_no else "#F39C12"
+        pred2_html = f"""
         <tr>
-          <td colspan="2" style="padding:6px 12px;background:#1a3a47;color:#F39C12;font-weight:bold">
+          <td colspan="2" style="padding:6px 12px;background:{pred2_bg};color:{pred2_color};font-weight:bold">
             🎯 PREDICTION 2: {pred2}
           </td>
-        </tr>""" if pred2 else ""
+        </tr>"""
+    else:
+        pred2_html = ""
 
     return f"""
 <div style="border:1px solid #ddd;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif">
