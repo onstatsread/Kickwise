@@ -254,9 +254,19 @@ def format_match_html(league_name, match, pred):
         </tr>""" if pred1 else ""
 
     if pred2:
-        aa15_no = (pred.get("aa15","") or "").lower() == "no" or                   (pred.get("aa15r","") or "").lower() == "no"
-        pred2_bg    = "#C0392B" if aa15_no else "#1a3a47"
-        pred2_color = "#ffffff" if aa15_no else "#F39C12"
+        aa15_no = (pred.get("aa15","") or "").lower() == "no" or \
+                  (pred.get("aa15r","") or "").lower() == "no"
+        b54_over = "over" in (pred.get("b54","") or "").lower() or \
+                   "over" in (pred.get("b54r","") or "").lower()
+        if b54_over:
+            pred2_bg    = "#000000"
+            pred2_color = "#ffffff"
+        elif aa15_no:
+            pred2_bg    = "#C0392B"
+            pred2_color = "#ffffff"
+        else:
+            pred2_bg    = "#1a3a47"
+            pred2_color = "#F39C12"
         pred2_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;background:{pred2_bg};color:{pred2_color};font-weight:bold">
