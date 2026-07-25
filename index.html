@@ -898,10 +898,17 @@ async function runAnalysis() {
 
           const aa15IsNo = (p.aa15 || "").toLowerCase() === "no" ||
                            (p.aa15r || "").toLowerCase() === "no";
-          const pred2Style = aa15IsNo
-            ? "background:#C0392B;color:white;border:1px solid #E74C3C"
-            : "";
-          const pred2Cls = aa15IsNo ? "" : "under";
+          const b54HasOver = (p.b54 || "").toLowerCase().includes("over") ||
+                             (p.b54r || "").toLowerCase().includes("over");
+          let pred2Style = "";
+          let pred2Cls = "under";
+          if (b54HasOver) {
+            pred2Style = "background:#000000;color:white;border:1px solid #333";
+            pred2Cls = "";
+          } else if (aa15IsNo) {
+            pred2Style = "background:#C0392B;color:white;border:1px solid #E74C3C";
+            pred2Cls = "";
+          }
           smart2Div.innerHTML = `
             <div style="margin-top:4px">
               <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
