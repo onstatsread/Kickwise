@@ -10,6 +10,7 @@ from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
+from odds import get_odds_for_card  # NEW — market odds from The Odds API
 
 app = FastAPI(title="Kickwise API")
 
@@ -29,6 +30,27 @@ HEADERS = {
 }
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
+
+# NEW — maps your SoccerStats league codes to The Odds API's sport keys.
+# Only major leagues are covered by the odds provider — leagues not listed
+# here simply won't get market_odds (the frontend already handles that
+# gracefully since it only renders when odds data is present).
+LEAGUE_TO_SPORT_KEY = {
+    "england": "soccer_epl",
+    "england2": "soccer_efl_champ",
+    "spain": "soccer_spain_la_liga",
+    "italy": "soccer_italy_serie_a",
+    "germany": "soccer_germany_bundesliga",
+    "france": "soccer_france_ligue_one",
+    "netherlands": "soccer_netherlands_eredivisie",
+    "portugal": "soccer_portugal_primeira_liga",
+    "usa": "soccer_usa_mls",
+    "brazil": "soccer_brazil_campeonato",
+    "cleague": "soccer_uefa_champs_league",
+    "uefa": "soccer_uefa_europa_league",
+    # Add more as you confirm the exact key from:
+    # GET https://api.the-odds-api.com/v4/sports/?apiKey=YOUR_KEY
+}
 
 
 def calc_win_draw_away(lambda_home, lambda_away, max_goals=10):
@@ -405,7 +427,7 @@ def fixtures_endpoint(league: str = Query(...), date: str = Query(None)):
 
 
 @app.get("/predict")
-def predict(league: str = Query(...), home: str = Query(...), away: str = Query(...)):
+async def predict(league: str = Query(...), home: str = Query(...), away: str = Query(...)):
     team_data = fetch_stats(league)
     h = resolve_team(home, team_data)
     a = resolve_team(away, team_data)
@@ -415,11 +437,21 @@ def predict(league: str = Query(...), home: str = Query(...), away: str = Query(
         f2 = executor.submit(run_model, a, h, team_data)
         r1, r2 = f1.result(), f2.result()
 
+    # NEW — fetch real bookmaker odds alongside the model's own implied odds.
+    # Only leagues in LEAGUE_TO_SPORT_KEY are covered by the odds provider;
+    # everything else just gets market_odds: None, which the frontend
+    # can treat the same way it already treats missing odds.
+    market_odds = None
+    sport_key = LEAGUE_TO_SPORT_KEY.get(league)
+    if sport_key:
+        market_odds = await get_odds_for_card(sport_key, h, a)
+
     return {
         "home": h, "away": a,
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
+        "market_odds": market_odds,  # NEW
         "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
         "o73": r1["o73"], "o74": r1["o74"],
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
