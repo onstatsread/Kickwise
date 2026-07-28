@@ -10,7 +10,7 @@ from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
-from odds import get_odds_for_card  # NEW — market odds from The Odds API
+from odds import get_odds_for_card, router as odds_router  # NEW — market odds from The Odds API
 
 app = FastAPI(title="Kickwise API")
 
@@ -20,6 +20,9 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+app.include_router(odds_router)  # NEW — registers /odds/{sport_key} and /odds/{sport_key}/{home}/{away}
+
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -525,5 +528,4 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-                }
-        
+    }
