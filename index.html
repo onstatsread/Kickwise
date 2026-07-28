@@ -722,7 +722,8 @@ async function runAnalysis() {
         <div class="result-section" id="smart-${i}"></div>
         <div class="result-section" id="smart2-${i}"></div>
         <div class="result-section" id="odds-${i}"></div>
-        <div class="result-section" id="market-odds-${i}"></div>`;
+        <div class="result-section" id="market-odds-${i}"></div>
+        <div class="result-section" id="value-${i}"></div>`;
       res.appendChild(card);
     });
 
@@ -779,6 +780,41 @@ async function runAnalysis() {
             </div>`;
         } else {
           marketOddsDiv.innerHTML = "";
+        }
+
+        // ── Value% — (market odd − model odd) / model odd × 100, signed ──
+        const valueDiv = document.getElementById(`value-${i}`);
+        const v = p.value_pct;
+        const vs = p.value_signal;
+        if (v) {
+          const fmt = (n) => {
+            if (n === null || n === undefined) return "—";
+            const sign = n > 0 ? "+" : "";
+            return `${sign}${n}%`;
+          };
+          const cls = (n) => {
+            if (n === null || n === undefined) return "neutral";
+            return n > 0 ? "match" : (n < 0 ? "nomatch" : "neutral");
+          };
+          let pills = `
+              <div class="pill ${cls(v.home)}"><span class="pill-label">Home</span>${fmt(v.home)}</div>
+              <div class="pill ${cls(v.draw)}"><span class="pill-label">Draw</span>${fmt(v.draw)}</div>
+              <div class="pill ${cls(v.away)}"><span class="pill-label">Away</span>${fmt(v.away)}</div>
+              <div class="pill ${cls(v.total)}"><span class="pill-label">Total</span>${fmt(v.total)}</div>`;
+          if (vs && vs.under) {
+            pills += `<div class="pill under"><span class="pill-label">Signal</span>${vs.under}</div>`;
+          }
+          if (vs && vs.home) {
+            pills += `<div class="pill double"><span class="pill-label">Home</span>${vs.home}</div>`;
+          }
+          if (vs && vs.away) {
+            pills += `<div class="pill double"><span class="pill-label">Away</span>${vs.away}</div>`;
+          }
+          valueDiv.innerHTML = `
+            <div class="result-label" style="margin-bottom:6px">📈 VALUE (MARKET VS MODEL)</div>
+            <div class="result-pills">${pills}</div>`;
+        } else {
+          valueDiv.innerHTML = "";
         }
 
         // ── Smart prediction logic ─────────────────────────────
