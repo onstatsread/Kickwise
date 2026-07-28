@@ -36,20 +36,49 @@ MODEL   = "A_mix2.xlsx"
 # here simply won't get market_odds (the frontend already handles that
 # gracefully since it only renders when odds data is present).
 LEAGUE_TO_SPORT_KEY = {
-    "england": "soccer_epl",
-    "england2": "soccer_efl_champ",
-    "spain": "soccer_spain_la_liga",
-    "italy": "soccer_italy_serie_a",
-    "germany": "soccer_germany_bundesliga",
-    "france": "soccer_france_ligue_one",
+    # Verified directly against this account's /v4/sports/ response —
+    # every key below was confirmed to exist, not guessed.
+    "argentina":   "soccer_argentina_primera_division",  # Apertura; same key likely also covers Clausura fixtures
+    "austria":     "soccer_austria_bundesliga",
+    "belgium":     "soccer_belgium_first_div",
+    "brazil":      "soccer_brazil_campeonato",
+    "brazil2":     "soccer_brazil_serie_b",
+    "chile":       "soccer_chile_campeonato",
+    "china":       "soccer_china_superleague",
+    "denmark":     "soccer_denmark_superliga",
+    "england":     "soccer_epl",
+    "england2":    "soccer_efl_champ",
+    "england3":    "soccer_england_league1",
+    "england4":    "soccer_england_league2",
+    "finland":     "soccer_finland_veikkausliiga",
+    "france":      "soccer_france_ligue_one",
+    "germany":     "soccer_germany_bundesliga",
+    "germany2":    "soccer_germany_bundesliga2",
+    "germany3":    "soccer_germany_liga3",
+    "greece":      "soccer_greece_super_league",
+    "ireland":     "soccer_league_of_ireland",
+    "italy":       "soccer_italy_serie_a",
+    "italy2":      "soccer_italy_serie_b",
+    "mexico":      "soccer_mexico_ligamx",  # Apertura; likely also covers Clausura fixtures
     "netherlands": "soccer_netherlands_eredivisie",
-    "portugal": "soccer_portugal_primeira_liga",
-    "usa": "soccer_usa_mls",
-    "brazil": "soccer_brazil_campeonato",
-    "cleague": "soccer_uefa_champs_league",
-    "uefa": "soccer_uefa_europa_league",
-    # Add more as you confirm the exact key from:
-    # GET https://api.the-odds-api.com/v4/sports/?apiKey=YOUR_KEY
+    "norway":      "soccer_norway_eliteserien",
+    "poland":      "soccer_poland_ekstraklasa",
+    "portugal":    "soccer_portugal_primeira_liga",
+    "russia":      "soccer_russia_premier_league",
+    "scotland":    "soccer_spl",
+    "southkorea":  "soccer_korea_kleague1",
+    "spain":       "soccer_spain_la_liga",
+    "sweden":      "soccer_sweden_allsvenskan",
+    "sweden2":     "soccer_sweden_superettan",
+    "switzerland": "soccer_switzerland_superleague",
+    "turkey":      "soccer_turkey_super_league",
+    "usa":         "soccer_usa_mls",
+    # NOT available on this plan (confirmed absent from /v4/sports/):
+    # UEFA Champions League, UEFA Europa League — only qualification
+    # rounds and Nations League exist in this account's coverage.
+    # Re-check /v4/sports/?apiKey=YOUR_KEY periodically — The Odds API
+    # adds leagues over time, and any newly available league just needs
+    # a new line here.
 }
 
 
@@ -496,4 +525,5 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-    }
+                }
+        
