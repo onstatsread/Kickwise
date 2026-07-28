@@ -201,8 +201,6 @@ def format_match_html(league_name, match, pred):
     o73l = o73.lower()
     b46v = pred.get("b46") or pred.get("b46r") or ""
 
-    r1 = o73l and (d69n.includes(o73l) if hasattr(d69n,'includes') else o73l in d69n) and \
-         o73l in d70n and b120_double and c120_ok if o73l else False
     r1 = o73l and (o73l in d69n or o73l in d69r) and \
          (o73l in d70n or o73l in d70r2) and b120_double and c120_ok
 
@@ -243,6 +241,51 @@ def format_match_html(league_name, match, pred):
             📊 Odds: Home {odds['home_odds']} ({odds['home_pct']}%) |
             Draw {odds['draw_odds']} ({odds['draw_pct']}%) |
             Away {odds['away_odds']} ({odds['away_pct']}%)
+          </td>
+        </tr>"""
+
+    # Market odds (real bookmaker odds, if this league is covered)
+    market_odds = pred.get("market_odds") or {}
+    market_html = ""
+    if market_odds and market_odds.get("home_odds"):
+        market_html = f"""
+        <tr>
+          <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+            💰 Market Odds: Home {market_odds['home_odds']} ({market_odds['home_pct']}%) |
+            Draw {market_odds['draw_odds']} ({market_odds['draw_pct']}%) |
+            Away {market_odds['away_odds']} ({market_odds['away_pct']}%)
+          </td>
+        </tr>"""
+
+    # Value% — (market odd − model odd) / model odd × 100, plus signal
+    value_pct = pred.get("value_pct") or {}
+    value_signal = pred.get("value_signal") or {}
+    value_html = ""
+    if value_pct:
+        def fmt_val(n):
+            if n is None:
+                return "—"
+            sign = "+" if n > 0 else ""
+            return f"{sign}{n}%"
+
+        signal_parts = []
+        if value_signal.get("under"):
+            signal_parts.append(f"Signal: {value_signal['under']}")
+        if value_signal.get("home"):
+            signal_parts.append(f"Home: {value_signal['home']}")
+        if value_signal.get("away"):
+            signal_parts.append(f"Away: {value_signal['away']}")
+        signal_str = " | ".join(signal_parts)
+        signal_line = f"<br><b style='color:#AAFF3C'>{signal_str}</b>" if signal_str else ""
+
+        value_html = f"""
+        <tr>
+          <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+            📈 Value: Home {fmt_val(value_pct.get('home'))} |
+            Draw {fmt_val(value_pct.get('draw'))} |
+            Away {fmt_val(value_pct.get('away'))} |
+            Total {fmt_val(value_pct.get('total'))}
+            {signal_line}
           </td>
         </tr>"""
 
@@ -294,6 +337,8 @@ def format_match_html(league_name, match, pred):
     {pred1_html}
     {pred2_html}
     {odds_html}
+    {market_html}
+    {value_html}
   </table>
 </div>"""
 
