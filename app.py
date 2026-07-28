@@ -478,12 +478,35 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
     if sport_key:
         market_odds = await get_odds_for_card(sport_key, h, a)
 
+    # NEW — value%: ((model_odd - market_odd) / model_odd) * 100 per side.
+    # Positive = model rates this side as more likely than the market does
+    # (model's fair odds are shorter than market's, i.e. potential value).
+    # Negative = model rates it as less likely than the market does.
+    # Computed once here so it's available identically to the live site
+    # AND your blog automation script — both just read this field from
+    # the same /predict response, no duplicate logic needed elsewhere.
+    value_pct = None
+    model_odds = r1.get("odds")
+    if model_odds and market_odds:
+        def pct_diff(model_o, market_o):
+            if not model_o or not market_o:
+                return None
+            return round(((model_o - market_o) / model_o) * 100, 1)
+
+        home_v = pct_diff(model_odds.get("home_odds"), market_odds.get("home_odds"))
+        draw_v = pct_diff(model_odds.get("draw_odds"), market_odds.get("draw_odds"))
+        away_v = pct_diff(model_odds.get("away_odds"), market_odds.get("away_odds"))
+
+        if home_v is not None or draw_v is not None or away_v is not None:
+            value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
+
     return {
         "home": h, "away": a,
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
         "market_odds": market_odds,  # NEW
+        "value_pct": value_pct,  # NEW — % difference between model and market odds, signed
         "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
         "o73": r1["o73"], "o74": r1["o74"],
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
@@ -528,4 +551,5 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-    }
+                        }
+                
