@@ -478,27 +478,50 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
     if sport_key:
         market_odds = await get_odds_for_card(sport_key, h, a)
 
-    # NEW — value%: ((model_odd - market_odd) / model_odd) * 100 per side.
-    # Positive = model rates this side as more likely than the market does
-    # (model's fair odds are shorter than market's, i.e. potential value).
-    # Negative = model rates it as less likely than the market does.
+    # NEW — value%: ((market_odd - model_odd) / model_odd) * 100 per side.
+    # Positive = market is offering LONGER odds than the model thinks fair
+    # (i.e. potential value on that side). Negative = market odds are
+    # shorter than the model's fair odds.
     # Computed once here so it's available identically to the live site
-    # AND your blog automation script — both just read this field from
+    # AND your blog automation script — both just read these fields from
     # the same /predict response, no duplicate logic needed elsewhere.
     value_pct = None
+    value_signal = None
     model_odds = r1.get("odds")
     if model_odds and market_odds:
-        def pct_diff(model_o, market_o):
+        def pct_diff(market_o, model_o):
             if not model_o or not market_o:
                 return None
-            return round(((model_o - market_o) / model_o) * 100, 1)
+            return round(((market_o - model_o) / model_o) * 100, 1)
 
-        home_v = pct_diff(model_odds.get("home_odds"), market_odds.get("home_odds"))
-        draw_v = pct_diff(model_odds.get("draw_odds"), market_odds.get("draw_odds"))
-        away_v = pct_diff(model_odds.get("away_odds"), market_odds.get("away_odds"))
+        home_v = pct_diff(market_odds.get("home_odds"), model_odds.get("home_odds"))
+        draw_v = pct_diff(market_odds.get("draw_odds"), model_odds.get("draw_odds"))
+        away_v = pct_diff(market_odds.get("away_odds"), model_odds.get("away_odds"))
 
         if home_v is not None or draw_v is not None or away_v is not None:
-            value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
+            total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
+            value_pct = {"home": home_v, "draw": draw_v, "away": away_v, "total": total_v}
+
+            # "under" flag — total value sits within a tight band around zero
+            under_flag = "under" if -20 <= total_v <= 20 else ""
+
+            # Home/away signal — only meaningful when we have both market odds to compare
+            home_signal = ""
+            away_signal = ""
+            m_home = market_odds.get("home_odds")
+            m_away = market_odds.get("away_odds")
+            if home_v is not None and home_v > 0 and m_home is not None and m_away is not None:
+                if m_home > m_away:
+                    home_signal = "Home Handicap"
+                elif m_home < m_away:
+                    home_signal = h
+            if away_v is not None and away_v > 0 and m_home is not None and m_away is not None:
+                if m_away > m_home:
+                    away_signal = "Away Handicap"
+                elif m_away < m_home:
+                    away_signal = a
+
+            value_signal = {"under": under_flag, "home": home_signal, "away": away_signal}
 
     return {
         "home": h, "away": a,
@@ -506,7 +529,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
         "market_odds": market_odds,  # NEW
-        "value_pct": value_pct,  # NEW — % difference between model and market odds, signed
+        "value_pct": value_pct,  # NEW — signed % diff between market and model odds, plus total
+        "value_signal": value_signal,  # NEW — under flag + home/away handicap-or-team-name signal
         "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
         "o73": r1["o73"], "o74": r1["o74"],
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
@@ -551,5 +575,4 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "team_names": list(team_data.keys()),
         "fixtures": fixtures,
         "resolved": resolved
-                        }
-                
+    }
