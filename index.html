@@ -721,7 +721,8 @@ async function runAnalysis() {
         </div>
         <div class="result-section" id="smart-${i}"></div>
         <div class="result-section" id="smart2-${i}"></div>
-        <div class="result-section" id="odds-${i}"></div>`;
+        <div class="result-section" id="odds-${i}"></div>
+        <div class="result-section" id="market-odds-${i}"></div>`;
       res.appendChild(card);
     });
 
@@ -763,6 +764,21 @@ async function runAnalysis() {
             </div>`;
         } else {
           oddsDiv.innerHTML = "";
+        }
+
+        // ── Market odds (real bookmaker odds, if available) ─────
+        const marketOddsDiv = document.getElementById(`market-odds-${i}`);
+        const marketData = p.market_odds;
+        if (marketData && marketData.home_odds) {
+          marketOddsDiv.innerHTML = `
+            <div class="result-label" style="margin-bottom:6px">💰 MARKET ODDS (1X2)</div>
+            <div class="result-pills">
+              <div class="pill neutral"><span class="pill-label">Home</span>${marketData.home_odds} <span style="opacity:0.6;font-size:11px">(${marketData.home_pct}%)</span></div>
+              <div class="pill neutral"><span class="pill-label">Draw</span>${marketData.draw_odds} <span style="opacity:0.6;font-size:11px">(${marketData.draw_pct}%)</span></div>
+              <div class="pill neutral"><span class="pill-label">Away</span>${marketData.away_odds} <span style="opacity:0.6;font-size:11px">(${marketData.away_pct}%)</span></div>
+            </div>`;
+        } else {
+          marketOddsDiv.innerHTML = "";
         }
 
         // ── Smart prediction logic ─────────────────────────────
