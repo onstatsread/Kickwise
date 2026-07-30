@@ -48,7 +48,21 @@ _odds_cache: dict[int, dict] = {}
 
 
 def _similar(a: str, b: str) -> float:
-    return SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
+    """Fuzzy string match score between 0 and 1, with a boost for
+    abbreviated names — e.g. "KuPS Ak." vs "KuPS Akatemia" — where plain
+    string similarity scores low but every word in the shorter name is
+    clearly a prefix of the corresponding word in the longer name."""
+    base_score = SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
+
+    a_words = a.lower().replace(".", "").split()
+    b_words = b.lower().replace(".", "").split()
+    shorter, longer = (a_words, b_words) if len(a_words) <= len(b_words) else (b_words, a_words)
+
+    if shorter and len(shorter) == len(longer):
+        if all(lw.startswith(sw) for sw, lw in zip(shorter, longer) if len(sw) >= 2):
+            base_score = max(base_score, 0.95)
+
+    return base_score
 
 
 async def _get_todays_fixtures(date_str: str = None) -> list:
