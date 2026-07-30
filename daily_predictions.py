@@ -271,10 +271,8 @@ def format_match_html(league_name, match, pred):
         signal_parts = []
         if value_signal.get("under"):
             signal_parts.append(f"Signal: {value_signal['under']}")
-        if value_signal.get("home"):
-            signal_parts.append(f"Home: {value_signal['home']}")
-        if value_signal.get("away"):
-            signal_parts.append(f"Away: {value_signal['away']}")
+        if value_signal.get("result"):
+            signal_parts.append(f"Result: {value_signal['result']}")
         signal_str = " | ".join(signal_parts)
         signal_line = f"<br><b style='color:#AAFF3C'>{signal_str}</b>" if signal_str else ""
 
