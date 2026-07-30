@@ -136,13 +136,32 @@ def calc_odds(lambda_home, lambda_away):
 
 
 def resolve_team(name, team_data):
+    """
+    Try to match `name` to a team in team_data (SoccerStats' own stats page).
+    Returns None — rather than a wrong guess — when no confident match exists.
+    Silently substituting the closest-sounding name (e.g. matching
+    "KuPS Akatemia" to "SJK Akatemia") corrupts the whole prediction
+    downstream, so this only returns a match it's actually confident about.
+    """
     if name in team_data:
         return name
-    for k in team_data:
-        if name in k or k in name:
-            return k
-    matches = difflib.get_close_matches(name, team_data.keys(), n=1, cutoff=0.6)
-    return matches[0] if matches else name
+
+    # Substring match — only accept if exactly ONE team qualifies, and the
+    # shorter string is long enough that a coincidental substring is unlikely.
+    substring_candidates = [
+        k for k in team_data
+        if len(name) >= 5 and (name in k or k in name)
+    ]
+    if len(substring_candidates) == 1:
+        return substring_candidates[0]
+
+    # Fuzzy match — raised cutoff from 0.6 to 0.8, and only accept if
+    # there's a single clear best match (not several similarly-close ones).
+    close = difflib.get_close_matches(name, team_data.keys(), n=2, cutoff=0.8)
+    if len(close) == 1:
+        return close[0]
+
+    return None
 
 
 def fetch_stats(code):
@@ -462,8 +481,13 @@ def fixtures_endpoint(league: str = Query(...), date: str = Query(None)):
 @app.get("/predict")
 async def predict(league: str = Query(...), home: str = Query(...), away: str = Query(...)):
     team_data = fetch_stats(league)
-    h = resolve_team(home, team_data)
-    a = resolve_team(away, team_data)
+    resolved_h = resolve_team(home, team_data)
+    resolved_a = resolve_team(away, team_data)
+    # If resolution failed, fall back to the raw name for display/model lookup —
+    # run_model already returns clean "N/A" values when a name isn't in
+    # team_data, so this doesn't risk silently using a wrong team anymore.
+    h = resolved_h or home
+    a = resolved_a or away
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         f1 = executor.submit(run_model, h, a, team_data)
@@ -471,19 +495,23 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         r1, r2 = f1.result(), f2.result()
 
     # NEW — fetch real bookmaker odds alongside the model's own implied odds.
-    # Only leagues in LEAGUE_TO_SPORT_KEY are covered by the odds provider;
+    # Uses the RAW fixture team names (home/away as given), not the
+    # SoccerStats-resolved names — market odds providers use their own team
+    # naming and have nothing to do with whether SoccerStats recognized the
+    # team, so a stats-resolution failure shouldn't block market odds too.
+    # Only leagues in LEAGUE_TO_SPORT_KEY are covered by the primary provider;
     # everything else just gets market_odds: None, which the frontend
     # can treat the same way it already treats missing odds.
     market_odds = None
     sport_key = LEAGUE_TO_SPORT_KEY.get(league)
     if sport_key:
-        market_odds = await get_odds_for_card(sport_key, h, a)
+        market_odds = await get_odds_for_card(sport_key, home, away)
 
     # NEW — if the primary provider had nothing (unmapped league, or no
     # odds posted for this specific match), try API-Football as a
     # fallback before giving up. Fails safe to None if it also has nothing.
     if not market_odds:
-        market_odds = await get_fallback_odds(h, a)
+        market_odds = await get_fallback_odds(home, away)
 
     # NEW — value%: ((market_odd - model_odd) / model_odd) * 100 per side.
     # Positive = market is offering LONGER odds than the model thinks fair
