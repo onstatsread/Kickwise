@@ -804,11 +804,8 @@ async function runAnalysis() {
           if (vs && vs.under) {
             pills += `<div class="pill under"><span class="pill-label">Signal</span>${vs.under}</div>`;
           }
-          if (vs && vs.home) {
-            pills += `<div class="pill double"><span class="pill-label">Home</span>${vs.home}</div>`;
-          }
-          if (vs && vs.away) {
-            pills += `<div class="pill double"><span class="pill-label">Away</span>${vs.away}</div>`;
+          if (vs && vs.result) {
+            pills += `<div class="pill double"><span class="pill-label">Result</span>${vs.result}</div>`;
           }
           valueDiv.innerHTML = `
             <div class="result-label" style="margin-bottom:6px">📈 VALUE (MARKET VS MODEL)</div>
