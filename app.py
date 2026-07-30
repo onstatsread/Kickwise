@@ -502,26 +502,27 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
             value_pct = {"home": home_v, "draw": draw_v, "away": away_v, "total": total_v}
 
-            # "under" flag — total value sits within a tight band around zero
-            under_flag = "under" if -20 <= total_v <= 20 else ""
+            # "under" flag — total value falls in the -60 to -1 range
+            under_flag = "under" if -60 <= total_v <= -1 else ""
 
-            # Home/away signal — only meaningful when we have both market odds to compare
-            home_signal = ""
-            away_signal = ""
-            m_home = market_odds.get("home_odds")
-            m_away = market_odds.get("away_odds")
-            if home_v is not None and home_v > 0 and m_home is not None and m_away is not None:
-                if m_home > m_away:
-                    home_signal = "Home Handicap"
-                elif m_home < m_away:
-                    home_signal = h
-            if away_v is not None and away_v > 0 and m_home is not None and m_away is not None:
-                if m_away > m_home:
-                    away_signal = "Away Handicap"
-                elif m_away < m_home:
-                    away_signal = a
+            # Signal — single decision based only on diff = home_v - away_v
+            # Mirrors: =IF(AND(diff<0,diff>-65),"H.Home",
+            #           IF(AND(diff<0,diff<-65),"home",
+            #           IF(AND(diff>0,diff<65),"H away",
+            #           IF(AND(diff>0,diff>65),"away"))))
+            result_signal = ""
+            if home_v is not None and away_v is not None:
+                diff = home_v - away_v
+                if diff < 0 and diff > -65:
+                    result_signal = "H.Home"
+                elif diff < 0 and diff < -65:
+                    result_signal = "home"
+                elif diff > 0 and diff < 65:
+                    result_signal = "H away"
+                elif diff > 0 and diff > 65:
+                    result_signal = "away"
 
-            value_signal = {"under": under_flag, "home": home_signal, "away": away_signal}
+            value_signal = {"under": under_flag, "result": result_signal}
 
     return {
         "home": h, "away": a,
