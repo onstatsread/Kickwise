@@ -540,22 +540,31 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             # "under" flag — total value falls in the -60 to -1 range
             under_flag = "under" if -60 <= total_v <= -1 else ""
 
-            # Signal — single decision based only on diff = home_v - away_v
-            # Mirrors: =IF(AND(diff<0,diff>-65),"H.Home",
-            #           IF(AND(diff<0,diff<-65),"home",
-            #           IF(AND(diff>0,diff<65),"H away",
-            #           IF(AND(diff>0,diff>65),"away"))))
+            # Signal — normally based on diff = home_v - away_v, EXCEPT when
+            # home_v and away_v are the SAME sign (both negative or both
+            # positive) — in that case, the higher-value side wins outright
+            # and produces "H.Home" or "H away" directly, overriding the
+            # diff-based calculation below.
             result_signal = ""
             if home_v is not None and away_v is not None:
-                diff = home_v - away_v
-                if diff < 0 and diff > -65:
-                    result_signal = "H.Home"
-                elif diff < 0 and diff < -65:
-                    result_signal = "home"
-                elif diff > 0 and diff < 65:
-                    result_signal = "H away"
-                elif diff > 0 and diff > 65:
-                    result_signal = "away"
+                if (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0):
+                    # Same-sign override
+                    result_signal = "H.Home" if home_v > away_v else "H away"
+                else:
+                    # Normal diff-based decision — mirrors:
+                    # =IF(AND(diff<0,diff>-65),"H.Home",
+                    #  IF(AND(diff<0,diff<-65),"home",
+                    #  IF(AND(diff>0,diff<65),"H away",
+                    #  IF(AND(diff>0,diff>65),"away"))))
+                    diff = home_v - away_v
+                    if diff < 0 and diff > -65:
+                        result_signal = "H.Home"
+                    elif diff < 0 and diff < -65:
+                        result_signal = "home"
+                    elif diff > 0 and diff < 65:
+                        result_signal = "H away"
+                    elif diff > 0 and diff > 65:
+                        result_signal = "away"
 
             value_signal = {"under": under_flag, "result": result_signal}
 
