@@ -239,6 +239,16 @@ def clean_team_name(name):
     return DAY_RE.sub("", name).strip()
 
 
+def _norm_key(a, b):
+    """Normalized dedup key — lowercased, whitespace-collapsed, so the same
+    match listed with slightly different formatting across SoccerStats'
+    different tables (extra spaces, casing) is still recognized as a
+    duplicate instead of slipping through as two separate fixtures."""
+    def clean(s):
+        return " ".join(s.lower().split())
+    return (clean(a), clean(b))
+
+
 def fetch_fixtures(code, date_str=None):
     if date_str:
         today1 = date_str.strip()
@@ -285,9 +295,9 @@ def fetch_fixtures(code, date_str=None):
                     a_ = clean_team_name(" ".join(parts[mid:]))
 
                 if h and a_ and h != a_ and len(h) < 30 and len(a_) < 30:
-                    time_map[(h, a_)] = time_str
-                    time_map[(a_, h)] = time_str
-                    key = (h, a_)
+                    time_map[_norm_key(h, a_)] = time_str
+                    time_map[_norm_key(a_, h)] = time_str
+                    key = _norm_key(h, a_)
                     if key not in seen:
                         seen.add(key)
                         matches.append({"time": time_str, "home": h, "away": a_})
@@ -315,7 +325,7 @@ def fetch_fixtures(code, date_str=None):
                     continue
                 if len(home) > 25 or len(away) > 25:
                     continue
-                key = (home, away)
+                key = _norm_key(home, away)
                 if key in seen:
                     continue
                 seen.add(key)
@@ -326,7 +336,7 @@ def fetch_fixtures(code, date_str=None):
         # Pass 2 - backfill times for any match still missing one
         for m in matches:
             if not m["time"]:
-                key = (m["home"], m["away"])
+                key = _norm_key(m["home"], m["away"])
                 if key in time_map:
                     m["time"] = time_map[key]
                 else:
@@ -339,7 +349,19 @@ def fetch_fixtures(code, date_str=None):
     except Exception as e:
         print(f"  Fixtures error: {e}")
 
-    return matches
+    # Final safety-net dedup — belt-and-braces in case anything slipped
+    # through the per-pass checks above with a normalized-key collision
+    # that wasn't caught inline (e.g. ordering edge cases).
+    final_seen = set()
+    deduped = []
+    for m in matches:
+        key = _norm_key(m["home"], m["away"])
+        if key in final_seen:
+            continue
+        final_seen.add(key)
+        deduped.append(m)
+
+    return deduped
 
 
 
@@ -537,7 +559,7 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
             value_pct = {"home": home_v, "draw": draw_v, "away": away_v, "total": total_v}
 
-            # "under" flag — total value falls in the -60 to -1 range,
+            # "under" flag — total value falls in the -30 to 0 range,
             # EXCEPT when home_v and away_v are the same sign (both negative
             # or both positive) — in that case "under" is forced empty,
             # since that condition is instead handled by the same-sign
@@ -545,7 +567,7 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             same_sign = home_v is not None and away_v is not None and (
                 (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0)
             )
-            under_flag = "" if same_sign else ("under" if -60 <= total_v <= -1 else "")
+            under_flag = "" if same_sign else ("under" if -30 <= total_v <= 0 else "")
 
             # Signal — normally based on diff = home_v - away_v, EXCEPT when
             # home_v and away_v are the SAME sign (both negative or both
