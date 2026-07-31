@@ -380,12 +380,18 @@ def main():
 
     # Collect ALL matches from all leagues first
     all_matches = []
+    seen_matches = set()  # safety net — league code + normalized team names
     for league_name, code in LEAGUE_CODES.items():
         fixtures = get_fixtures(code, date_str)
         if not fixtures:
             continue
         print(f"  📌 {league_name}: {len(fixtures)} match(es)")
         for fix in fixtures:
+            dedup_key = (code, fix["home"].lower().strip(), fix["away"].lower().strip())
+            if dedup_key in seen_matches:
+                print(f"    ⚠️ Skipping duplicate: {fix['home']} vs {fix['away']} ({league_name})")
+                continue
+            seen_matches.add(dedup_key)
             all_matches.append({
                 "league_name": league_name,
                 "code": code,
