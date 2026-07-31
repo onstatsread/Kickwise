@@ -537,8 +537,15 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
             value_pct = {"home": home_v, "draw": draw_v, "away": away_v, "total": total_v}
 
-            # "under" flag — total value falls in the -60 to -1 range
-            under_flag = "under" if -60 <= total_v <= -1 else ""
+            # "under" flag — total value falls in the -60 to -1 range,
+            # EXCEPT when home_v and away_v are the same sign (both negative
+            # or both positive) — in that case "under" is forced empty,
+            # since that condition is instead handled by the same-sign
+            # override in result_signal below.
+            same_sign = home_v is not None and away_v is not None and (
+                (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0)
+            )
+            under_flag = "" if same_sign else ("under" if -60 <= total_v <= -1 else "")
 
             # Signal — normally based on diff = home_v - away_v, EXCEPT when
             # home_v and away_v are the SAME sign (both negative or both
@@ -547,7 +554,7 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             # diff-based calculation below.
             result_signal = ""
             if home_v is not None and away_v is not None:
-                if (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0):
+                if same_sign:
                     # Same-sign override
                     result_signal = "H.Home" if home_v > away_v else "H away"
                 else:
