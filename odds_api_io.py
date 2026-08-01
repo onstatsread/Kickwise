@@ -42,6 +42,29 @@ _bookmakers_cache: dict = {"data": None, "fetched_at": 0}
 BOOKMAKERS_CACHE_TTL = 24 * 60 * 60  # 24 hours — this rarely changes
 
 
+# Well-known recreational (non-sharp, non-exchange) bookmakers, in preference
+# order. The free plan explicitly excludes sharp/exchange books (confirmed by
+# a live 403 error naming "10BET" as one such excluded book), so rather than
+# blindly grabbing the first N names from the full 265+ catalog, we match
+# against known-recreational names and use whichever the account's real list
+# actually contains.
+PREFERRED_RECREATIONAL_BOOKMAKERS = [
+    "bet365", "unibet", "betway", "william hill", "1xbet",
+    "bwin", "betmgm", "draftkings", "betsson", "888sport",
+]
+
+
+def _pick_recreational_bookmakers(all_bookmakers: list, n: int = 2) -> list:
+    lower_map = {str(b).lower(): b for b in all_bookmakers}
+    picked = []
+    for pref in PREFERRED_RECREATIONAL_BOOKMAKERS:
+        if pref in lower_map and lower_map[pref] not in picked:
+            picked.append(lower_map[pref])
+        if len(picked) >= n:
+            break
+    return picked
+
+
 async def _get_valid_bookmakers() -> list:
     """
     Fetch the account's actual valid bookmaker identifiers from /v3/bookmakers
@@ -269,7 +292,14 @@ async def get_odds_api_io_fallback(home_team: str, away_team: str):
     if not valid_bookmakers:
         print(f"  [odds_api_io] No valid bookmakers available for this account — skipping odds fetch for event {event_id}")
         return None
-    bookmakers_param = ",".join(valid_bookmakers[:2])  # free tier = 2 bookmakers
+
+    recreational_picks = _pick_recreational_bookmakers(valid_bookmakers, n=2)
+    if not recreational_picks:
+        print(f"  [odds_api_io] None of the known recreational bookmakers found in this account's list "
+              f"— skipping odds fetch for event {event_id}")
+        return None
+    bookmakers_param = ",".join(recreational_picks)
+    print(f"  [odds_api_io] Using bookmakers: {bookmakers_param}")
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
