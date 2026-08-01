@@ -37,6 +37,53 @@ ODDS_API_IO_BASE = "https://api.odds-api.io/v3"
 _events_cache: dict[str, tuple[float, list]] = {}
 EVENTS_CACHE_TTL = 2 * 60 * 60  # 2 hours — generous 100/hr rate limit allows more frequent refresh than API-Football's 12h cache
 
+# Cache: the account's valid bookmaker list (free tier = 2 recreational books)
+_bookmakers_cache: dict = {"data": None, "fetched_at": 0}
+BOOKMAKERS_CACHE_TTL = 24 * 60 * 60  # 24 hours — this rarely changes
+
+
+async def _get_valid_bookmakers() -> list:
+    """
+    Fetch the account's actual valid bookmaker identifiers from /v3/bookmakers
+    instead of guessing a name — their API rejected 'bet365' as invalid on
+    first try, so this asks them directly what IS valid for this account
+    (free tier = 2 specific recreational books) and uses that.
+    """
+    if _bookmakers_cache["data"] and time.time() - _bookmakers_cache["fetched_at"] < BOOKMAKERS_CACHE_TTL:
+        return _bookmakers_cache["data"]
+
+    if not ODDS_API_IO_KEY:
+        return []
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(
+                f"{ODDS_API_IO_BASE}/bookmakers",
+                params={"apiKey": ODDS_API_IO_KEY},
+            )
+        if resp.status_code != 200:
+            print(f"  [odds_api_io] Bookmakers fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
+            return []
+
+        data = resp.json()
+        bookmakers = data if isinstance(data, list) else (data.get("bookmakers") or data.get("data") or [])
+        # Bookmakers might be plain strings or objects with a name/id/slug field
+        ids = []
+        for b in bookmakers:
+            if isinstance(b, str):
+                ids.append(b)
+            elif isinstance(b, dict):
+                ids.append(b.get("id") or b.get("slug") or b.get("name") or b.get("key"))
+        ids = [i for i in ids if i]
+        print(f"  [odds_api_io] Valid bookmakers for this account: {ids}")
+        _bookmakers_cache["data"] = ids
+        _bookmakers_cache["fetched_at"] = time.time()
+        return ids
+    except Exception as e:
+        print(f"  [odds_api_io] Exception fetching bookmakers: {e}")
+        return []
+
+
 # Cache: per-event odds lookups, so re-checking the same match doesn't spend quota twice
 _odds_cache: dict[str, dict] = {}
 
@@ -218,11 +265,17 @@ async def get_odds_api_io_fallback(home_team: str, away_team: str):
     if cache_key in _odds_cache:
         return _odds_cache[cache_key]
 
+    valid_bookmakers = await _get_valid_bookmakers()
+    if not valid_bookmakers:
+        print(f"  [odds_api_io] No valid bookmakers available for this account — skipping odds fetch for event {event_id}")
+        return None
+    bookmakers_param = ",".join(valid_bookmakers[:2])  # free tier = 2 bookmakers
+
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
                 f"{ODDS_API_IO_BASE}/odds",
-                params={"apiKey": ODDS_API_IO_KEY, "eventId": event_id, "bookmakers": "bet365"},
+                params={"apiKey": ODDS_API_IO_KEY, "eventId": event_id, "bookmakers": bookmakers_param},
             )
         if resp.status_code == 401:
             print("  [odds_api_io] Invalid API key (401) fetching odds")
