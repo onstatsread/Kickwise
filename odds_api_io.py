@@ -257,7 +257,7 @@ def _extract_hda_from_odds(data: dict):
 
     h_odd, d_odd, a_odd = avg(home_odds), avg(draw_odds), avg(away_odds)
     if not h_odd:
-        print(f"  [odds_api_io] Could not parse odds from response — raw shape: {str(data)[:400]}")
+        print(f"  [odds_api_io] Could not parse odds from response — raw shape: {str(data)[:2000]}")
         return None
 
     def pct(o):
