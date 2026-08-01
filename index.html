@@ -800,7 +800,8 @@ async function runAnalysis() {
               <div class="pill ${cls(v.home)}"><span class="pill-label">Home</span>${fmt(v.home)}</div>
               <div class="pill ${cls(v.draw)}"><span class="pill-label">Draw</span>${fmt(v.draw)}</div>
               <div class="pill ${cls(v.away)}"><span class="pill-label">Away</span>${fmt(v.away)}</div>
-              <div class="pill ${cls(v.total)}"><span class="pill-label">Total</span>${fmt(v.total)}</div>`;
+              <div class="pill ${cls(v.total)}"><span class="pill-label">Total</span>${fmt(v.total)}</div>
+              <div class="pill ${cls(v.share_diff)}"><span class="pill-label">Share Diff</span>${fmt(v.share_diff)}</div>`;
           if (vs && vs.under) {
             pills += `<div class="pill under"><span class="pill-label">Signal</span>${vs.under}</div>`;
           }
