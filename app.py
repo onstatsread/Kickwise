@@ -11,7 +11,8 @@ from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
 from odds import get_odds_for_card, router as odds_router  # NEW — market odds from The Odds API
-from api_football import get_fallback_odds  # NEW — fallback odds source for broader coverage
+from api_football import get_fallback_odds  # Fallback tier 2 — currently suspended, kept in case reactivated
+from odds_api_io import get_odds_api_io_fallback  # NEW — fallback tier, tried before api_football
 
 app = FastAPI(title="Kickwise API")
 
@@ -530,8 +531,11 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         market_odds = await get_odds_for_card(sport_key, home, away)
 
     # NEW — if the primary provider had nothing (unmapped league, or no
-    # odds posted for this specific match), try API-Football as a
-    # fallback before giving up. Fails safe to None if it also has nothing.
+    # odds posted for this specific match), try Odds-API.io next, then
+    # API-Football as a last resort (currently suspended, but kept in
+    # case it gets reactivated). Each fails safe to None.
+    if not market_odds:
+        market_odds = await get_odds_api_io_fallback(home, away)
     if not market_odds:
         market_odds = await get_fallback_odds(home, away)
 
