@@ -561,7 +561,32 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
         if home_v is not None or draw_v is not None or away_v is not None:
             total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
-            value_pct = {"home": home_v, "draw": draw_v, "away": away_v, "total": total_v}
+
+            # Share% — each side's absolute value as a % of the sum of all
+            # three absolute values. Mirrors:
+            # =ABS(B134)/(ABS($B$134)+ABS($C$134)+ABS($D$134))*100
+            abs_sum = abs(home_v or 0) + abs(draw_v or 0) + abs(away_v or 0)
+
+            def share(v):
+                if v is None or abs_sum == 0:
+                    return None
+                return round(abs(v) / abs_sum * 100, 1)
+
+            home_share_v = share(home_v)
+            draw_share_v = share(draw_v)
+            away_share_v = share(away_v)
+
+            value_pct = {
+                "home": home_v, "draw": draw_v, "away": away_v, "total": total_v,
+                "home_share": home_share_v, "draw_share": draw_share_v, "away_share": away_share_v,
+            }
+
+            # Next step: home_share - away_share (both already absolute-value
+            # based, per the share formula above)
+            share_diff = None
+            if home_share_v is not None and away_share_v is not None:
+                share_diff = round(home_share_v - away_share_v, 1)
+                value_pct["share_diff"] = share_diff
 
             # "under" flag — total value falls in the -30 to 0 range,
             # EXCEPT when home_v and away_v are the same sign (both negative
@@ -573,31 +598,11 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
             )
             under_flag = "" if same_sign else ("under" if -30 <= total_v <= 0 else "")
 
-            # Signal — normally based on diff = home_v - away_v, EXCEPT when
-            # home_v and away_v are the SAME sign (both negative or both
-            # positive) — in that case, the higher-value side wins outright
-            # and produces "H.Home" or "H away" directly, overriding the
-            # diff-based calculation below.
+            # Signal — decision now based on share_diff (home_share - away_share):
+            # positive share_diff -> "away", negative share_diff -> "Home"
             result_signal = ""
-            if home_v is not None and away_v is not None:
-                if same_sign:
-                    # Same-sign override
-                    result_signal = "H.Home" if home_v > away_v else "H away"
-                else:
-                    # Normal diff-based decision — mirrors:
-                    # =IF(AND(diff<0,diff>-65),"H.Home",
-                    #  IF(AND(diff<0,diff<-65),"home",
-                    #  IF(AND(diff>0,diff<65),"H away",
-                    #  IF(AND(diff>0,diff>65),"away"))))
-                    diff = home_v - away_v
-                    if diff < 0 and diff > -65:
-                        result_signal = "H.Home"
-                    elif diff < 0 and diff < -65:
-                        result_signal = "home"
-                    elif diff > 0 and diff < 65:
-                        result_signal = "H away"
-                    elif diff > 0 and diff > 65:
-                        result_signal = "away"
+            if share_diff is not None and share_diff != 0:
+                result_signal = "away" if share_diff > 0 else "Home"
 
             value_signal = {"under": under_flag, "result": result_signal}
 
