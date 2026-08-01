@@ -296,7 +296,8 @@ def format_match_html(league_name, match, pred):
             📈 Value: Home {fmt_val(value_pct.get('home'))} |
             Draw {fmt_val(value_pct.get('draw'))} |
             Away {fmt_val(value_pct.get('away'))} |
-            Total {fmt_val(value_pct.get('total'))}
+            Total {fmt_val(value_pct.get('total'))} |
+            Share Diff {fmt_val(value_pct.get('share_diff'))}
             {signal_line}
           </td>
         </tr>"""
