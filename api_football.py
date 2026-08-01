@@ -49,18 +49,22 @@ _odds_cache: dict[int, dict] = {}
 
 def _similar(a: str, b: str) -> float:
     """Fuzzy string match score between 0 and 1, with a boost for
-    abbreviated names — e.g. "KuPS Ak." vs "KuPS Akatemia" — where plain
-    string similarity scores low but every word in the shorter name is
-    clearly a prefix of the corresponding word in the longer name."""
+    partial/abbreviated names — covers two cases:
+    1. Same word count, abbreviated word(s) — "KuPS Ak." vs "KuPS Akatemia"
+    2. Fewer words entirely — "Naftan" vs "Naftan Novopolotsk"
+    In both cases plain string similarity scores low even though a human
+    would clearly recognize them as the same team."""
     base_score = SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
 
     a_words = a.lower().replace(".", "").split()
     b_words = b.lower().replace(".", "").split()
     shorter, longer = (a_words, b_words) if len(a_words) <= len(b_words) else (b_words, a_words)
 
-    if shorter and len(shorter) == len(longer):
-        if all(lw.startswith(sw) for sw, lw in zip(shorter, longer) if len(sw) >= 2):
-            base_score = max(base_score, 0.95)
+    if shorter and longer:
+        prefix_match = all(lw.startswith(sw) for sw, lw in zip(shorter, longer) if len(sw) >= 2)
+        if prefix_match:
+            coverage = len(shorter) / len(longer)
+            base_score = max(base_score, 0.75 + 0.20 * coverage)
 
     return base_score
 
@@ -79,6 +83,7 @@ async def _get_todays_fixtures(date_str: str = None) -> list:
         return cached[1]
 
     if not API_FOOTBALL_KEY:
+        print("  [api_football] No API_FOOTBALL_KEY set — skipping fallback")
         return []
 
     try:
@@ -88,13 +93,24 @@ async def _get_todays_fixtures(date_str: str = None) -> list:
                 headers=HEADERS,
                 params={"date": date_str},
             )
+        if resp.status_code == 429:
+            print(f"  [api_football] Rate limit / quota exceeded (429) fetching fixtures for {date_str}")
+            return cached[1] if cached else []
         if resp.status_code != 200:
+            print(f"  [api_football] Fixtures fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
             return cached[1] if cached else []
 
-        data = resp.json().get("response", [])
+        body = resp.json()
+        errors = body.get("errors")
+        if errors:
+            print(f"  [api_football] API returned errors on fixtures fetch: {errors}")
+        data = body.get("response", [])
+        print(f"  [api_football] Fetched {len(data)} global fixtures for {date_str} "
+              f"(requests remaining today: {resp.headers.get('x-ratelimit-requests-remaining', '?')})")
         _fixtures_cache[date_str] = (time.time(), data)
         return data
-    except Exception:
+    except Exception as e:
+        print(f"  [api_football] Exception fetching fixtures: {e}")
         return cached[1] if cached else []
 
 
@@ -111,7 +127,11 @@ async def _find_fixture_id(home_team: str, away_team: str, date_str: str = None)
             best_score = score
             best_id = fx.get("fixture", {}).get("id")
 
-    return best_id if best_score >= 1.2 else None  # require a fairly strong match on both names
+    if best_id is None or best_score < 1.2:
+        print(f"  [api_football] No confident fixture match for '{home_team}' vs '{away_team}' "
+              f"(best score: {best_score:.2f})")
+        return None
+    return best_id
 
 
 async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None) -> dict | None:
@@ -120,7 +140,9 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
     { home_odds, draw_odds, away_odds, home_pct, draw_pct, away_pct }
     Returns None if no fixture/odds found, quota exhausted, or key missing
     — always fails safe, never raises, so it's safe to call unconditionally
-    as a fallback.
+    as a fallback. Every failure path is logged so Render logs show
+    WHY it returned None (quota, no fixture, no odds posted, or a bug)
+    instead of leaving it a mystery.
     """
     if not API_FOOTBALL_KEY:
         return None
@@ -139,11 +161,23 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
                 headers=HEADERS,
                 params={"fixture": fixture_id, "bet": 1},  # bet=1 is "Match Winner" (1X2)
             )
+        if resp.status_code == 429:
+            print(f"  [api_football] Rate limit / quota exceeded (429) fetching odds for fixture {fixture_id}")
+            return None
         if resp.status_code != 200:
+            print(f"  [api_football] Odds fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
             return None
 
-        response_data = resp.json().get("response", [])
+        body = resp.json()
+        errors = body.get("errors")
+        if errors:
+            print(f"  [api_football] API returned errors on odds fetch: {errors}")
+
+        remaining = resp.headers.get("x-ratelimit-requests-remaining", "?")
+        response_data = body.get("response", [])
         if not response_data:
+            print(f"  [api_football] No odds posted yet for fixture {fixture_id} "
+                  f"(requests remaining today: {remaining})")
             return None
 
         home_odds, draw_odds, away_odds = [], [], []
@@ -170,6 +204,7 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
 
         h_odd, d_odd, a_odd = avg(home_odds), avg(draw_odds), avg(away_odds)
         if not h_odd:
+            print(f"  [api_football] Fixture {fixture_id} had bookmaker data but no parseable Match Winner odds")
             return None
 
         def pct(o):
@@ -180,7 +215,10 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
             "home_pct": pct(h_odd), "draw_pct": pct(d_odd), "away_pct": pct(a_odd),
         }
         _odds_cache[fixture_id] = result
+        print(f"  [api_football] Fallback odds found for fixture {fixture_id} "
+              f"(requests remaining today: {remaining})")
         return result
 
-    except Exception:
+    except Exception as e:
+        print(f"  [api_football] Exception fetching odds for fixture {fixture_id}: {e}")
         return None
