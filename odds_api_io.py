@@ -192,9 +192,22 @@ async def _get_football_events() -> list:
         return cached[1] if cached else []
 
 
+# Age-group/reserve qualifiers that, if present in a matched event but NOT
+# in the original query, signal a cross-match into the wrong competition
+# (e.g. matching "Sutherland S." to "Sutherland Sharks FC U20" instead of
+# the intended senior team) — reject those matches rather than accept them.
+_SUSPICIOUS_QUALIFIERS = ["u17", "u18", "u19", "u20", "u21", "u23", "reserve", "reserves", "youth", "academy"]
+
+
+def _has_unwanted_qualifier(query: str, matched: str) -> bool:
+    q, m = f" {query.lower()} ", f" {matched.lower()} "
+    return any(qual in m and qual not in q for qual in _SUSPICIOUS_QUALIFIERS)
+
+
 async def _find_event_id(home_team: str, away_team: str):
     events = await _get_football_events()
     best_id, best_score = None, 0.0
+    best_home, best_away = "", ""
 
     for ev in events:
         ev_home, ev_away = _extract_team_names(ev)
@@ -204,60 +217,57 @@ async def _find_event_id(home_team: str, away_team: str):
         if score > best_score:
             best_score = score
             best_id = _extract_event_id(ev)
+            best_home, best_away = ev_home, ev_away
 
     if best_id is None or best_score < 1.2:
         print(f"  [odds_api_io] No confident event match for '{home_team}' vs '{away_team}' "
               f"(best score: {best_score:.2f})")
         return None
+
+    if _has_unwanted_qualifier(home_team, best_home) or _has_unwanted_qualifier(away_team, best_away):
+        print(f"  [odds_api_io] Rejected cross-match into different competition: "
+              f"'{home_team}' vs '{away_team}' matched '{best_home}' vs '{best_away}' "
+              f"— looks like a different (youth/reserve) competition")
+        return None
+
     return best_id
 
 
 def _extract_hda_from_odds(data: dict):
-    """Defensive parsing of the /odds response into home/draw/away — tries
-    several likely shapes since exact schema wasn't confirmed ahead of time."""
+    """
+    Confirmed real schema (from live Render logs):
+    data["bookmakers"] is a DICT keyed by bookmaker name (e.g. "Bet365"),
+    each value a LIST of market objects. The market named "ML" (Moneyline)
+    has odds: [{"home": "2.000", "draw": "4.000", "away": "2.750"}].
+    """
     home_odds, draw_odds, away_odds = [], [], []
 
-    bookmakers = data.get("bookmakers") or data.get("odds") or []
-    if isinstance(bookmakers, dict):
-        bookmakers = [bookmakers]
+    bookmakers = data.get("bookmakers")
+    if not isinstance(bookmakers, dict):
+        print(f"  [odds_api_io] Unexpected 'bookmakers' shape (not a dict) — raw: {str(data)[:800]}")
+        return None
 
-    for bm in bookmakers:
-        markets = bm.get("markets") if isinstance(bm, dict) else None
-        if not markets:
+    for bm_name, markets in bookmakers.items():
+        if not isinstance(markets, list):
             continue
-        market = markets.get("moneyline") or markets.get("h2h") or markets.get("1x2") or {}
-
-        if isinstance(market, dict):
-            h = market.get("home") or market.get("1")
-            d = market.get("draw") or market.get("x")
-            a = market.get("away") or market.get("2")
-            try:
-                if h: home_odds.append(float(h))
-                if d: draw_odds.append(float(d))
-                if a: away_odds.append(float(a))
-            except (TypeError, ValueError):
-                pass
-        elif isinstance(market, list):
-            for outcome in market:
-                name = str(outcome.get("name", "")).lower()
-                price = outcome.get("price") or outcome.get("odd")
+        for market in markets:
+            if market.get("name") != "ML":  # "ML" = Moneyline = 1X2
+                continue
+            for outcome in market.get("odds") or []:
                 try:
-                    price = float(price)
+                    h, d, a = outcome.get("home"), outcome.get("draw"), outcome.get("away")
+                    if h: home_odds.append(float(h))
+                    if d: draw_odds.append(float(d))
+                    if a: away_odds.append(float(a))
                 except (TypeError, ValueError):
                     continue
-                if "home" in name or name == "1":
-                    home_odds.append(price)
-                elif "draw" in name or name == "x":
-                    draw_odds.append(price)
-                elif "away" in name or name == "2":
-                    away_odds.append(price)
 
     def avg(lst):
         return round(sum(lst) / len(lst), 2) if lst else None
 
     h_odd, d_odd, a_odd = avg(home_odds), avg(draw_odds), avg(away_odds)
     if not h_odd:
-        print(f"  [odds_api_io] Could not parse odds from response — raw shape: {str(data)[:2000]}")
+        print(f"  [odds_api_io] Could not find ML market odds — raw shape: {str(data)[:2000]}")
         return None
 
     def pct(o):
