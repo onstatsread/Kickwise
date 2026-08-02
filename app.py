@@ -10,7 +10,7 @@ from datetime import date
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
-from odds import get_odds_for_card, router as odds_router  # NEW — market odds from The Odds API
+from odds import get_odds_for_card, get_ou25_for_card, router as odds_router  # NEW — market odds from The Odds API
 from api_football import get_fallback_odds  # Fallback tier 2 — currently suspended, kept in case reactivated
 from odds_api_io import get_odds_api_io_fallback  # NEW — fallback tier, tried before api_football
 
@@ -562,9 +562,11 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
     # everything else just gets market_odds: None, which the frontend
     # can treat the same way it already treats missing odds.
     market_odds = None
+    market_ou25 = None  # NEW — market Over/Under 2.5 goals odds
     sport_key = LEAGUE_TO_SPORT_KEY.get(league)
     if sport_key:
         market_odds = await get_odds_for_card(sport_key, home, away)
+        market_ou25 = await get_ou25_for_card(sport_key, home, away)
 
     # NEW — if the primary provider had nothing (unmapped league, or no
     # odds posted for this specific match), try Odds-API.io next, then
@@ -648,6 +650,7 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
         "ou25": r1.get("ou25"),  # NEW — model's own Over/Under 2.5 goals odds
+        "market_ou25": market_ou25,  # NEW — market Over/Under 2.5 goals odds (primary provider only for now)
         "market_odds": market_odds,  # NEW
         "value_pct": value_pct,  # NEW — signed % diff between market and model odds, plus total
         "value_signal": value_signal,  # NEW — under flag + home/away handicap-or-team-name signal
