@@ -136,6 +136,41 @@ def calc_odds(lambda_home, lambda_away):
     }
 
 
+def calc_over_under_25(lambda_home, lambda_away, max_goals=10):
+    """
+    Model's own Over/Under 2.5 goals probabilities — same Poisson approach
+    as calc_win_draw_away, just summing joint probabilities by TOTAL goals
+    (home + away) relative to the 2.5 line instead of by which side scores
+    more. Returns model-implied odds the same way calc_odds() does for 1X2.
+    """
+    try:
+        lambda_home = float(lambda_home)
+        lambda_away = float(lambda_away)
+    except (TypeError, ValueError):
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
+    if lambda_home < 0 or lambda_away < 0:
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
+
+    over = under = 0.0
+    for h in range(max_goals + 1):
+        for a in range(max_goals + 1):
+            p = poisson.pmf(h, lambda_home) * poisson.pmf(a, lambda_away)
+            if h + a > 2.5:
+                over += p
+            else:
+                under += p
+    total = over + under
+    if total <= 0:
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
+
+    over_pct = round(over / total * 100, 1)
+    under_pct = round(under / total * 100, 1)
+    return {
+        "over_pct": over_pct, "under_pct": under_pct,
+        "over_odds": pct_to_odds(over_pct), "under_odds": pct_to_odds(under_pct),
+    }
+
+
 def resolve_team(name, team_data):
     """
     Try to match `name` to a team in team_data (SoccerStats' own stats page).
@@ -368,7 +403,7 @@ def fetch_fixtures(code, date_str=None):
 
 def run_model(home, away, team_data):
     if home not in team_data or away not in team_data:
-        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A", "odds": None, "b119": "", "d119": "", "d70val": "", "o73": "", "o74": ""}
+        return {"d70": "N/A", "b120": "N/A", "c120": "N/A", "b46": "N/A", "d64": "N/A", "b118": "N/A", "aa15": "N/A", "b54": "N/A", "odds": None, "ou25": None, "b119": "", "d119": "", "d70val": "", "o73": "", "o74": ""}
 
     data = sorted([
         (n, d["gp"], d["gf"], d["ga"], d["tot"],
@@ -470,6 +505,7 @@ def run_model(home, away, team_data):
     lambda_home = sheet2["C5"].value
     lambda_away = sheet2["D5"].value
     odds = calc_odds(lambda_home, lambda_away)
+    ou25 = calc_over_under_25(lambda_home, lambda_away)  # NEW — model's own O/U 2.5
 
     # B119, D119 — show only when not "run"
     b119_raw = safe("B119")
@@ -490,7 +526,7 @@ def run_model(home, away, team_data):
 
     shutil.rmtree(tmp_dir, ignore_errors=True)
     return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64,
-            "b118": b118, "aa15": aa15, "b54": b54, "odds": odds,
+            "b118": b118, "aa15": aa15, "b54": b54, "odds": odds, "ou25": ou25,
             "b119": b119, "d119": d119, "d70val": d70_val,
             "o73": o73, "o74": o74}
 
@@ -611,6 +647,7 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
+        "ou25": r1.get("ou25"),  # NEW — model's own Over/Under 2.5 goals odds
         "market_odds": market_odds,  # NEW
         "value_pct": value_pct,  # NEW — signed % diff between market and model odds, plus total
         "value_signal": value_signal,  # NEW — under flag + home/away handicap-or-team-name signal
