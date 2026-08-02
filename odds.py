@@ -50,18 +50,28 @@ CACHE_TTL_SECONDS = 4 * 60 * 60  # 4 hours; odds don't move fast enough to need 
 
 def _similar(a: str, b: str) -> float:
     """Fuzzy string match score between 0 and 1, with a boost for
-    abbreviated names — e.g. "KuPS Ak." vs "KuPS Akatemia" — where plain
-    string similarity scores low but every word in the shorter name is
-    clearly a prefix of the corresponding word in the longer name."""
+    partial/abbreviated names — covers two cases:
+    1. Same word count, abbreviated word(s) — "KuPS Ak." vs "KuPS Akatemia"
+    2. Fewer words entirely — "Naftan" vs "Naftan Novopolotsk"
+    In both cases plain string similarity scores low even though a human
+    would clearly recognize them as the same team."""
     base_score = SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
 
     a_words = a.lower().replace(".", "").split()
     b_words = b.lower().replace(".", "").split()
     shorter, longer = (a_words, b_words) if len(a_words) <= len(b_words) else (b_words, a_words)
 
-    if shorter and len(shorter) == len(longer):
-        if all(lw.startswith(sw) for sw, lw in zip(shorter, longer) if len(sw) >= 2):
-            base_score = max(base_score, 0.95)
+    if shorter and longer:
+        # Every word in the shorter name must be a prefix of the
+        # corresponding word (by position) in the longer name.
+        prefix_match = all(lw.startswith(sw) for sw, lw in zip(shorter, longer) if len(sw) >= 2)
+        if prefix_match:
+            # Coverage-weighted boost: a short name that covers most of the
+            # longer name's words (or is the longer name's distinctive first
+            # word, e.g. "Naftan") scores high; very short/partial overlaps
+            # score a bit lower but still well above a typical false match.
+            coverage = len(shorter) / len(longer)
+            base_score = max(base_score, 0.75 + 0.20 * coverage)
 
     return base_score
 
@@ -102,6 +112,41 @@ def _extract_hda(match_data: dict) -> dict:
     }
 
 
+def _extract_ou25(match_data: dict) -> dict:
+    """Average Over/Under 2.5 goals odds across all bookmakers offering
+    the 2.5 line specifically (totals markets can list multiple lines,
+    e.g. 1.5, 2.5, 3.5 — only 2.5 is used here)."""
+    over_odds, under_odds = [], []
+
+    for bookmaker in match_data.get("bookmakers", []):
+        for market in bookmaker.get("markets", []):
+            if market.get("key") != "totals":
+                continue
+            for outcome in market.get("outcomes", []):
+                point = outcome.get("point")
+                price = outcome.get("price")
+                if point != 2.5 or price is None:
+                    continue
+                name = (outcome.get("name") or "").lower()
+                if name == "over":
+                    over_odds.append(price)
+                elif name == "under":
+                    under_odds.append(price)
+
+    def avg(lst):
+        return round(sum(lst) / len(lst), 2) if lst else None
+
+    o_odd, u_odd = avg(over_odds), avg(under_odds)
+
+    def pct(o):
+        return round(100 / o, 1) if o else None
+
+    return {
+        "over_odds": o_odd, "under_odds": u_odd,
+        "over_pct": pct(o_odd), "under_pct": pct(u_odd),
+    }
+
+
 async def _fetch_odds(sport_key: str, force_refresh: bool = False) -> list:
     # Serve from cache if fresh
     cached = _odds_cache.get(sport_key)
@@ -120,7 +165,7 @@ async def _fetch_odds(sport_key: str, force_refresh: bool = False) -> list:
     params = {
         "apiKey": ODDS_API_KEY,
         "regions": "uk,eu",
-        "markets": "h2h",
+        "markets": "h2h,totals",  # NEW — totals added for Over/Under goals markets
         "oddsFormat": "decimal",
     }
 
@@ -240,6 +285,35 @@ async def get_odds_for_card(sport_key: str, home_team: str, away_team: str) -> d
         "draw_pct": pct(odds["draw_odds"]),
         "away_pct": pct(odds["away_odds"]),
     }
+
+
+async def get_ou25_for_card(sport_key: str, home_team: str, away_team: str) -> dict | None:
+    """
+    Returns market Over/Under 2.5 goals odds:
+    { over_odds, under_odds, over_pct, under_pct }
+    Returns None if no odds found — same fail-safe pattern as get_odds_for_card.
+    Reuses the same cached _fetch_odds() call (now requests h2h,totals
+    together), so this costs no extra API quota beyond the 1X2 lookup.
+    """
+    try:
+        raw_matches = await _fetch_odds(sport_key)
+    except HTTPException:
+        return None
+
+    best_match, best_score = None, 0.0
+    for m in raw_matches:
+        score = _similar(m.get("home_team", ""), home_team) + _similar(m.get("away_team", ""), away_team)
+        if score > best_score:
+            best_score, best_match = score, m
+
+    if not best_match or best_score < 1.0:
+        return None
+
+    ou25 = _extract_ou25(best_match)
+    if not ou25["over_odds"]:
+        return None
+
+    return ou25
 
 
 def merge_with_prediction(prediction: dict, odds: dict) -> dict:
