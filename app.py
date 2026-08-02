@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
 from odds import get_odds_for_card, get_ou25_for_card, router as odds_router  # NEW — market odds from The Odds API
 from api_football import get_fallback_odds  # Fallback tier 2 — currently suspended, kept in case reactivated
-from odds_api_io import get_odds_api_io_fallback  # NEW — fallback tier, tried before api_football
+from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback  # NEW — fallback tier, tried before api_football
 
 app = FastAPI(title="Kickwise API")
 
@@ -576,6 +576,12 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         market_odds = await get_odds_api_io_fallback(home, away)
     if not market_odds:
         market_odds = await get_fallback_odds(home, away)
+
+    # NEW — same fallback chain for O/U 2.5. API-Football's odds endpoint
+    # doesn't return totals/O-U markets, so it's not part of this chain —
+    # just the primary provider (already tried above) then Odds-API.io.
+    if not market_ou25:
+        market_ou25 = await get_ou25_api_io_fallback(home, away)
 
     # NEW — value%: ((market_odd - model_odd) / model_odd) * 100 per side.
     # Positive = market is offering LONGER odds than the model thinks fair
