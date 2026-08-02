@@ -644,6 +644,55 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
             value_signal = {"under": under_flag, "result": result_signal}
 
+    # NEW — same formula applied to Over/Under 2.5 goals, completely
+    # separate from the 1X2 value_pct/value_signal above:
+    #   over_v  = (market_over_odd  - model_over_odd)  / model_over_odd  * 100
+    #   under_v = (market_under_odd - model_under_odd) / model_under_odd * 100
+    # then share% of each (abs value / sum of abs values), then
+    # share_diff = over_share - under_share, then decision:
+    #   share_diff > 0 -> "Under" (opposite side favored)
+    #   share_diff < 0 -> "Over"  (same side favored)
+    ou25_value_pct = None
+    ou25_value_signal = None
+    model_ou25 = r1.get("ou25")
+    if model_ou25 and market_ou25:
+        def pct_diff_ou(market_o, model_o):
+            if not model_o or not market_o:
+                return None
+            return round(((market_o - model_o) / model_o) * 100, 1)
+
+        over_v = pct_diff_ou(market_ou25.get("over_odds"), model_ou25.get("over_odds"))
+        under_v = pct_diff_ou(market_ou25.get("under_odds"), model_ou25.get("under_odds"))
+
+        if over_v is not None or under_v is not None:
+            ou_total_v = round(sum(x for x in [over_v, under_v] if x is not None), 1)
+
+            ou_abs_sum = abs(over_v or 0) + abs(under_v or 0)
+
+            def ou_share(v):
+                if v is None or ou_abs_sum == 0:
+                    return None
+                return round(abs(v) / ou_abs_sum * 100, 1)
+
+            over_share_v = ou_share(over_v)
+            under_share_v = ou_share(under_v)
+
+            ou25_value_pct = {
+                "over": over_v, "under": under_v, "total": ou_total_v,
+                "over_share": over_share_v, "under_share": under_share_v,
+            }
+
+            ou_share_diff = None
+            if over_share_v is not None and under_share_v is not None:
+                ou_share_diff = round(over_share_v - under_share_v, 1)
+                ou25_value_pct["share_diff"] = ou_share_diff
+
+            ou_result_signal = ""
+            if ou_share_diff is not None and ou_share_diff != 0:
+                ou_result_signal = "Under" if ou_share_diff > 0 else "Over"
+
+            ou25_value_signal = {"result": ou_result_signal}
+
     return {
         "home": h, "away": a,
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
@@ -651,6 +700,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "odds": r1.get("odds"),
         "ou25": r1.get("ou25"),  # NEW — model's own Over/Under 2.5 goals odds
         "market_ou25": market_ou25,  # NEW — market Over/Under 2.5 goals odds (primary provider only for now)
+        "ou25_value_pct": ou25_value_pct,  # NEW — same formula applied to O/U 2.5
+        "ou25_value_signal": ou25_value_signal,  # NEW — Over/Under decision from share_diff
         "market_odds": market_odds,  # NEW
         "value_pct": value_pct,  # NEW — signed % diff between market and model odds, plus total
         "value_signal": value_signal,  # NEW — under flag + home/away handicap-or-team-name signal
