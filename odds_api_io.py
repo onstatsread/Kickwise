@@ -107,8 +107,10 @@ async def _get_valid_bookmakers() -> list:
         return []
 
 
-# Cache: per-event odds lookups, so re-checking the same match doesn't spend quota twice
-_odds_cache: dict[str, dict] = {}
+# Cache: raw /odds response per event, shared by both the 1X2 and O/U 2.5
+# fallback functions so checking both markets for one match costs a single
+# API call, not two.
+_raw_odds_cache: dict[str, dict] = {}
 
 
 def _similar(a: str, b: str) -> float:
@@ -279,24 +281,62 @@ def _extract_hda_from_odds(data: dict):
     }
 
 
-async def get_odds_api_io_fallback(home_team: str, away_team: str):
+def _extract_ou25_from_odds(data: dict):
     """
-    Returns odds in the SAME shape as odds.py's get_odds_for_card() and
-    api_football.py's get_fallback_odds():
-    { home_odds, draw_odds, away_odds, home_pct, draw_pct, away_pct }
-    Fails safe to None on any error, missing key, or no coverage — safe
-    to call unconditionally as a fallback tier.
+    Same confirmed schema, but reads the "Goals Over/Under" market instead
+    of "ML". That market's odds list holds entries per goal line (hdp),
+    e.g. {"hdp": 2.5, "over": "1.333", "under": "3.250"} — only hdp==2.5
+    is used here.
     """
-    if not ODDS_API_IO_KEY:
+    over_odds, under_odds = [], []
+
+    bookmakers = data.get("bookmakers")
+    if not isinstance(bookmakers, dict):
         return None
 
-    event_id = await _find_event_id(home_team, away_team)
-    if not event_id:
+    for bm_name, markets in bookmakers.items():
+        if not isinstance(markets, list):
+            continue
+        for market in markets:
+            if market.get("name") != "Goals Over/Under":
+                continue
+            for outcome in market.get("odds") or []:
+                try:
+                    if outcome.get("hdp") != 2.5:
+                        continue
+                    o, u = outcome.get("over"), outcome.get("under")
+                    if o: over_odds.append(float(o))
+                    if u: under_odds.append(float(u))
+                except (TypeError, ValueError):
+                    continue
+
+    def avg(lst):
+        return round(sum(lst) / len(lst), 2) if lst else None
+
+    o_odd, u_odd = avg(over_odds), avg(under_odds)
+    if not o_odd:
+        print(f"  [odds_api_io] Could not find Goals Over/Under 2.5 market — raw shape: {str(data)[:2000]}")
         return None
 
+    def pct(o):
+        return round(100 / o, 1) if o else None
+
+    return {
+        "over_odds": o_odd, "under_odds": u_odd,
+        "over_pct": pct(o_odd), "under_pct": pct(u_odd),
+    }
+
+
+async def _fetch_raw_odds_for_event(event_id) -> dict | None:
+    """
+    Fetches the full raw /odds response for one event and caches it —
+    shared by both get_odds_api_io_fallback (1X2) and
+    get_ou25_api_io_fallback (O/U 2.5) so checking both markets for the
+    same match only costs ONE API call, not two.
+    """
     cache_key = str(event_id)
-    if cache_key in _odds_cache:
-        return _odds_cache[cache_key]
+    if cache_key in _raw_odds_cache:
+        return _raw_odds_cache[cache_key]
 
     valid_bookmakers = await _get_valid_bookmakers()
     if not valid_bookmakers:
@@ -331,13 +371,61 @@ async def get_odds_api_io_fallback(home_team: str, away_team: str):
             return None
 
         data = resp.json()
-        result = _extract_hda_from_odds(data)
-        if result:
-            _odds_cache[cache_key] = result
-            print(f"  [odds_api_io] Fallback odds found for event {event_id} "
-                  f"(rate limit remaining: {resp.headers.get('x-ratelimit-remaining', '?')})")
-        return result
+        _raw_odds_cache[cache_key] = data
+        print(f"  [odds_api_io] Fetched raw odds for event {event_id} "
+              f"(rate limit remaining: {resp.headers.get('x-ratelimit-remaining', '?')})")
+        return data
 
     except Exception as e:
         print(f"  [odds_api_io] Exception fetching odds for event {event_id}: {e}")
         return None
+
+
+async def get_odds_api_io_fallback(home_team: str, away_team: str):
+    """
+    Returns odds in the SAME shape as odds.py's get_odds_for_card() and
+    api_football.py's get_fallback_odds():
+    { home_odds, draw_odds, away_odds, home_pct, draw_pct, away_pct }
+    Fails safe to None on any error, missing key, or no coverage — safe
+    to call unconditionally as a fallback tier.
+    """
+    if not ODDS_API_IO_KEY:
+        return None
+
+    event_id = await _find_event_id(home_team, away_team)
+    if not event_id:
+        return None
+
+    data = await _fetch_raw_odds_for_event(event_id)
+    if not data:
+        return None
+
+    result = _extract_hda_from_odds(data)
+    if result:
+        print(f"  [odds_api_io] Fallback 1X2 odds found for event {event_id}")
+    return result
+
+
+async def get_ou25_api_io_fallback(home_team: str, away_team: str):
+    """
+    Returns market Over/Under 2.5 goals odds:
+    { over_odds, under_odds, over_pct, under_pct }
+    Same fail-safe pattern as get_odds_api_io_fallback. Reuses the same
+    cached raw fetch as the 1X2 fallback — if that one already ran for
+    this match, this costs zero extra API quota.
+    """
+    if not ODDS_API_IO_KEY:
+        return None
+
+    event_id = await _find_event_id(home_team, away_team)
+    if not event_id:
+        return None
+
+    data = await _fetch_raw_odds_for_event(event_id)
+    if not data:
+        return None
+
+    result = _extract_ou25_from_odds(data)
+    if result:
+        print(f"  [odds_api_io] Fallback O/U 2.5 odds found for event {event_id}")
+    return result
