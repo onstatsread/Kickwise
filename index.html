@@ -723,7 +723,9 @@ async function runAnalysis() {
         <div class="result-section" id="smart2-${i}"></div>
         <div class="result-section" id="odds-${i}"></div>
         <div class="result-section" id="market-odds-${i}"></div>
-        <div class="result-section" id="value-${i}"></div>`;
+        <div class="result-section" id="value-${i}"></div>
+        <div class="result-section" id="ou25-${i}"></div>
+        <div class="result-section" id="ou25-value-${i}"></div>`;
       res.appendChild(card);
     });
 
@@ -813,6 +815,57 @@ async function runAnalysis() {
             <div class="result-pills">${pills}</div>`;
         } else {
           valueDiv.innerHTML = "";
+        }
+
+        // ── Over/Under 2.5 goals — model odds ────────────────────
+        const ou25Div = document.getElementById(`ou25-${i}`);
+        const ou25Data = p.ou25;
+        const marketOu25Data = p.market_ou25;
+        if ((ou25Data && ou25Data.over_odds) || (marketOu25Data && marketOu25Data.over_odds)) {
+          let ouHtml = `<div class="result-label" style="margin-bottom:6px">⚽ OVER/UNDER 2.5</div><div class="result-pills">`;
+          if (ou25Data && ou25Data.over_odds) {
+            ouHtml += `
+              <div class="pill neutral"><span class="pill-label">Model Over</span>${ou25Data.over_odds} <span style="opacity:0.6;font-size:11px">(${ou25Data.over_pct}%)</span></div>
+              <div class="pill neutral"><span class="pill-label">Model Under</span>${ou25Data.under_odds} <span style="opacity:0.6;font-size:11px">(${ou25Data.under_pct}%)</span></div>`;
+          }
+          if (marketOu25Data && marketOu25Data.over_odds) {
+            ouHtml += `
+              <div class="pill neutral"><span class="pill-label">Market Over</span>${marketOu25Data.over_odds} <span style="opacity:0.6;font-size:11px">(${marketOu25Data.over_pct}%)</span></div>
+              <div class="pill neutral"><span class="pill-label">Market Under</span>${marketOu25Data.under_odds} <span style="opacity:0.6;font-size:11px">(${marketOu25Data.under_pct}%)</span></div>`;
+          }
+          ouHtml += `</div>`;
+          ou25Div.innerHTML = ouHtml;
+        } else {
+          ou25Div.innerHTML = "";
+        }
+
+        // ── Over/Under 2.5 — value (same formula/share/diff as 1X2) ──
+        const ou25ValueDiv = document.getElementById(`ou25-value-${i}`);
+        const ouV = p.ou25_value_pct;
+        const ouVs = p.ou25_value_signal;
+        if (ouV) {
+          const fmtOu = (n) => {
+            if (n === null || n === undefined) return "—";
+            const sign = n > 0 ? "+" : "";
+            return `${sign}${n}%`;
+          };
+          const clsOu = (n) => {
+            if (n === null || n === undefined) return "neutral";
+            return n > 0 ? "match" : (n < 0 ? "nomatch" : "neutral");
+          };
+          let ouPills = `
+              <div class="pill ${clsOu(ouV.over)}"><span class="pill-label">Over</span>${fmtOu(ouV.over)}</div>
+              <div class="pill ${clsOu(ouV.under)}"><span class="pill-label">Under</span>${fmtOu(ouV.under)}</div>
+              <div class="pill ${clsOu(ouV.total)}"><span class="pill-label">Total</span>${fmtOu(ouV.total)}</div>
+              <div class="pill ${clsOu(ouV.share_diff)}"><span class="pill-label">Share Diff</span>${fmtOu(ouV.share_diff)}</div>`;
+          if (ouVs && ouVs.result) {
+            ouPills += `<div class="pill double"><span class="pill-label">Result</span>${ouVs.result}</div>`;
+          }
+          ou25ValueDiv.innerHTML = `
+            <div class="result-label" style="margin-bottom:6px">📈 O/U 2.5 VALUE</div>
+            <div class="result-pills">${ouPills}</div>`;
+        } else {
+          ou25ValueDiv.innerHTML = "";
         }
 
         // ── Smart prediction logic ─────────────────────────────
