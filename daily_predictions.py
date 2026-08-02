@@ -302,6 +302,47 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
+    # Over/Under 2.5 — model + market odds, and the same value/share formula
+    ou25 = pred.get("ou25") or {}
+    market_ou25 = pred.get("market_ou25") or {}
+    ou25_html = ""
+    if ou25.get("over_odds") or market_ou25.get("over_odds"):
+        parts = []
+        if ou25.get("over_odds"):
+            parts.append(f"Model Over {ou25['over_odds']} ({ou25['over_pct']}%) / Under {ou25['under_odds']} ({ou25['under_pct']}%)")
+        if market_ou25.get("over_odds"):
+            parts.append(f"Market Over {market_ou25['over_odds']} ({market_ou25['over_pct']}%) / Under {market_ou25['under_odds']} ({market_ou25['under_pct']}%)")
+        ou25_html = f"""
+        <tr>
+          <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+            ⚽ O/U 2.5: {" | ".join(parts)}
+          </td>
+        </tr>"""
+
+    ou25_value_pct = pred.get("ou25_value_pct") or {}
+    ou25_value_signal = pred.get("ou25_value_signal") or {}
+    ou25_value_html = ""
+    if ou25_value_pct:
+        def fmt_val_ou(n):
+            if n is None:
+                return "—"
+            sign = "+" if n > 0 else ""
+            return f"{sign}{n}%"
+
+        ou_signal_str = f"Result: {ou25_value_signal['result']}" if ou25_value_signal.get("result") else ""
+        ou_signal_line = f"<br><b style='color:#AAFF3C'>{ou_signal_str}</b>" if ou_signal_str else ""
+
+        ou25_value_html = f"""
+        <tr>
+          <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+            📈 O/U 2.5 Value: Over {fmt_val_ou(ou25_value_pct.get('over'))} |
+            Under {fmt_val_ou(ou25_value_pct.get('under'))} |
+            Total {fmt_val_ou(ou25_value_pct.get('total'))} |
+            Share Diff {fmt_val_ou(ou25_value_pct.get('share_diff'))}
+            {ou_signal_line}
+          </td>
+        </tr>"""
+
     pred1_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;background:#1a472a;color:#AAFF3C;font-weight:bold">
@@ -352,6 +393,8 @@ def format_match_html(league_name, match, pred):
     {odds_html}
     {market_html}
     {value_html}
+    {ou25_html}
+    {ou25_value_html}
   </table>
 </div>"""
 
