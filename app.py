@@ -650,6 +650,25 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
             value_signal = {"under": under_flag, "result": result_signal}
 
+            # NEW — decision rule built from tracked results (74 games logged):
+            # Home predictions: ~92% hit rate → trusted as-is.
+            # Away predictions: ~79% hit rate when total_v <= -35%, only ~44%
+            # when total_v > -35% → an Away pick above that threshold is
+            # rejected and relabeled as a 2-handicap on the opposite (Home)
+            # side instead of being shown as a straight Away pick.
+            AWAY_TOTAL_THRESHOLD = -35
+
+            decision = ""
+            if result_signal == "Home":
+                decision = "Home"
+            elif result_signal == "away":
+                if total_v <= AWAY_TOTAL_THRESHOLD:
+                    decision = "Away"
+                else:
+                    decision = "Home 2-handicap"  # rejected Away pick, flipped to opposite-side handicap
+
+            value_signal["decision"] = decision
+
     # NEW — same formula applied to Over/Under 2.5 goals, completely
     # separate from the 1X2 value_pct/value_signal above:
     #   over_v  = (market_over_odd  - model_over_odd)  / model_over_odd  * 100
