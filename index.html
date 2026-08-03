@@ -810,6 +810,10 @@ async function runAnalysis() {
           if (vs && vs.result) {
             pills += `<div class="pill double"><span class="pill-label">Result</span>${vs.result}</div>`;
           }
+          if (vs && vs.decision) {
+            const decisionCls = vs.decision.includes("handicap") ? "handicap" : "match";
+            pills += `<div class="pill ${decisionCls}" style="font-weight:800"><span class="pill-label">Decision</span>${vs.decision}</div>`;
+          }
           valueDiv.innerHTML = `
             <div class="result-label" style="margin-bottom:6px">📈 VALUE (MARKET VS MODEL)</div>
             <div class="result-pills">${pills}</div>`;
