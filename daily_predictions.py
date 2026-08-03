@@ -290,6 +290,9 @@ def format_match_html(league_name, match, pred):
         signal_str = " | ".join(signal_parts)
         signal_line = f"<br><b style='color:#AAFF3C'>{signal_str}</b>" if signal_str else ""
 
+        decision = value_signal.get("decision", "")
+        decision_line = f"<br><b style='color:#F39C12;font-size:14px'>⚡ DECISION: {decision}</b>" if decision else ""
+
         value_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
@@ -299,6 +302,7 @@ def format_match_html(league_name, match, pred):
             Total {fmt_val(value_pct.get('total'))} |
             Share Diff {fmt_val(value_pct.get('share_diff'))}
             {signal_line}
+            {decision_line}
           </td>
         </tr>"""
 
