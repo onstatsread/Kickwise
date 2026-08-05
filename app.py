@@ -583,13 +583,25 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
     if not market_ou25:
         market_ou25 = await get_ou25_api_io_fallback(home, away)
 
-    # NEW — value%: ((market_odd - model_odd) / model_odd) * 100 per side.
-    # Positive = market is offering LONGER odds than the model thinks fair
-    # (i.e. potential value on that side). Negative = market odds are
-    # shorter than the model's fair odds.
-    # Computed once here so it's available identically to the live site
-    # AND your blog automation script — both just read these fields from
-    # the same /predict response, no duplicate logic needed elsewhere.
+    # ── Value% and Decision — H/A/D decision logic ──────────────────────
+    # value = (market_odds - model_odds) / model_odds * 100, per side.
+    # Negative value = market quoting SHORTER odds than the model on that
+    # side (market more confident than the model there).
+    #
+    # Decision rule (backtested across 165+ matches):
+    #   Step 1 — share_diff signal: share_diff = home_share - away_share,
+    #            where each share is that side's |value| as a % of
+    #            (|home_v| + |draw_v| + |away_v|). Including draw_v dilutes
+    #            outlier spikes rather than letting a single blown-up
+    #            percentage dominate a two-way comparison.
+    #            share_diff > 0 -> signal "Away"
+    #            share_diff < 0 -> signal "Home"
+    #   Step 2 — confirm the signal against the raw side value:
+    #            signal "Away" AND away_v < 0  -> decision "Away"
+    #            signal "Home" AND home_v < 0  -> decision "Home"
+    #   Step 3 — mismatch: hand a 2-handicap to whichever raw value is
+    #            negative (if both negative, the more negative one gets it,
+    #            since that's the side the market is most confident about).
     value_pct = None
     value_signal = None
     model_odds = r1.get("odds")
@@ -603,80 +615,44 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         draw_v = pct_diff(market_odds.get("draw_odds"), model_odds.get("draw_odds"))
         away_v = pct_diff(market_odds.get("away_odds"), model_odds.get("away_odds"))
 
-        if home_v is not None or draw_v is not None or away_v is not None:
-            total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
+        value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
 
-            # Share% — each side's absolute value as a % of the sum of all
-            # three absolute values. Mirrors:
-            # =ABS(B134)/(ABS($B$134)+ABS($C$134)+ABS($D$134))*100
-            abs_sum = abs(home_v or 0) + abs(draw_v or 0) + abs(away_v or 0)
+        decision = ""
+        if home_v is not None and away_v is not None:
+            # Step 1 — share_diff signal
+            abs_sum = abs(home_v) + abs(draw_v or 0) + abs(away_v)
+            signal = ""
+            if abs_sum > 0:
+                home_share = abs(home_v) / abs_sum * 100
+                away_share = abs(away_v) / abs_sum * 100
+                share_diff = home_share - away_share
+                value_pct["share_diff"] = round(share_diff, 1)
+                if share_diff > 0:
+                    signal = "Away"
+                elif share_diff < 0:
+                    signal = "Home"
+                # share_diff == 0 -> no signal
 
-            def share(v):
-                if v is None or abs_sum == 0:
-                    return None
-                return round(abs(v) / abs_sum * 100, 1)
-
-            home_share_v = share(home_v)
-            draw_share_v = share(draw_v)
-            away_share_v = share(away_v)
-
-            value_pct = {
-                "home": home_v, "draw": draw_v, "away": away_v, "total": total_v,
-                "home_share": home_share_v, "draw_share": draw_share_v, "away_share": away_share_v,
-            }
-
-            # Next step: home_share - away_share (both already absolute-value
-            # based, per the share formula above)
-            share_diff = None
-            if home_share_v is not None and away_share_v is not None:
-                share_diff = round(home_share_v - away_share_v, 1)
-                value_pct["share_diff"] = share_diff
-
-            # "under" flag — total value falls in the -30 to 0 range,
-            # EXCEPT when home_v and away_v are the same sign (both negative
-            # or both positive) — in that case "under" is forced empty,
-            # since that condition is instead handled by the same-sign
-            # override in result_signal below.
-            same_sign = home_v is not None and away_v is not None and (
-                (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0)
-            )
-            under_flag = "" if same_sign else ("under" if -30 <= total_v <= 0 else "")
-
-            # Signal — decision now based on share_diff (home_share - away_share):
-            # positive share_diff -> "away", negative share_diff -> "Home"
-            result_signal = ""
-            if share_diff is not None and share_diff != 0:
-                result_signal = "away" if share_diff > 0 else "Home"
-
-            value_signal = {"under": under_flag, "result": result_signal}
-
-            # NEW — decision rule built from tracked results (74 games logged):
-            # Home predictions: ~92% hit rate → trusted as-is.
-            # Away predictions: ~79% hit rate when total_v <= -35%, only ~44%
-            # when total_v > -35% → an Away pick above that threshold is
-            # rejected and relabeled as a 2-handicap on the opposite (Home)
-            # side instead of being shown as a straight Away pick.
-            AWAY_TOTAL_THRESHOLD = -35
-
-            decision = ""
-            if result_signal == "Home":
+            # Step 2 — confirm signal against raw value
+            if signal == "Away" and away_v < 0:
+                decision = "Away"
+            elif signal == "Home" and home_v < 0:
                 decision = "Home"
-            elif result_signal == "away":
-                if total_v <= AWAY_TOTAL_THRESHOLD:
-                    decision = "Away"
-                else:
-                    decision = "Home 2-handicap"  # rejected Away pick, flipped to opposite-side handicap
+            else:
+                # Step 3 — mismatch -> 2-handicap to whichever raw value is
+                # negative (more negative one wins if both are negative)
+                if home_v < 0 and away_v < 0:
+                    decision = "Home 2-handicap" if home_v < away_v else "Away 2-handicap"
+                elif home_v < 0:
+                    decision = "Home 2-handicap"
+                elif away_v < 0:
+                    decision = "Away 2-handicap"
+                # else neither negative -> decision stays "" (no confident call)
 
-            value_signal["decision"] = decision
+        value_signal = {"decision": decision}
 
-    # NEW — same formula applied to Over/Under 2.5 goals, completely
-    # separate from the 1X2 value_pct/value_signal above:
-    #   over_v  = (market_over_odd  - model_over_odd)  / model_over_odd  * 100
-    #   under_v = (market_under_odd - model_under_odd) / model_under_odd * 100
-    # then share% of each (abs value / sum of abs values), then
-    # share_diff = over_share - under_share, then decision:
-    #   share_diff > 0 -> "Under" (opposite side favored)
-    #   share_diff < 0 -> "Over"  (same side favored)
+    # ── Over/Under 2.5 goals — value% (UNCHANGED, still uses the original
+    # share/share_diff formula for O/U, separate from the H/A/D logic above) ──
     ou25_value_pct = None
     ou25_value_signal = None
     model_ou25 = r1.get("ou25")
@@ -723,13 +699,13 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
         "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
         "odds": r1.get("odds"),
-        "ou25": r1.get("ou25"),  # NEW — model's own Over/Under 2.5 goals odds
-        "market_ou25": market_ou25,  # NEW — market Over/Under 2.5 goals odds (primary provider only for now)
-        "ou25_value_pct": ou25_value_pct,  # NEW — same formula applied to O/U 2.5
-        "ou25_value_signal": ou25_value_signal,  # NEW — Over/Under decision from share_diff
-        "market_odds": market_odds,  # NEW
-        "value_pct": value_pct,  # NEW — signed % diff between market and model odds, plus total
-        "value_signal": value_signal,  # NEW — under flag + home/away handicap-or-team-name signal
+        "ou25": r1.get("ou25"),  # model's own Over/Under 2.5 goals odds
+        "market_ou25": market_ou25,  # market Over/Under 2.5 goals odds (primary provider only for now)
+        "ou25_value_pct": ou25_value_pct,  # O/U 2.5 value% (unchanged formula)
+        "ou25_value_signal": ou25_value_signal,  # Over/Under decision from share_diff
+        "market_odds": market_odds,
+        "value_pct": value_pct,  # signed % diff between market and model odds, plus share_diff
+        "value_signal": value_signal,  # H/A/D decision (Home / Away / Home 2-handicap / Away 2-handicap)
         "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
         "o73": r1["o73"], "o74": r1["o74"],
         "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
