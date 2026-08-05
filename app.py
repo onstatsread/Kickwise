@@ -618,7 +618,13 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
 
         decision = ""
+        under_flag = ""
         if home_v is not None and away_v is not None:
+            # Total — signed sum, kept for the under-flag call below (and
+            # for display). NOT used for the H/A/D decision itself anymore.
+            total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
+            value_pct["total"] = total_v
+
             # Step 1 — share_diff signal
             abs_sum = abs(home_v) + abs(draw_v or 0) + abs(away_v)
             signal = ""
@@ -649,7 +655,13 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
                     decision = "Away 2-handicap"
                 # else neither negative -> decision stays "" (no confident call)
 
-        value_signal = {"decision": decision}
+            # Under flag — total_v falls in the -30 to 0 range, EXCEPT when
+            # home_v and away_v are the same sign (both negative or both
+            # positive), in which case it's suppressed.
+            same_sign = (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0)
+            under_flag = "" if same_sign else ("under" if -30 <= total_v <= 0 else "")
+
+        value_signal = {"decision": decision, "under": under_flag}
 
     # ── Over/Under 2.5 goals — value% (UNCHANGED, still uses the original
     # share/share_diff formula for O/U, separate from the H/A/D logic above) ──
