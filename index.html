@@ -807,9 +807,6 @@ async function runAnalysis() {
           if (vs && vs.under) {
             pills += `<div class="pill under"><span class="pill-label">Signal</span>${vs.under}</div>`;
           }
-          if (vs && vs.result) {
-            pills += `<div class="pill double"><span class="pill-label">Result</span>${vs.result}</div>`;
-          }
           if (vs && vs.decision) {
             const decisionCls = vs.decision.includes("handicap") ? "handicap" : "match";
             pills += `<div class="pill ${decisionCls}" style="font-weight:800"><span class="pill-label">Decision</span>${vs.decision}</div>`;
