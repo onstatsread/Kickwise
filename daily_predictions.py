@@ -271,7 +271,10 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
-    # Value% — (market odd − model odd) / model odd × 100, plus signal
+    # Value% — (market odd − model odd) / model odd × 100, plus decision.
+    # value_pct: home, draw, away, total, share_diff.
+    # value_signal: decision (Home / Away / Home 2-handicap / Away 2-handicap),
+    # under (flag from Total, unrelated to the H/A/D decision itself).
     value_pct = pred.get("value_pct") or {}
     value_signal = pred.get("value_signal") or {}
     value_html = ""
@@ -282,12 +285,7 @@ def format_match_html(league_name, match, pred):
             sign = "+" if n > 0 else ""
             return f"{sign}{n}%"
 
-        signal_parts = []
-        if value_signal.get("under"):
-            signal_parts.append(f"Signal: {value_signal['under']}")
-        if value_signal.get("result"):
-            signal_parts.append(f"Result: {value_signal['result']}")
-        signal_str = " | ".join(signal_parts)
+        signal_str = f"Signal: {value_signal['under']}" if value_signal.get("under") else ""
         signal_line = f"<br><b style='color:#AAFF3C'>{signal_str}</b>" if signal_str else ""
 
         decision = value_signal.get("decision", "")
@@ -307,6 +305,8 @@ def format_match_html(league_name, match, pred):
         </tr>"""
 
     # Over/Under 2.5 — model + market odds, and the same value/share formula
+    # (UNCHANGED — still uses its own share_diff/result logic, separate
+    # from the H/A/D decision above)
     ou25 = pred.get("ou25") or {}
     market_ou25 = pred.get("market_ou25") or {}
     ou25_html = ""
