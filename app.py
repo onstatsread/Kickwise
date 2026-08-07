@@ -5,8 +5,6 @@ Deploy to Render.com (free tier)
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
-import cloudscraper  # NEW — gets past Cloudflare's bot-challenge page that
-                      # plain `requests` can't solve (no JS engine)
 from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
@@ -38,15 +36,24 @@ HEADERS = {
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
 
-# NEW — cloudscraper session, reused across requests. Built to solve
-# Cloudflare's JS-based "Just a moment..." challenge page automatically,
-# which plain requests.get() cannot do (it has no JS engine to run the
-# challenge script). If SoccerStats upgrades their Cloudflare settings
-# further, this may eventually stop working too — worth checking the
-# /debug endpoint's homeaway_status periodically.
-SCRAPER = cloudscraper.create_scraper(
-    browser={"browser": "chrome", "platform": "windows", "mobile": False}
-)
+# NEW — cloudscraper couldn't solve SoccerStats' Cloudflare Turnstile
+# challenge (confirmed via /debug — still 403). ScraperAPI proxies the
+# request through their own real-browser infrastructure to solve it and
+# hands back the actual page HTML. render=true is required — it's what
+# tells ScraperAPI to run a real browser instead of a plain HTTP fetch,
+# and costs more credits per request than a plain fetch (check your
+# ScraperAPI dashboard for current credit usage).
+SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY", "")
+
+def scraperapi_get(url, timeout=30):
+    """Fetch `url` through ScraperAPI's rendering proxy. Returns a
+    requests.Response-like object (has .text and .status_code) so it's a
+    drop-in replacement for requests.get() / SCRAPER.get() at call sites."""
+    return requests.get(
+        "https://api.scraperapi.com/",
+        params={"api_key": SCRAPERAPI_KEY, "url": url, "render": "true"},
+        timeout=timeout,
+    )
 
 # NEW — maps your SoccerStats league codes to The Odds API's sport keys.
 # Only major leagues are covered by the odds provider — leagues not listed
@@ -216,7 +223,7 @@ def fetch_stats(code):
     teams = {}
     try:
         soup = BeautifulSoup(
-            SCRAPER.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
+            scraperapi_get(f"{BASE}/homeaway.asp?league={code}").text,
             "html.parser")
         tables = soup.find_all("table")
         section_count = 0
@@ -309,8 +316,7 @@ def fetch_fixtures(code, date_str=None):
     time_map = {}
 
     try:
-        resp = SCRAPER.get(f"{BASE}/latest.asp?league={code}",
-                            headers=HEADERS, timeout=8)
+        resp = scraperapi_get(f"{BASE}/latest.asp?league={code}")
         soup = BeautifulSoup(resp.text, "html.parser")
 
         # Pass 0 - dedicated "upcoming matches" table near top of page.
@@ -749,7 +755,7 @@ def health():
 def debug(league: str = Query(...), date: str = Query(None)):
     debug_info = {}
     try:
-        resp = SCRAPER.get(f"{BASE}/homeaway.asp?league={league}", headers=HEADERS, timeout=10)
+        resp = scraperapi_get(f"{BASE}/homeaway.asp?league={league}")
         debug_info["homeaway_status"] = resp.status_code
         debug_info["homeaway_length"] = len(resp.text)
         debug_info["homeaway_snippet"] = resp.text[:500]
@@ -757,7 +763,7 @@ def debug(league: str = Query(...), date: str = Query(None)):
         debug_info["homeaway_error"] = str(e)
 
     try:
-        resp2 = SCRAPER.get(f"{BASE}/latest.asp?league={league}", headers=HEADERS, timeout=10)
+        resp2 = scraperapi_get(f"{BASE}/latest.asp?league={league}")
         debug_info["latest_status"] = resp2.status_code
         debug_info["latest_length"] = len(resp2.text)
     except Exception as e:
