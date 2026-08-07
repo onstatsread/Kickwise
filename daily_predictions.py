@@ -6,7 +6,7 @@ Fetches all leagues with matches, runs predictions, posts to Blogger
 import requests
 import json
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 BACKEND_URL = os.environ["BACKEND_URL"]
 BLOG_ID     = os.environ["BLOG_ID"]
@@ -143,12 +143,19 @@ def get_access_token():
 
 def get_fixtures(league_code, date_str):
     try:
+        # timeout raised from 15 to 90 — /fixtures now calls ScraperAPI
+        # with render=true internally, which can take 30-60+ seconds to
+        # solve SoccerStats' Cloudflare challenge. The old 15s timeout was
+        # silently killing every single one of these calls (bare except
+        # below swallowed it with no log line), which is why every league
+        # came back with zero fixtures despite the backend working fine.
         r = requests.get(f"{BACKEND_URL}/fixtures",
                         params={"league": league_code, "date": date_str},
-                        timeout=15)
+                        timeout=90)
         data = r.json()
         return data.get("matches", [])
-    except:
+    except Exception as e:
+        print(f"    ⚠️ get_fixtures failed for {league_code}: {e}")
         return []
 
 def get_prediction(league_code, home, away, retries=2):
@@ -412,7 +419,15 @@ def post_to_blogger(access_token, title, content):
     return resp.status_code, resp.json()
 
 def main():
-    today = date.today()
+    # Script runs at 23:00 UTC = midnight WAT (Nigeria, UTC+1) — right at
+    # the moment Nigeria's calendar day rolls over. date.today() on the
+    # GitHub Actions runner returns the UTC date, which at that instant is
+    # still the OLD day for Nigeria — the day that just ended, not the one
+    # starting. That caused fetch_fixtures() to query SoccerStats for the
+    # wrong day, so today's fixtures (like a 5pm match) were never fetched
+    # at all — not skipped, never requested in the first place.
+    # Fix: compute "today" from Nigeria's local time instead of raw UTC.
+    today = (datetime.utcnow() + timedelta(hours=1)).date()
     date_str = f"{today.day} {today.strftime('%b')}"
     today_display = today.strftime("%A, %B %d %Y")
 
