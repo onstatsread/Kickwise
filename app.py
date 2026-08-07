@@ -311,7 +311,13 @@ def fetch_stats(code):
             "aga": aga / agp if agp else 0,
             "atot": (agf + aga) / agp if agp else 0,
         }
-    _STATS_CACHE[code] = (time.time(), result)  # cache before returning
+    # Only cache a genuinely successful fetch — an empty result usually
+    # means this particular request hit an intermittent failure (the
+    # 500s we've seen from ScraperAPI), not that the league has no data.
+    # Caching an empty result would lock that league into showing N/A for
+    # a full hour even once SoccerStats becomes reachable again.
+    if result:
+        _STATS_CACHE[code] = (time.time(), result)
     return result
 
 TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
