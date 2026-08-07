@@ -59,16 +59,20 @@ def scraperapi_get(url, timeout=60):
     requests.Response-like object (has .text and .status_code) so it's a
     drop-in replacement for requests.get() / SCRAPER.get() at call sites.
 
-    Tested session_number pinning to reuse a verified browser session
-    across calls (hoping to skip re-solving Cloudflare each time) — but a
-    back-to-back test showed the second call was SLOWER (60s) than the
-    first (30s), not faster. So sessions aren't cutting the challenge-solve
-    time for this site; every call genuinely pays the full render cost.
-    Removed session_number since it added no benefit.
+    premium=true added after seeing intermittent 500s from ScraperAPI
+    itself on this domain, with their own error message suggesting
+    premium=true or ultra_premium=true for more reliable access on
+    protected domains. render=true alone worked sometimes (confirmed
+    working on Norway) but not consistently across all leagues/calls.
     """
     return requests.get(
         "https://api.scraperapi.com/",
-        params={"api_key": SCRAPERAPI_KEY, "url": url, "render": "true"},
+        params={
+            "api_key": SCRAPERAPI_KEY,
+            "url": url,
+            "render": "true",
+            "premium": "true",
+        },
         timeout=timeout,
     )
 
