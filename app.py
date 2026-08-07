@@ -5,6 +5,8 @@ Deploy to Render.com (free tier)
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
+import cloudscraper  # NEW — gets past Cloudflare's bot-challenge page that
+                      # plain `requests` can't solve (no JS engine)
 from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
@@ -35,6 +37,16 @@ HEADERS = {
 }
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
+
+# NEW — cloudscraper session, reused across requests. Built to solve
+# Cloudflare's JS-based "Just a moment..." challenge page automatically,
+# which plain requests.get() cannot do (it has no JS engine to run the
+# challenge script). If SoccerStats upgrades their Cloudflare settings
+# further, this may eventually stop working too — worth checking the
+# /debug endpoint's homeaway_status periodically.
+SCRAPER = cloudscraper.create_scraper(
+    browser={"browser": "chrome", "platform": "windows", "mobile": False}
+)
 
 # NEW — maps your SoccerStats league codes to The Odds API's sport keys.
 # Only major leagues are covered by the odds provider — leagues not listed
@@ -204,7 +216,7 @@ def fetch_stats(code):
     teams = {}
     try:
         soup = BeautifulSoup(
-            requests.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
+            SCRAPER.get(f"{BASE}/homeaway.asp?league={code}", headers=HEADERS, timeout=15).text,
             "html.parser")
         tables = soup.find_all("table")
         section_count = 0
@@ -297,7 +309,7 @@ def fetch_fixtures(code, date_str=None):
     time_map = {}
 
     try:
-        resp = requests.get(f"{BASE}/latest.asp?league={code}",
+        resp = SCRAPER.get(f"{BASE}/latest.asp?league={code}",
                             headers=HEADERS, timeout=8)
         soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -737,7 +749,7 @@ def health():
 def debug(league: str = Query(...), date: str = Query(None)):
     debug_info = {}
     try:
-        resp = requests.get(f"{BASE}/homeaway.asp?league={league}", headers=HEADERS, timeout=10)
+        resp = SCRAPER.get(f"{BASE}/homeaway.asp?league={league}", headers=HEADERS, timeout=10)
         debug_info["homeaway_status"] = resp.status_code
         debug_info["homeaway_length"] = len(resp.text)
         debug_info["homeaway_snippet"] = resp.text[:500]
@@ -745,7 +757,7 @@ def debug(league: str = Query(...), date: str = Query(None)):
         debug_info["homeaway_error"] = str(e)
 
     try:
-        resp2 = requests.get(f"{BASE}/latest.asp?league={league}", headers=HEADERS, timeout=10)
+        resp2 = SCRAPER.get(f"{BASE}/latest.asp?league={league}", headers=HEADERS, timeout=10)
         debug_info["latest_status"] = resp2.status_code
         debug_info["latest_length"] = len(resp2.text)
     except Exception as e:
