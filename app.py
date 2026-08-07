@@ -540,7 +540,12 @@ def run_model(home, away, team_data):
     try:
         o74 = str(round(float(o74_raw), 1)) + "%" if o74_raw is not None else ""
     except:
-        o74 = str(o74_raw or "")
+        # o74_raw wasn't a number — likely an Excel error value like
+        # #VALUE!, #N/A, #NAME? (e.g. formula couldn't compute for this
+        # matchup). Blank it out instead of leaking the raw error string,
+        # same treatment safe() gives every other cell.
+        o74_str = str(o74_raw or "")
+        o74 = "" if o74_str in ("#NAME?", "#N/A", "#VALUE!", "None") else o74_str
 
     shutil.rmtree(tmp_dir, ignore_errors=True)
     return {"d70": d70, "b120": b120, "c120": c120, "b46": b46, "d64": d64,
