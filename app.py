@@ -4,7 +4,7 @@ Deploy to Render.com (free tier)
 """
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time
 from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
@@ -35,6 +35,15 @@ HEADERS = {
 }
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
+
+# NEW — in-memory cache for fetch_stats() results, keyed by league code.
+# Without this, every match in a league triggers its own full scrape of
+# that league's homeaway.asp page — e.g. 5 matches in a league = 5
+# separate ScraperAPI render calls (30-60s each) fetching the exact same
+# team stats. Team stats don't meaningfully change within a day, so this
+# caches per league for 1 hour, cutting most of those redundant calls.
+_STATS_CACHE = {}  # {league_code: (timestamp, team_data)}
+STATS_CACHE_TTL = 3600  # seconds
 
 # NEW — cloudscraper couldn't solve SoccerStats' Cloudflare Turnstile
 # challenge (confirmed via /debug — still 403). ScraperAPI proxies the
@@ -228,6 +237,12 @@ def resolve_team(name, team_data):
 
 
 def fetch_stats(code):
+    # Check cache first — skip the slow ScraperAPI call entirely if we
+    # fetched this league's stats within the last hour.
+    cached = _STATS_CACHE.get(code)
+    if cached and (time.time() - cached[0]) < STATS_CACHE_TTL:
+        return cached[1]
+
     teams = {}
     try:
         soup = BeautifulSoup(
@@ -292,6 +307,7 @@ def fetch_stats(code):
             "aga": aga / agp if agp else 0,
             "atot": (agf + aga) / agp if agp else 0,
         }
+    _STATS_CACHE[code] = (time.time(), result)  # cache before returning
     return result
 
 TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
