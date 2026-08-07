@@ -45,7 +45,7 @@ MODEL   = "A_mix2.xlsx"
 # ScraperAPI dashboard for current credit usage).
 SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY", "")
 
-def scraperapi_get(url, timeout=30):
+def scraperapi_get(url, timeout=60):
     """Fetch `url` through ScraperAPI's rendering proxy. Returns a
     requests.Response-like object (has .text and .status_code) so it's a
     drop-in replacement for requests.get() / SCRAPER.get() at call sites."""
