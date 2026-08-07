@@ -50,22 +50,16 @@ def scraperapi_get(url, timeout=60):
     requests.Response-like object (has .text and .status_code) so it's a
     drop-in replacement for requests.get() / SCRAPER.get() at call sites.
 
-    session_number pins all our requests to the same underlying browser/IP
-    on ScraperAPI's end (persists ~1 hour), instead of a fresh identity per
-    call. That gives Cloudflare a consistent session to recognize as
-    already-verified, which should cut down on how often the full
-    challenge-solve is needed — fewer expensive render cycles, faster
-    responses. Fixed number is fine here since this backend only ever
-    talks to one domain (SoccerStats).
+    Tested session_number pinning to reuse a verified browser session
+    across calls (hoping to skip re-solving Cloudflare each time) — but a
+    back-to-back test showed the second call was SLOWER (60s) than the
+    first (30s), not faster. So sessions aren't cutting the challenge-solve
+    time for this site; every call genuinely pays the full render cost.
+    Removed session_number since it added no benefit.
     """
     return requests.get(
         "https://api.scraperapi.com/",
-        params={
-            "api_key": SCRAPERAPI_KEY,
-            "url": url,
-            "render": "true",
-            "session_number": "1",
-        },
+        params={"api_key": SCRAPERAPI_KEY, "url": url, "render": "true"},
         timeout=timeout,
     )
 
