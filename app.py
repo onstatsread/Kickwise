@@ -45,36 +45,38 @@ MODEL   = "A_mix2.xlsx"
 _STATS_CACHE = {}  # {league_code: (timestamp, team_data)}
 STATS_CACHE_TTL = 3600  # seconds
 
-# NEW — cloudscraper couldn't solve SoccerStats' Cloudflare Turnstile
-# challenge (confirmed via /debug — still 403). ScraperAPI proxies the
-# request through their own real-browser infrastructure to solve it and
-# hands back the actual page HTML. render=true is required — it's what
-# tells ScraperAPI to run a real browser instead of a plain HTTP fetch,
-# and costs more credits per request than a plain fetch (check your
-# ScraperAPI dashboard for current credit usage).
-SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY", "")
+# NEW — switched from ScraperAPI (paid, credits ran out) to FlareSolverr:
+# a free, self-hosted service running its own real Chromium browser to
+# solve Cloudflare's Turnstile challenge. No per-request cost. Deployed
+# as a separate Render service; set FLARESOLVERR_URL in this service's
+# environment variables to point at it if the URL ever changes.
+FLARESOLVERR_URL = os.environ.get("FLARESOLVERR_URL", "https://kickwise-flaresolverr.onrender.com")
 
-def scraperapi_get(url, timeout=60):
-    """Fetch `url` through ScraperAPI's rendering proxy. Returns a
-    requests.Response-like object (has .text and .status_code) so it's a
-    drop-in replacement for requests.get() / SCRAPER.get() at call sites.
+class _FlareResponse:
+    """Minimal .status_code / .text wrapper so fetch_protected() is a
+    drop-in replacement for requests.get() at existing call sites."""
+    def __init__(self, status_code, text):
+        self.status_code = status_code
+        self.text = text
 
-    premium=true added after seeing intermittent 500s from ScraperAPI
-    itself on this domain, with their own error message suggesting
-    premium=true or ultra_premium=true for more reliable access on
-    protected domains. render=true alone worked sometimes (confirmed
-    working on Norway) but not consistently across all leagues/calls.
+def fetch_protected(url, timeout=60):
+    """Fetch `url` through FlareSolverr. FlareSolverr's own HTTP API call
+    always responds 200 at the HTTP level (even on failure) — the real
+    target-site status code is nested inside the JSON body under
+    solution.status, so we dig that out instead of trusting resp itself.
     """
-    return requests.get(
-        "https://api.scraperapi.com/",
-        params={
-            "api_key": SCRAPERAPI_KEY,
-            "url": url,
-            "render": "true",
-            "premium": "true",
-        },
-        timeout=timeout,
+    resp = requests.post(
+        f"{FLARESOLVERR_URL}/v1",
+        json={"cmd": "request.get", "url": url, "maxTimeout": timeout * 1000},
+        timeout=timeout + 15,
     )
+    data = resp.json()
+    solution = data.get("solution", {})
+    return _FlareResponse(
+        status_code=solution.get("status", 0),
+        text=solution.get("response", ""),
+    )
+
 
 # NEW — maps your SoccerStats league codes to The Odds API's sport keys.
 # Only major leagues are covered by the odds provider — leagues not listed
@@ -250,7 +252,7 @@ def fetch_stats(code):
     teams = {}
     try:
         soup = BeautifulSoup(
-            scraperapi_get(f"{BASE}/homeaway.asp?league={code}").text,
+            fetch_protected(f"{BASE}/homeaway.asp?league={code}").text,
             "html.parser")
         tables = soup.find_all("table")
         section_count = 0
@@ -350,7 +352,7 @@ def fetch_fixtures(code, date_str=None):
     time_map = {}
 
     try:
-        resp = scraperapi_get(f"{BASE}/latest.asp?league={code}")
+        resp = fetch_protected(f"{BASE}/latest.asp?league={code}")
         soup = BeautifulSoup(resp.text, "html.parser")
 
         # Pass 0 - dedicated "upcoming matches" table near top of page.
@@ -794,7 +796,7 @@ def health():
 def debug(league: str = Query(...), date: str = Query(None)):
     debug_info = {}
     try:
-        resp = scraperapi_get(f"{BASE}/homeaway.asp?league={league}")
+        resp = fetch_protected(f"{BASE}/homeaway.asp?league={league}")
         debug_info["homeaway_status"] = resp.status_code
         debug_info["homeaway_length"] = len(resp.text)
         debug_info["homeaway_snippet"] = resp.text[:500]
@@ -802,7 +804,7 @@ def debug(league: str = Query(...), date: str = Query(None)):
         debug_info["homeaway_error"] = str(e)
 
     try:
-        resp2 = scraperapi_get(f"{BASE}/latest.asp?league={league}")
+        resp2 = fetch_protected(f"{BASE}/latest.asp?league={league}")
         debug_info["latest_status"] = resp2.status_code
         debug_info["latest_length"] = len(resp2.text)
     except Exception as e:
