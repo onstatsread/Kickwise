@@ -59,18 +59,29 @@ class _FlareResponse:
         self.status_code = status_code
         self.text = text
 
-def fetch_protected(url, timeout=60):
+def fetch_protected(url, timeout=150):
     """Fetch `url` through FlareSolverr. FlareSolverr's own HTTP API call
     always responds 200 at the HTTP level (even on failure) — the real
     target-site status code is nested inside the JSON body under
     solution.status, so we dig that out instead of trusting resp itself.
+
+    timeout raised from 60 to 150 — Render's free tier spins FlareSolverr
+    down after inactivity, and waking it back up alone can take 50+
+    seconds, on top of however long the actual challenge-solve takes.
     """
-    resp = requests.post(
-        f"{FLARESOLVERR_URL}/v1",
-        json={"cmd": "request.get", "url": url, "maxTimeout": timeout * 1000},
-        timeout=timeout + 15,
-    )
-    data = resp.json()
+    try:
+        resp = requests.post(
+            f"{FLARESOLVERR_URL}/v1",
+            json={"cmd": "request.get", "url": url, "maxTimeout": timeout * 1000},
+            timeout=timeout + 15,
+        )
+        data = resp.json()
+    except (requests.exceptions.RequestException, ValueError) as e:
+        # Cold-start timeout, connection error, or a non-JSON response
+        # (e.g. Render's own gateway page while FlareSolverr is still
+        # waking up) — fail safe instead of crashing the caller.
+        print(f"fetch_protected error for {url}: {e}")
+        return _FlareResponse(status_code=0, text="")
     solution = data.get("solution", {})
     return _FlareResponse(
         status_code=solution.get("status", 0),
