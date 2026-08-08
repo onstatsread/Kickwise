@@ -79,9 +79,11 @@ def fetch_protected(url, timeout=150):
     except (requests.exceptions.RequestException, ValueError) as e:
         # Cold-start timeout, connection error, or a non-JSON response
         # (e.g. Render's own gateway page while FlareSolverr is still
-        # waking up) — fail safe instead of crashing the caller.
+        # waking up) — fail safe instead of crashing the caller. Put the
+        # error message in .text (truncated by /debug's own snippet slice)
+        # so /debug surfaces the real reason instead of just status 0.
         print(f"fetch_protected error for {url}: {e}")
-        return _FlareResponse(status_code=0, text="")
+        return _FlareResponse(status_code=0, text=f"fetch_protected error: {e}")
     solution = data.get("solution", {})
     return _FlareResponse(
         status_code=solution.get("status", 0),
