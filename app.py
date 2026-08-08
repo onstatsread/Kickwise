@@ -45,49 +45,26 @@ MODEL   = "A_mix2.xlsx"
 _STATS_CACHE = {}  # {league_code: (timestamp, team_data)}
 STATS_CACHE_TTL = 3600  # seconds
 
-# NEW — switched from ScraperAPI (paid, credits ran out) to FlareSolverr:
-# a free, self-hosted service running its own real Chromium browser to
-# solve Cloudflare's Turnstile challenge. No per-request cost. Deployed
-# as a separate Render service; set FLARESOLVERR_URL in this service's
-# environment variables to point at it if the URL ever changes.
-FLARESOLVERR_URL = os.environ.get("FLARESOLVERR_URL", "https://kickwise-flaresolverr.onrender.com")
+# NEW — reverted back to ScraperAPI (new key from a fresh account) after
+# FlareSolverr's self-hosted instance kept crash-looping from Chromium
+# running out of memory on Render's free 512MB tier. render=true solves
+# Cloudflare's Turnstile challenge; premium=true added after seeing
+# intermittent 500s from ScraperAPI on this domain with plain render=true.
+SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY", "")
 
-class _FlareResponse:
-    """Minimal .status_code / .text wrapper so fetch_protected() is a
+def fetch_protected(url, timeout=60):
+    """Fetch `url` through ScraperAPI's rendering proxy. Returns a
+    requests.Response-like object (has .text and .status_code) so it's a
     drop-in replacement for requests.get() at existing call sites."""
-    def __init__(self, status_code, text):
-        self.status_code = status_code
-        self.text = text
-
-def fetch_protected(url, timeout=150):
-    """Fetch `url` through FlareSolverr. FlareSolverr's own HTTP API call
-    always responds 200 at the HTTP level (even on failure) — the real
-    target-site status code is nested inside the JSON body under
-    solution.status, so we dig that out instead of trusting resp itself.
-
-    timeout raised from 60 to 150 — Render's free tier spins FlareSolverr
-    down after inactivity, and waking it back up alone can take 50+
-    seconds, on top of however long the actual challenge-solve takes.
-    """
-    try:
-        resp = requests.post(
-            f"{FLARESOLVERR_URL}/v1",
-            json={"cmd": "request.get", "url": url, "maxTimeout": timeout * 1000},
-            timeout=timeout + 15,
-        )
-        data = resp.json()
-    except (requests.exceptions.RequestException, ValueError) as e:
-        # Cold-start timeout, connection error, or a non-JSON response
-        # (e.g. Render's own gateway page while FlareSolverr is still
-        # waking up) — fail safe instead of crashing the caller. Put the
-        # error message in .text (truncated by /debug's own snippet slice)
-        # so /debug surfaces the real reason instead of just status 0.
-        print(f"fetch_protected error for {url}: {e}")
-        return _FlareResponse(status_code=0, text=f"fetch_protected error: {e}")
-    solution = data.get("solution", {})
-    return _FlareResponse(
-        status_code=solution.get("status", 0),
-        text=solution.get("response", ""),
+    return requests.get(
+        "https://api.scraperapi.com/",
+        params={
+            "api_key": SCRAPERAPI_KEY,
+            "url": url,
+            "render": "true",
+            "premium": "true",
+        },
+        timeout=timeout,
     )
 
 
