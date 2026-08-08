@@ -18,5 +18,5 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run AnnaBet test
-        run: python test_annabet.py
+      - - name: Run AnnaBet test
+        run: python check_annabet_gp.py
