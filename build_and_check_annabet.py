@@ -25,7 +25,7 @@ HEADERS = {
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-TEST_URL = "https://annabet.com/en/soccerstats/serie_249_x.html"  # K League 1
+TEST_URL = "https://annabet.com/en/soccerstats/serie_36_x.html"  # Norway Eliteserien
 
 # Look for time-like patterns (HH:MM) which would indicate an upcoming
 # match listing (kickoff time) rather than a final score (X-Y)
@@ -49,12 +49,21 @@ def main():
         rows = table.find_all("tr")
         time_rows = []
         score_rows = []
+        kristiansund_rows = []
         for row in rows:
             text = row.get_text(" ", strip=True)
+            if "Kristiansund" in text or "Molde" in text:
+                kristiansund_rows.append(text)
             if TIME_RE.search(text) and not SCORE_RE.search(text):
                 time_rows.append(text)
             elif SCORE_RE.search(text):
                 score_rows.append(text)
+
+        if kristiansund_rows:
+            print(f"*** TABLE #{i} — contains Kristiansund/Molde ***")
+            for k in kristiansund_rows[:5]:
+                print(f"  MATCH: {k[:200]}")
+            print()
 
         if time_rows or score_rows:
             print(f"--- TABLE #{i} — {len(rows)} rows, {len(time_rows)} time-like, {len(score_rows)} score-like ---")
