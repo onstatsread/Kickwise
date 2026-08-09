@@ -703,13 +703,19 @@ def run_model(home, away, team_data):
 
 @app.get("/fixtures")
 def fixtures_endpoint(league: str = Query(...), date: str = Query(None)):
+    t0 = time.time()
     matches = fetch_fixtures(league, date)
+    print(f"⏱ fetch_fixtures({league}) took {time.time() - t0:.1f}s")
     return {"league": league, "matches": matches}
 
 
 @app.get("/predict")
 async def predict(league: str = Query(...), home: str = Query(...), away: str = Query(...)):
+    t0 = time.time()
     team_data = fetch_stats(league)
+    t1 = time.time()
+    print(f"⏱ fetch_stats({league}) took {t1 - t0:.1f}s")
+
     resolved_h = resolve_team(home, team_data)
     resolved_a = resolve_team(away, team_data)
     # If resolution failed, fall back to the raw name for display/model lookup —
@@ -722,6 +728,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         f1 = executor.submit(run_model, h, a, team_data)
         f2 = executor.submit(run_model, a, h, team_data)
         r1, r2 = f1.result(), f2.result()
+    t2 = time.time()
+    print(f"⏱ run_model (both directions) took {t2 - t1:.1f}s")
 
     # NEW — fetch real bookmaker odds alongside the model's own implied odds.
     # Uses the RAW fixture team names (home/away as given), not the
