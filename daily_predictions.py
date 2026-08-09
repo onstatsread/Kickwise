@@ -21,17 +21,16 @@ REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
 # Mar-Nov or Southern Hemisphere calendars, genuinely mid-season right
 # now. Revisit this list as European seasons progress through the year —
 # leagues dropped here aren't bad, just too early right now.
+#
+# Further trimmed from 41 to 33 (Aug 2026) — dropped the 6 Australia NPL
+# state leagues and Brazil Serie C after switching fully to AnnaBet as
+# the data source (no more ScraperAPI/SoccerStats fallback). AnnaBet
+# doesn't have a mapped equivalent for these 7 leagues, so they'd return
+# nothing now. Re-add if/when an AnnaBet mapping is found for them.
 LEAGUE_CODES = {
-    "Australia - NPL Victoria": "australia3",
-    "Australia - NPL Queensland": "australia4",
-    "Australia - NPL Western Australia": "australia5",
-    "Australia - NPL South Australia": "australia6",
-    "Australia - NPL New South Wales": "australia11",
-    "Australia - Victoria Premier League": "australia13",
     "Belarus - Vysshaya Liga": "belarus",
     "Brazil - Serie A": "brazil",
     "Brazil - Serie B": "brazil2",
-    "Brazil - Serie C": "brazil3",
     "Canada - Premier League": "canada",
     "Chile - Liga de Primera": "chile",
     "China - Super League": "china",
