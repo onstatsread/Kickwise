@@ -78,6 +78,96 @@ ANNABET_SERIE_ID = {
     "sweden": 32, "sweden2": 33, "uruguay": 439, "usa": 43, "usa2": 362,
     "venezuela": 314,
 }
+# Reverse lookup: serie_ID -> our league code, used to match fixture
+# rows on the global "upcoming" page back to our own league codes.
+_ANNABET_ID_TO_CODE = {v: k for k, v in ANNABET_SERIE_ID.items()}
+
+ANNABET_UPCOMING_URL = "https://annabet.com/en/soccerstats/upcoming/"
+_ANNABET_FIXTURES_CACHE = {}  # (timestamp, {league_code: [matches]})
+ANNABET_FIXTURES_CACHE_TTL = 1800  # 30 min — this page updates frequently
+                                    # as kickoffs pass, shorter TTL than stats
+
+_ANNABET_SERIE_LINK_RE = re.compile(r'/serie_(\d+)_')
+_ANNABET_DATETIME_RE = re.compile(r'(\d{1,2})\.(\d{1,2})\.\s+(\d{1,2}):(\d{2})')
+
+
+def fetch_all_upcoming_annabet():
+    """Fetch the single global upcoming-fixtures page and group matches
+    by our league codes (via serie_ID matched from each row's league
+    link). One fetch covers every AnnaBet-mapped league at once —
+    cheaper than the old per-league fixture calls SoccerStats needed."""
+    cached = _ANNABET_FIXTURES_CACHE.get("_all")
+    if cached and (time.time() - cached[0]) < ANNABET_FIXTURES_CACHE_TTL:
+        return cached[1]
+
+    resp = ANNABET_SESSION.get(ANNABET_UPCOMING_URL, timeout=30)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    by_league = {}
+    for row in soup.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 3:
+            continue
+
+        row_text = cells[0].get_text(" ", strip=True)
+        dt_match = _ANNABET_DATETIME_RE.search(row_text)
+        if not dt_match:
+            continue
+
+        # Find the league link (points to /serie_{ID}_...) to identify
+        # which league this fixture belongs to
+        league_link = None
+        for cell in cells:
+            a = cell.find("a", href=_ANNABET_SERIE_LINK_RE)
+            if a:
+                league_link = a
+                break
+        if not league_link:
+            continue
+        serie_match = _ANNABET_SERIE_LINK_RE.search(league_link["href"])
+        serie_id = int(serie_match.group(1))
+        code = _ANNABET_ID_TO_CODE.get(serie_id)
+        if not code:
+            continue  # league we don't track — skip
+
+        # Find the team matchup link (h2h.php)
+        team_link = None
+        for cell in cells:
+            a = cell.find("a", href=re.compile(r'h2h\.php'))
+            if a:
+                team_link = a
+                break
+        if not team_link:
+            continue
+        team_text = team_link.get_text(strip=True)
+        if " - " not in team_text:
+            continue
+        home, away = team_text.split(" - ", 1)
+
+        day, month, hour, minute = dt_match.groups()
+        time_str = f"{hour}:{minute}"
+        date_str = f"{day}.{month}."
+
+        by_league.setdefault(code, []).append({
+            "date": date_str, "time": time_str,
+            "home": home.strip(), "away": away.strip(),
+        })
+
+    _ANNABET_FIXTURES_CACHE["_all"] = (time.time(), by_league)
+    return by_league
+
+
+def fetch_fixtures_annabet(code, day, month):
+    """Returns fixtures for one league code on a given day/month (both
+    ints), matching against the cached global upcoming-fixtures data."""
+    by_league = fetch_all_upcoming_annabet()
+    matches = by_league.get(code, [])
+    target = f"{day}.{month}."
+    return [
+        {"time": m["time"], "home": m["home"], "away": m["away"]}
+        for m in matches if m["date"] == target
+    ]
 
 
 def _annabet_get_header(table):
@@ -348,9 +438,10 @@ def fetch_stats(code):
     if cached and (time.time() - cached[0]) < STATS_CACHE_TTL:
         return cached[1]
 
-    # Try AnnaBet first if this league is mapped — free, no Cloudflare
-    # fight. Falls through to SoccerStats below if AnnaBet doesn't cover
-    # this league, or if the AnnaBet fetch fails for any reason.
+    # AnnaBet only — no ScraperAPI/SoccerStats fallback, per decision to
+    # go fully free. Leagues not in ANNABET_SERIE_ID (Brazil Serie C,
+    # Australia NPL states) will return empty here — they were dropped
+    # from LEAGUE_CODES for this reason.
     if code in ANNABET_SERIE_ID:
         try:
             result = fetch_stats_annabet(ANNABET_SERIE_ID[code])
@@ -358,81 +449,9 @@ def fetch_stats(code):
                 _STATS_CACHE[code] = (time.time(), result)
                 return result
         except Exception as e:
-            print(f"AnnaBet fetch failed for {code}, falling back to SoccerStats: {e}")
+            print(f"AnnaBet fetch failed for {code}: {e}")
 
-    teams = {}
-    try:
-        soup = BeautifulSoup(
-            fetch_protected(f"{BASE}/homeaway.asp?league={code}").text,
-            "html.parser")
-        tables = soup.find_all("table")
-        section_count = 0
-        for tbl in tables:
-            valid_rows = []
-            for row in tbl.find_all("tr"):
-                cells = row.find_all("td")
-                if len(cells) < 8:
-                    continue
-                team = cells[1].get_text(strip=True)
-                if not team:
-                    continue
-                try:
-                    gp = float(cells[2].get_text(strip=True))
-                    gf = float(cells[6].get_text(strip=True))
-                    ga = float(cells[7].get_text(strip=True))
-                except:
-                    continue
-                if gp <= 0:
-                    continue
-                valid_rows.append((team, gp, gf, ga))
-            if len(valid_rows) >= 10:
-                section_count += 1
-                for team, gp, gf, ga in valid_rows:
-                    if team not in teams:
-                        teams[team] = {}
-                    if section_count == 1:
-                        teams[team]["hgp"] = gp
-                        teams[team]["hgf"] = gf
-                        teams[team]["hga"] = ga
-                    elif section_count == 2:
-                        teams[team]["agp"] = gp
-                        teams[team]["agf"] = gf
-                        teams[team]["aga"] = ga
-            if section_count >= 2:
-                break
-    except Exception as e:
-        print(f"Stats error: {e}")
-
-    result = {}
-    for team, d in teams.items():
-        if "hgp" not in d or "agp" not in d:
-            continue
-        hgp, hgf, hga = d["hgp"], d["hgf"], d["hga"]
-        agp, agf, aga = d["agp"], d["agf"], d["aga"]
-        gp = hgp + agp
-        gf = hgf + agf
-        ga = hga + aga
-        result[team] = {
-            "gp": gp,
-            "gf": gf / gp if gp else 0,
-            "ga": ga / gp if gp else 0,
-            "tot": (gf + ga) / gp if gp else 0,
-            "hgf": hgf / hgp if hgp else 0,
-            "hga": hga / hgp if hgp else 0,
-            "htot": (hgf + hga) / hgp if hgp else 0,
-            "agf": agf / agp if agp else 0,
-            "aga": aga / agp if agp else 0,
-            "atot": (agf + aga) / agp if agp else 0,
-        }
-    # Only cache a genuinely successful fetch — an empty result usually
-    # means this particular request hit an intermittent failure (the
-    # 500s we've seen from ScraperAPI), not that the league has no data.
-    # Caching an empty result would lock that league into showing N/A for
-    # a full hour even once SoccerStats becomes reachable again.
-    if result:
-        _STATS_CACHE[code] = (time.time(), result)
-    return result
-
+    return {}
 TIME_RE  = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
 DAY_RE   = re.compile(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*')
 
@@ -457,6 +476,31 @@ def fetch_fixtures(code, date_str=None):
     else:
         d = date.today()
         today1 = f"{d.day} {d.strftime('%b')}"
+
+    # AnnaBet only — no ScraperAPI/SoccerStats fallback, per decision to
+    # go fully free. One shared global fetch covers all mapped leagues,
+    # so this is fast/cheap after the first call in a run. Returns
+    # immediately even if AnnaBet genuinely has no matches that day for
+    # this league (a valid empty result, not a failure) — mapped leagues
+    # never touch the old SoccerStats/ScraperAPI path below. Leagues not
+    # in ANNABET_SERIE_ID (Brazil Serie C, Australia NPL states) fall
+    # through, but those were dropped from LEAGUE_CODES for this reason.
+    if code in ANNABET_SERIE_ID:
+        try:
+            d = date.today() if not date_str else None
+            if d:
+                return fetch_fixtures_annabet(code, d.day, d.month)
+            else:
+                # date_str was given explicitly (e.g. by blog.py) — parse
+                # "D Mon" format (e.g. "9 Aug") back into day/month ints
+                import calendar
+                parts = date_str.strip().split()
+                day_num = int(parts[0])
+                month_num = list(calendar.month_abbr).index(parts[1][:3].title())
+                return fetch_fixtures_annabet(code, day_num, month_num)
+        except Exception as e:
+            print(f"AnnaBet fixtures failed for {code}: {e}")
+            return []
 
     matches = []
     seen = set()
