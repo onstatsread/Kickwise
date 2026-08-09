@@ -22,8 +22,6 @@ HEADERS = {
 
 from annabet_leagues import ANNABET_LEAGUE_IDS
 
-MIN_GP_THRESHOLD = 10
-
 
 def extract_max_gp(html):
     """Parse AnnaBet's league table(s) and find the highest games-played
@@ -73,20 +71,18 @@ def check_league(name, serie_id, retries=1):
 def main():
     print(f"🔍 Checking games-played across {len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet...\n")
 
-    # Only check the FIRST 15 leagues for now — a full 162-league run at
-    # full speed got rate-limited/blocked after ~8 requests last time
-    # (everything after timed out for the rest of a 1h49m run). Testing
-    # a small batch with real spacing between requests first, to find a
-    # pace that doesn't trip whatever limit AnnaBet has, before trusting
-    # a run against the full list.
+    # Testing a small batch first with slower pacing — a full 162-league
+    # run at full speed got blocked after ~8 requests, and even slowing
+    # to 5s between requests still only let the same first few leagues
+    # through. No GP filter applied here — just reporting the real
+    # number for whatever successfully loads, no pre-judging by count.
     test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[:15])
 
     results = []
     for name, serie_id in test_leagues.items():
         r = check_league(name, serie_id)
         if r["status"] == "ok":
-            flag = "✅" if r["max_gp"] >= MIN_GP_THRESHOLD else "⚠️ THIN"
-            print(f"  {flag}  {name} (serie_{serie_id}): {r['max_gp']} games played")
+            print(f"  ✅  {name} (serie_{serie_id}): {r['max_gp']} games played")
             results.append((name, serie_id, r["max_gp"]))
         elif r["status"] == "no_data":
             print(f"  ❓  {name} (serie_{serie_id}): no table data found — check manually")
@@ -99,20 +95,15 @@ def main():
 
     print(f"\n📊 Summary — {len(results)} leagues checked\n")
 
-    keep = [r for r in results if r[2] >= MIN_GP_THRESHOLD]
-    thin = [r for r in results if 0 <= r[2] < MIN_GP_THRESHOLD]
+    ok = [r for r in results if r[2] > 0]
     failed = [r for r in results if r[2] == -1]
 
-    print(f"✅ READY ({len(keep)} leagues, >= {MIN_GP_THRESHOLD} games played):")
-    for name, sid, gp in sorted(keep, key=lambda x: -x[2]):
-        print(f"    {name}: {gp} GP")
-
-    print(f"\n⚠️ THIN — noted, not excluded ({len(thin)} leagues, < {MIN_GP_THRESHOLD} games played):")
-    for name, sid, gp in sorted(thin, key=lambda x: -x[2]):
+    print(f"✅ GAMES PLAYED (real numbers, no filtering):")
+    for name, sid, gp in sorted(ok, key=lambda x: -x[2]):
         print(f"    {name}: {gp} GP")
 
     if failed:
-        print(f"\n❌ FAILED TO CHECK ({len(failed)} leagues):")
+        print(f"\n❌ FAILED TO CHECK ({len(failed)} leagues — connection blocked, unrelated to GP):")
         for name, sid, gp in failed:
             print(f"    {name} (serie_{sid})")
 
