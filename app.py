@@ -36,6 +36,114 @@ HEADERS = {
 BASE    = "https://www.soccerstats.com"
 MODEL   = "A_mix2.xlsx"
 
+# ── AnnaBet stats source — free, no Cloudflare block, replaces
+# SoccerStats+ScraperAPI for leagues it covers. Verified: their table
+# structure is ['#','Team','GP','W','T','L','GF','GA','Diff','Pts',
+# 'Pts/G','W%','ØGF','ØGA'], found as the FIRST group of 3 consecutive
+# tables sharing that header (All Games / At Home / At Away, in that
+# order) — confirmed correct by checking Home GP + Away GP = All GP for
+# every team on a real page (K League 1). Falls back to SoccerStats for
+# leagues AnnaBet doesn't cover (Brazil Serie C, Australia NPL states).
+ANNABET_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate",  # NOT "br" — requests can't decompress
+                                          # Brotli without an extra package,
+                                          # asking for it returns garbage text
+    "Connection": "keep-alive",
+    "Referer": "https://annabet.com/en/soccerstats/",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Upgrade-Insecure-Requests": "1",
+}
+ANNABET_SESSION = requests.Session()  # persistent session — bare/fresh
+ANNABET_SESSION.headers.update(ANNABET_HEADERS)  # connections got blocked
+
+ANNABET_TABLE_HEADER = ['#', 'Team', 'GP', 'W', 'T', 'L', 'GF', 'GA', 'Diff', 'Pts', 'Pts/G', 'W%', 'ØGF', 'ØGA']
+
+# Maps your existing SoccerStats-style league codes (used everywhere
+# else in the app) to AnnaBet's serie_ID. Only the leagues currently in
+# blog.py's trimmed LEAGUE_CODES are mapped — leagues not listed here
+# fall back to SoccerStats automatically.
+ANNABET_SERIE_ID = {
+    "belarus": 232, "brazil": 217, "brazil2": 259, "canada": 750,
+    "chile": 301, "china": 248, "china2": 731, "colombia": 329,
+    "ecuador": 313, "estonia": 242, "faroeislands": 368, "finland": 7,
+    "finland2": 35, "georgia": 235, "iceland": 114, "iceland2": 392,
+    "ireland": 42, "ireland2": 163, "kazakhstan": 328, "latvia": 223,
+    "lithuania": 226, "malaysia": 521, "norway": 36, "norway2": 173,
+    "paraguay": 347, "peru": 321, "southkorea": 249, "southkorea2": 543,
+    "sweden": 32, "sweden2": 33, "uruguay": 439, "usa": 43, "usa2": 362,
+    "venezuela": 314,
+}
+
+
+def _annabet_get_header(table):
+    rows = table.find_all("tr")
+    if not rows:
+        return None
+    return [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
+
+
+def _annabet_parse_table(table):
+    teams = {}
+    for row in table.find_all("tr")[1:]:
+        cells = [c.get_text(strip=True) for c in row.find_all("td")]
+        if len(cells) < 8:
+            continue
+        try:
+            name = cells[1]
+            gp = int(cells[2])
+            gf = int(cells[6])
+            ga = int(cells[7])
+            teams[name] = {"gp": gp, "gf": gf, "ga": ga}
+        except (ValueError, IndexError):
+            continue
+    return teams
+
+
+def fetch_stats_annabet(serie_id):
+    """Fetch team stats from AnnaBet for one league. Returns the same
+    shape fetch_stats() (SoccerStats version) returns, so run_model()
+    doesn't need to know which source the data came from."""
+    url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
+    resp = ANNABET_SESSION.get(url, timeout=20)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    tables = soup.find_all("table")
+    matching = [t for t in tables if _annabet_get_header(t) == ANNABET_TABLE_HEADER]
+    if len(matching) < 3:
+        return {}
+
+    all_table, home_table, away_table = matching[0], matching[1], matching[2]
+    home_data = _annabet_parse_table(home_table)
+    away_data = _annabet_parse_table(away_table)
+
+    result = {}
+    for team, h in home_data.items():
+        a = away_data.get(team)
+        if not a:
+            continue
+        gp = h["gp"] + a["gp"]
+        gf = h["gf"] + a["gf"]
+        ga = h["ga"] + a["ga"]
+        result[team] = {
+            "gp": gp,
+            "gf": gf / gp if gp else 0,
+            "ga": ga / gp if gp else 0,
+            "tot": (gf + ga) / gp if gp else 0,
+            "hgf": h["gf"] / h["gp"] if h["gp"] else 0,
+            "hga": h["ga"] / h["gp"] if h["gp"] else 0,
+            "htot": (h["gf"] + h["ga"]) / h["gp"] if h["gp"] else 0,
+            "agf": a["gf"] / a["gp"] if a["gp"] else 0,
+            "aga": a["ga"] / a["gp"] if a["gp"] else 0,
+            "atot": (a["gf"] + a["ga"]) / a["gp"] if a["gp"] else 0,
+        }
+    return result
+
 # NEW — in-memory cache for fetch_stats() results, keyed by league code.
 # Without this, every match in a league triggers its own full scrape of
 # that league's homeaway.asp page — e.g. 5 matches in a league = 5
@@ -44,6 +152,7 @@ MODEL   = "A_mix2.xlsx"
 # caches per league for 1 hour, cutting most of those redundant calls.
 _STATS_CACHE = {}  # {league_code: (timestamp, team_data)}
 STATS_CACHE_TTL = 3600  # seconds
+
 
 # NEW — reverted back to ScraperAPI (new key from a fresh account) after
 # FlareSolverr's self-hosted instance kept crash-looping from Chromium
@@ -233,11 +342,23 @@ def resolve_team(name, team_data):
 
 
 def fetch_stats(code):
-    # Check cache first — skip the slow ScraperAPI call entirely if we
-    # fetched this league's stats within the last hour.
+    # Check cache first — skip the slow scrape entirely if we fetched
+    # this league's stats within the last hour.
     cached = _STATS_CACHE.get(code)
     if cached and (time.time() - cached[0]) < STATS_CACHE_TTL:
         return cached[1]
+
+    # Try AnnaBet first if this league is mapped — free, no Cloudflare
+    # fight. Falls through to SoccerStats below if AnnaBet doesn't cover
+    # this league, or if the AnnaBet fetch fails for any reason.
+    if code in ANNABET_SERIE_ID:
+        try:
+            result = fetch_stats_annabet(ANNABET_SERIE_ID[code])
+            if result:
+                _STATS_CACHE[code] = (time.time(), result)
+                return result
+        except Exception as e:
+            print(f"AnnaBet fetch failed for {code}, falling back to SoccerStats: {e}")
 
     teams = {}
     try:
@@ -780,6 +901,22 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/league_gp")
+def league_gp(league: str = Query(...)):
+    """Lightweight check — just fetches team stats for one league and
+    reports the max games-played across all teams, plus team count.
+    Used to identify which leagues have enough season data (e.g. >=10 GP)
+    to be worth keeping in LEAGUE_CODES. Deliberately does NOT also fetch
+    fixtures or run homeaway/latest twice like /debug does — one scrape
+    per league keeps a full-league-list batch check as cheap as possible.
+    """
+    team_data = fetch_stats(league)
+    if not team_data:
+        return {"league": league, "team_count": 0, "max_gp": 0}
+    max_gp = max(d.get("gp", 0) for d in team_data.values())
+    return {"league": league, "team_count": len(team_data), "max_gp": max_gp}
 
 
 @app.get("/debug")
