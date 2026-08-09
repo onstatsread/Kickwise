@@ -72,7 +72,14 @@ def check_league(name, serie_id, retries=1):
             resp.raise_for_status()
             max_gp = extract_max_gp(resp.text)
             if max_gp == 0:
-                return {"status": "no_data", "max_gp": 0}
+                # DEBUG — show what actually came back so we can see why
+                # parsing found nothing (wrong page? redirect? consent
+                # wall?) instead of just guessing.
+                snippet = resp.text[:300].replace("\n", " ")
+                return {
+                    "status": "no_data", "max_gp": 0,
+                    "debug": f"status={resp.status_code} len={len(resp.text)} url={resp.url} snippet={snippet}"
+                }
             return {"status": "ok", "max_gp": max_gp}
         except Exception as e:
             last_error = e
@@ -98,7 +105,8 @@ def main():
             print(f"  ✅  {name} (serie_{serie_id}): {r['max_gp']} games played")
             results.append((name, serie_id, r["max_gp"]))
         elif r["status"] == "no_data":
-            print(f"  ❓  {name} (serie_{serie_id}): no table data found — check manually")
+            print(f"  ❓  {name} (serie_{serie_id}): no table data found")
+            print(f"      DEBUG: {r.get('debug', 'n/a')}")
             results.append((name, serie_id, 0))
         else:
             print(f"  ❌  {name} (serie_{serie_id}): failed — {r['error']}")
