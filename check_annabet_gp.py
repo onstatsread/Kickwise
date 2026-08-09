@@ -96,7 +96,7 @@ def main():
     # to 5s between requests still only let the same first few leagues
     # through. No GP filter applied here — just reporting the real
     # number for whatever successfully loads, no pre-judging by count.
-    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[6:40])
+    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[40:])
 
     results = []
     for name, serie_id in test_leagues.items():
