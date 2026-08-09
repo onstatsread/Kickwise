@@ -1,14 +1,14 @@
 """
-AnnaBet Table Identification — Round 2
-Last attempt assumed tables 0/1/2 = All/Home/Away by position, which
-was wrong (table 1 was empty, and "All Games" + "At Away" showed
-identical data — meaning the real Home/Away tables are elsewhere among
-the 19 tables on the page).
+AnnaBet Real Parser — Verification Run
+Finds the season-long All Games / At Home / At Away tables reliably,
+without relying on fixed table index numbers (which shift per league
+depending on how many cup-competition tables appear before them).
 
-This time: print EVERY table's surrounding context (any heading, tab
-label, or text within ~300 characters before it) plus its first 2 data
-rows, so we can visually match each table to what it actually contains
-instead of guessing by position.
+Method: scan all tables for the exact header signature
+['#','Team','GP','W','T','L','GF','GA','Diff','Pts','Pts/G','W%','ØGF','ØGA'].
+Group consecutive matches into runs of 3. Take the FIRST such run — this
+is reliably the season stats (the "Last 6 Games" section, which shares
+the same header, always appears later on the page).
 """
 import requests
 from bs4 import BeautifulSoup
@@ -31,6 +31,41 @@ SESSION.headers.update(HEADERS)
 
 TEST_URL = "https://annabet.com/en/soccerstats/serie_249_x.html"  # K League 1
 
+EXPECTED_HEADER = ['#', 'Team', 'GP', 'W', 'T', 'L', 'GF', 'GA', 'Diff', 'Pts', 'Pts/G', 'W%', 'ØGF', 'ØGA']
+
+
+def get_header(table):
+    rows = table.find_all("tr")
+    if not rows:
+        return None
+    return [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
+
+
+def parse_table(table):
+    teams = {}
+    for row in table.find_all("tr")[1:]:  # skip header row
+        cells = [c.get_text(strip=True) for c in row.find_all("td")]
+        if len(cells) < 8:
+            continue
+        try:
+            name = cells[1]
+            gp = int(cells[2])
+            gf = int(cells[6])
+            ga = int(cells[7])
+            teams[name] = {"gp": gp, "gf": gf, "ga": ga}
+        except (ValueError, IndexError):
+            continue
+    return teams
+
+
+def find_season_tables(soup):
+    """Returns (all_games_table, home_table, away_table) or (None, None, None)."""
+    tables = soup.find_all("table")
+    matching = [t for t in tables if get_header(t) == EXPECTED_HEADER]
+    if len(matching) < 3:
+        return None, None, None
+    return matching[0], matching[1], matching[2]
+
 
 def main():
     print(f"🔍 Fetching {TEST_URL}\n")
@@ -38,37 +73,31 @@ def main():
     print(f"Status: {resp.status_code}, Length: {len(resp.text)}\n")
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    tables = soup.find_all("table")
-    print(f"Found {len(tables)} tables total.\n")
-    print("=" * 60)
+    all_table, home_table, away_table = find_season_tables(soup)
 
-    for i, table in enumerate(tables):
-        rows = table.find_all("tr")
+    if not all_table:
+        print("❌ Could not find 3 matching tables — structure may differ from expected")
+        return
 
-        html_str = str(soup)
-        table_html = str(table)
-        pos = html_str.find(table_html)
-        context_before = html_str[max(0, pos - 400):pos]
-        context_soup = BeautifulSoup(context_before, "html.parser")
-        context_text = context_soup.get_text(" ", strip=True)[-150:]
+    all_data = parse_table(all_table)
+    home_data = parse_table(home_table)
+    away_data = parse_table(away_table)
 
-        table_attrs = table.attrs
-        parent = table.parent
-        parent_attrs = parent.attrs if parent else {}
+    print(f"✅ Found season tables: All={len(all_data)} teams, Home={len(home_data)} teams, Away={len(away_data)} teams\n")
 
-        print(f"\nTABLE #{i} — {len(rows)} rows")
-        print(f"  Context text just before: ...{context_text!r}")
-        print(f"  Table attrs: {table_attrs}")
-        print(f"  Parent tag: <{parent.name if parent else '?'}> attrs: {parent_attrs}")
+    print("--- Verification: Home GP + Away GP should equal All GP, per team ---")
+    all_match = True
+    for team in all_data:
+        all_gp = all_data[team]["gp"]
+        home_gp = home_data.get(team, {}).get("gp", "?")
+        away_gp = away_data.get(team, {}).get("gp", "?")
+        ok = (isinstance(home_gp, int) and isinstance(away_gp, int) and home_gp + away_gp == all_gp)
+        if not ok:
+            all_match = False
+        flag = "✅" if ok else "❌"
+        print(f"  {flag} {team}: All GP={all_gp}, Home GP={home_gp}, Away GP={away_gp}")
 
-        if rows:
-            first_row_cells = [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
-            print(f"  First row: {first_row_cells}")
-        if len(rows) > 1:
-            second_row_cells = [c.get_text(strip=True) for c in rows[1].find_all(["td", "th"])]
-            print(f"  Second row: {second_row_cells}")
-
-        print("-" * 60)
+    print(f"\n{'✅ ALL TEAMS MATCH — parser is correct!' if all_match else '❌ MISMATCH FOUND — parser needs adjustment'}")
 
 
 if __name__ == "__main__":
