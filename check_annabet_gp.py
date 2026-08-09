@@ -18,7 +18,20 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Referer": "https://annabet.com/en/soccerstats/",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Upgrade-Insecure-Requests": "1",
 }
+
+# Persistent session — reuses cookies and the underlying connection across
+# requests, closer to how a real browser behaves than opening a brand new
+# bare connection every time (which the earlier attempts were doing).
+SESSION = requests.Session()
+SESSION.headers.update(HEADERS)
 
 from annabet_leagues import ANNABET_LEAGUE_IDS
 
@@ -55,7 +68,7 @@ def check_league(name, serie_id, retries=1):
     last_error = None
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = SESSION.get(url, timeout=15)
             resp.raise_for_status()
             max_gp = extract_max_gp(resp.text)
             if max_gp == 0:
@@ -76,7 +89,7 @@ def main():
     # to 5s between requests still only let the same first few leagues
     # through. No GP filter applied here — just reporting the real
     # number for whatever successfully loads, no pre-judging by count.
-    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[:15])
+    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[:6])
 
     results = []
     for name, serie_id in test_leagues.items():
@@ -91,7 +104,7 @@ def main():
             print(f"  ❌  {name} (serie_{serie_id}): failed — {r['error']}")
             results.append((name, serie_id, -1))
 
-        time.sleep(5)  # much slower pace — testing if this avoids the block
+        time.sleep(20)  # much longer gap — testing if this is a time-window limit
 
     print(f"\n📊 Summary — {len(results)} leagues checked\n")
 
