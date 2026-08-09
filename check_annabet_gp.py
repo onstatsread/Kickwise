@@ -52,12 +52,12 @@ def extract_max_gp(html):
     return max_gp
 
 
-def check_league(name, serie_id, retries=2):
+def check_league(name, serie_id, retries=1):
     url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
     last_error = None
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=20)
+            resp = requests.get(url, headers=HEADERS, timeout=15)
             resp.raise_for_status()
             max_gp = extract_max_gp(resp.text)
             if max_gp == 0:
@@ -66,15 +66,23 @@ def check_league(name, serie_id, retries=2):
         except Exception as e:
             last_error = e
             if attempt < retries:
-                time.sleep(2)
+                time.sleep(3)
     return {"status": "error", "error": str(last_error), "max_gp": 0}
 
 
 def main():
     print(f"🔍 Checking games-played across {len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet...\n")
 
+    # Only check the FIRST 15 leagues for now — a full 162-league run at
+    # full speed got rate-limited/blocked after ~8 requests last time
+    # (everything after timed out for the rest of a 1h49m run). Testing
+    # a small batch with real spacing between requests first, to find a
+    # pace that doesn't trip whatever limit AnnaBet has, before trusting
+    # a run against the full list.
+    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[:15])
+
     results = []
-    for name, serie_id in ANNABET_LEAGUE_IDS.items():
+    for name, serie_id in test_leagues.items():
         r = check_league(name, serie_id)
         if r["status"] == "ok":
             flag = "✅" if r["max_gp"] >= MIN_GP_THRESHOLD else "⚠️ THIN"
@@ -87,7 +95,7 @@ def main():
             print(f"  ❌  {name} (serie_{serie_id}): failed — {r['error']}")
             results.append((name, serie_id, -1))
 
-        time.sleep(0.3)  # light pause, be reasonable even though it's free
+        time.sleep(5)  # much slower pace — testing if this avoids the block
 
     print(f"\n📊 Summary — {len(results)} leagues checked\n")
 
