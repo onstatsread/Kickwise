@@ -1,9 +1,10 @@
 """
-AnnaBet Fixtures Structure Check
-Looks for upcoming (not-yet-played) matches on a league page — need to
-confirm how AnnaBet marks these (kickoff time vs a final score, some
-"vs" or "-" placeholder, date format, etc.) before building a real
-fetch_fixtures() parser around it.
+AnnaBet Upcoming Fixtures Parser
+Targets the "Upcoming Games" data — date header rows (e.g. "09.08.2026")
+followed by team1 - team2 rows with NO score yet (just odds: 1/X/2).
+This is likely sitting in the same big results/fixtures table we found
+earlier (~100+ rows) — just wasn't recognized before because it has no
+score digits and no HH:MM time, only a date header per group.
 """
 import requests
 from bs4 import BeautifulSoup
@@ -27,10 +28,8 @@ SESSION.headers.update(HEADERS)
 
 TEST_URL = "https://annabet.com/en/soccerstats/serie_36_x.html"  # Norway Eliteserien
 
-# Look for time-like patterns (HH:MM) which would indicate an upcoming
-# match listing (kickoff time) rather than a final score (X-Y)
-TIME_RE = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
-SCORE_RE = re.compile(r'\b(\d+)\s*[-:]\s*(\d+)\b')
+DATE_RE = re.compile(r'\b(\d{2})\.(\d{2})\.(\d{4})\b')  # DD.MM.YYYY
+ODDS_RE = re.compile(r'\b\d+\.\d{2}\b')  # decimal odds like 5.20
 
 
 def main():
@@ -39,38 +38,48 @@ def main():
     print(f"Status: {resp.status_code}, Length: {len(resp.text)}\n")
 
     soup = BeautifulSoup(resp.text, "html.parser")
-
-    # Search all tables for rows containing a time pattern (possible
-    # upcoming fixture) vs a score pattern (possible past result)
     tables = soup.find_all("table")
-    print(f"Scanning {len(tables)} tables for time/score patterns...\n")
 
     for i, table in enumerate(tables):
         rows = table.find_all("tr")
-        time_rows = []
-        score_rows = []
-        kristiansund_rows = []
+        current_date = None
+        fixtures_found = []
+
         for row in rows:
-            text = row.get_text(" ", strip=True)
-            if "Kristiansund" in text or "Molde" in text:
-                kristiansund_rows.append(text)
-            if TIME_RE.search(text) and not SCORE_RE.search(text):
-                time_rows.append(text)
-            elif SCORE_RE.search(text):
-                score_rows.append(text)
+            row_text = row.get_text(" ", strip=True)
 
-        if kristiansund_rows:
-            print(f"*** TABLE #{i} — contains Kristiansund/Molde ***")
-            for k in kristiansund_rows[:5]:
-                print(f"  MATCH: {k[:200]}")
-            print()
+            # Is this a date header row?
+            date_match = DATE_RE.search(row_text)
+            cells = row.find_all("td")
 
-        if time_rows or score_rows:
-            print(f"--- TABLE #{i} — {len(rows)} rows, {len(time_rows)} time-like, {len(score_rows)} score-like ---")
-            for t in time_rows[:3]:
-                print(f"  TIME: {t[:150]}")
-            for s in score_rows[:3]:
-                print(f"  SCORE: {s[:150]}")
+            # Date header rows are usually short (just the date, maybe
+            # spanning the row) — check if this row is JUST a date
+            if date_match and len(row_text) < 20:
+                current_date = date_match.group(0)
+                continue
+
+            # Look for a row with exactly 2 team links and odds, no score
+            links = row.find_all("a")
+            if len(links) == 2 and current_date:
+                team1 = links[0].get_text(strip=True)
+                team2 = links[1].get_text(strip=True)
+                odds = ODDS_RE.findall(row_text)
+                # No digit-digit score should appear between team names —
+                # if there's a real score, SCORE pattern like "2 - 1"
+                # (single/double digit, not decimal) would show up instead
+                has_score = re.search(r'\b\d{1,2}\s*-\s*\d{1,2}\b(?!\d)', row_text.replace(".", ""))
+                if odds and (team1 == "Kristiansund" or team2 == "Kristiansund" or team1 == "Molde FK" or team2 == "Molde FK"):
+                    fixtures_found.append({
+                        "table": i, "date": current_date,
+                        "team1": team1, "team2": team2,
+                        "odds": odds[:3], "raw": row_text[:150]
+                    })
+
+        if fixtures_found:
+            print(f"=== TABLE #{i} — found {len(fixtures_found)} Kristiansund/Molde row(s) ===")
+            for f in fixtures_found:
+                print(f"  Date: {f['date']}, {f['team1']} vs {f['team2']}, Odds: {f['odds']}")
+                print(f"  Raw: {f['raw']}")
             print()
 
 
