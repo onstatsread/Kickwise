@@ -1,14 +1,14 @@
 """
-AnnaBet Parser — One-Shot Build & Check
-Parses one league page assuming AnnaBet's tables appear in page order:
-table 0 = All Games, table 1 = At Home, table 2 = At Away (based on the
-page layout seen earlier). Prints team stats clearly labeled by section
-so this can be checked against the real site in a single look, instead
-of a separate inspect-then-build round trip.
+AnnaBet Table Identification — Round 2
+Last attempt assumed tables 0/1/2 = All/Home/Away by position, which
+was wrong (table 1 was empty, and "All Games" + "At Away" showed
+identical data — meaning the real Home/Away tables are elsewhere among
+the 19 tables on the page).
 
-If the labels come out wrong (e.g. "At Home" numbers don't match what
-the real site shows under Home), that tells us the table order
-assumption is wrong and needs flipping — but we'll know from ONE run.
+This time: print EVERY table's surrounding context (any heading, tab
+label, or text within ~300 characters before it) plus its first 2 data
+rows, so we can visually match each table to what it actually contains
+instead of guessing by position.
 """
 import requests
 from bs4 import BeautifulSoup
@@ -32,26 +32,6 @@ SESSION.headers.update(HEADERS)
 TEST_URL = "https://annabet.com/en/soccerstats/serie_249_x.html"  # K League 1
 
 
-def parse_table(table):
-    """Extract Team name + GP + GF + GA for every row in one table.
-    Assumes column order: #, Team, GP, W, T, L, GF, GA, ... (based on
-    the page layout seen earlier)."""
-    teams = []
-    for row in table.find_all("tr"):
-        cells = [c.get_text(strip=True) for c in row.find_all("td")]
-        if len(cells) < 8:
-            continue
-        try:
-            name = cells[1]
-            gp = int(cells[2])
-            gf = int(cells[6])
-            ga = int(cells[7])
-            teams.append({"team": name, "gp": gp, "gf": gf, "ga": ga})
-        except (ValueError, IndexError):
-            continue
-    return teams
-
-
 def main():
     print(f"🔍 Fetching {TEST_URL}\n")
     resp = SESSION.get(TEST_URL, timeout=20)
@@ -59,21 +39,36 @@ def main():
 
     soup = BeautifulSoup(resp.text, "html.parser")
     tables = soup.find_all("table")
-    print(f"Found {len(tables)} tables on the page.\n")
+    print(f"Found {len(tables)} tables total.\n")
+    print("=" * 60)
 
-    labels = ["ALL GAMES (assumed)", "AT HOME (assumed)", "AT AWAY (assumed)"]
+    for i, table in enumerate(tables):
+        rows = table.find_all("tr")
 
-    for i, table in enumerate(tables[:3]):
-        label = labels[i] if i < len(labels) else f"TABLE {i}"
-        teams = parse_table(table)
-        print(f"=== {label} — table index {i}, {len(teams)} teams parsed ===")
-        for t in teams[:5]:  # first 5 teams only, enough to eyeball
-            print(f"    {t['team']}: GP={t['gp']} GF={t['gf']} GA={t['ga']}")
-        print()
+        html_str = str(soup)
+        table_html = str(table)
+        pos = html_str.find(table_html)
+        context_before = html_str[max(0, pos - 400):pos]
+        context_soup = BeautifulSoup(context_before, "html.parser")
+        context_text = context_soup.get_text(" ", strip=True)[-150:]
 
-    print("👉 Compare the numbers above to annabet.com/en/soccerstats/serie_249_x.html")
-    print("   in a browser. If 'AT HOME' numbers here match the real Home table,")
-    print("   the table order assumption is correct.")
+        table_attrs = table.attrs
+        parent = table.parent
+        parent_attrs = parent.attrs if parent else {}
+
+        print(f"\nTABLE #{i} — {len(rows)} rows")
+        print(f"  Context text just before: ...{context_text!r}")
+        print(f"  Table attrs: {table_attrs}")
+        print(f"  Parent tag: <{parent.name if parent else '?'}> attrs: {parent_attrs}")
+
+        if rows:
+            first_row_cells = [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
+            print(f"  First row: {first_row_cells}")
+        if len(rows) > 1:
+            second_row_cells = [c.get_text(strip=True) for c in rows[1].find_all(["td", "th"])]
+            print(f"  Second row: {second_row_cells}")
+
+        print("-" * 60)
 
 
 if __name__ == "__main__":
