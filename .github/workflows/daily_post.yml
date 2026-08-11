@@ -29,4 +29,8 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          BLOG_ID_2: ${{ secrets.BLOG_ID_2 }}
+          GOOGLE_CLIENT_ID_2: ${{ secrets.GOOGLE_CLIENT_ID_2 }}
+          GOOGLE_CLIENT_SECRET_2: ${{ secrets.GOOGLE_CLIENT_SECRET_2 }}
+          GOOGLE_REFRESH_TOKEN_2: ${{ secrets.GOOGLE_REFRESH_TOKEN_2 }}
         run: python daily_predictions.py
