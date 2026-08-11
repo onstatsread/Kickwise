@@ -6,6 +6,7 @@ Fetches all leagues with matches, runs predictions, posts to Blogger
 import requests
 import json
 import os
+import re
 from datetime import date, datetime, timedelta
 
 BACKEND_URL = os.environ["BACKEND_URL"]
@@ -13,6 +14,17 @@ BLOG_ID     = os.environ["BLOG_ID"]
 CLIENT_ID   = os.environ["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
+
+# NEW — second blog, different Google account, filtered "standard" subset
+# of matches only (not a different league list — same 34 leagues checked
+# once, filtered per-match for this blog). All four vars must be set for
+# blog 2 to run; if any are missing, blog 2 is silently skipped so this
+# doesn't break the main blog if not configured yet.
+BLOG_ID_2       = os.environ.get("BLOG_ID_2")
+CLIENT_ID_2     = os.environ.get("GOOGLE_CLIENT_ID_2")
+CLIENT_SECRET_2 = os.environ.get("GOOGLE_CLIENT_SECRET_2")
+REFRESH_TOKEN_2 = os.environ.get("GOOGLE_REFRESH_TOKEN_2")
+BLOG2_ENABLED = all([BLOG_ID_2, CLIENT_ID_2, CLIENT_SECRET_2, REFRESH_TOKEN_2])
 
 # All league codes to check
 # Trimmed from ~114 to 41 leagues (Aug 2026) — dropped every league on an
@@ -64,11 +76,14 @@ LEAGUE_CODES = {
     "Venezuela - Liga FUTVE": "venezuela",
 }
 
-def get_access_token():
+def get_access_token(client_id=None, client_secret=None, refresh_token=None):
+    """Parameterized so it works for either blog's Google account — defaults
+    to blog 1's credentials if called with no arguments (existing behavior
+    unchanged for the main blog)."""
     resp = requests.post("https://oauth2.googleapis.com/token", data={
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "refresh_token": REFRESH_TOKEN,
+        "client_id": client_id or CLIENT_ID,
+        "client_secret": client_secret or CLIENT_SECRET,
+        "refresh_token": refresh_token or REFRESH_TOKEN,
         "grant_type": "refresh_token"
     })
     return resp.json().get("access_token")
@@ -113,39 +128,11 @@ def get_prediction(league_code, home, away, retries=2):
     print(f"    ❌ Failed to get prediction for {home} vs {away} after {retries} attempts: {last_error}")
     return None
 
-def format_match_html(league_name, match, pred):
-    if not pred:
-        return ""
-
-    time_str = match.get("time", "TBD")
-    home = match["home"]
-    away = match["away"]
-
-    # Smart Prediction 1
-    c120_match = lambda v: (v or "").lower().strip() == "match" or \
-                           ("match" in (v or "").lower() and "not" not in (v or "").lower())
-    d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
-    d64_one  = "one"  in (pred.get("d64","") + pred.get("d64r","")).lower()
-    b120_combined = (pred.get("b120","") + " " + pred.get("b120r","")).lower()
-    b120_double = "double" in b120_combined
-    b120_under  = "under"  in b120_combined
-    c120_ok = c120_match(pred.get("c120")) or c120_match(pred.get("c120r"))
-    d70_main = pred.get("d70") if c120_match(pred.get("c120")) else (pred.get("d70r") or pred.get("d70",""))
-
-    pred1 = ""
-    if c120_ok:
-        labels = []
-        if b120_double: labels.append("double" if d64_both else ("2-handicap" if d64_one else None))
-        if b120_under:  labels.append("under"  if d64_both else ("under extend" if d64_one else None))
-        labels = list(set(filter(None, labels)))
-        if labels:
-            b46_match = __import__('re').search(r'(\d+\s*goals)', (pred.get("b46","") + " " + pred.get("b46r","")).lower())
-            b46_goals = b46_match.group(1).replace(" ","") if b46_match else ""
-            aa15_ok = any((pred.get(k,"") or "").lower() in ("yes","yes1","both") for k in ["aa15","aa15r"])
-            goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
-            pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
-
-    # Smart Prediction 2
+def build_pred2_text(pred):
+    """Builds the Prediction 2 string from a /predict response. Extracted
+    from format_match_html() so both the display logic and the blog-2
+    filter (meets_blog2_standard) can reuse the exact same logic without
+    duplicating it."""
     o73 = (pred.get("o73") or pred.get("o73r") or "").strip()
     d69n = (pred.get("d70") or "").lower()
     d70n = (pred.get("d70val") or "").lower()
@@ -153,6 +140,13 @@ def format_match_html(league_name, match, pred):
     d70r2 = (pred.get("d70valr") or "").lower()
     o73l = o73.lower()
     b46v = pred.get("b46") or pred.get("b46r") or ""
+
+    d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
+    b120_combined = (pred.get("b120","") + " " + pred.get("b120r","")).lower()
+    b120_double = "double" in b120_combined
+    c120_match = lambda v: (v or "").lower().strip() == "match" or \
+                           ("match" in (v or "").lower() and "not" not in (v or "").lower())
+    c120_ok = c120_match(pred.get("c120")) or c120_match(pred.get("c120r"))
 
     r1 = o73l and (o73l in d69n or o73l in d69r) and \
          (o73l in d70n or o73l in d70r2) and b120_double and c120_ok
@@ -183,6 +177,45 @@ def format_match_html(league_name, match, pred):
             r_away = "away" in b118r
             if (n_home and r_home) or (n_away and r_away):
                 pred2 += " / same"
+
+    return pred2
+
+
+def format_match_html(league_name, match, pred):
+    if not pred:
+        return ""
+
+    time_str = match.get("time", "TBD")
+    home = match["home"]
+    away = match["away"]
+
+    # Smart Prediction 1
+    c120_match = lambda v: (v or "").lower().strip() == "match" or \
+                           ("match" in (v or "").lower() and "not" not in (v or "").lower())
+    d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
+    d64_one  = "one"  in (pred.get("d64","") + pred.get("d64r","")).lower()
+    b120_combined = (pred.get("b120","") + " " + pred.get("b120r","")).lower()
+    b120_double = "double" in b120_combined
+    b120_under  = "under"  in b120_combined
+    c120_ok = c120_match(pred.get("c120")) or c120_match(pred.get("c120r"))
+    d70_main = pred.get("d70") if c120_match(pred.get("c120")) else (pred.get("d70r") or pred.get("d70",""))
+
+    pred1 = ""
+    if c120_ok:
+        labels = []
+        if b120_double: labels.append("double" if d64_both else ("2-handicap" if d64_one else None))
+        if b120_under:  labels.append("under"  if d64_both else ("under extend" if d64_one else None))
+        labels = list(set(filter(None, labels)))
+        if labels:
+            b46_match = re.search(r'(\d+\s*goals)', (pred.get("b46","") + " " + pred.get("b46r","")).lower())
+            b46_goals = b46_match.group(1).replace(" ","") if b46_match else ""
+            aa15_ok = any((pred.get(k,"") or "").lower() in ("yes","yes1","both") for k in ["aa15","aa15r"])
+            goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
+            pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
+
+    # Smart Prediction 2 — built via shared helper (also used by
+    # meets_blog2_standard() for the filter, so both stay in sync)
+    pred2 = build_pred2_text(pred)
 
     # Odds
     odds = pred.get("odds") or pred.get("oddsr") or {}
@@ -341,9 +374,43 @@ def format_match_html(league_name, match, pred):
   </table>
 </div>"""
 
-def post_to_blogger(access_token, title, content):
+# NEW — "Standard" filter for blog 2: a match only qualifies if it meets
+# ALL four conditions:
+#   1. Prediction 2 must exist (non-empty)
+#   2. Prediction 2 must be JUST a team name, or "team name only" — not
+#      combined with goals or "/same" (those forms all contain a "/",
+#      so excluding any "/" plus excluding a bare goals value like
+#      "5goals" catches exactly the disallowed forms)
+#   3. value_pct['total'] (H/A/D) between -20 and 0 inclusive
+#   4. ou25_value_pct['total'] (O/U 2.5) between -20 and 0 inclusive
+_BARE_GOALS_RE = re.compile(r'^\d+\s*goals\b', re.IGNORECASE)
+
+
+def meets_blog2_standard(pred):
+    pred2 = build_pred2_text(pred)
+    if not pred2:
+        return False
+    if "/" in pred2:
+        return False
+    if _BARE_GOALS_RE.match(pred2.strip()):
+        return False
+
+    value_pct = pred.get("value_pct") or {}
+    total = value_pct.get("total")
+    if total is None or not (-20 <= total <= 0):
+        return False
+
+    ou25_value_pct = pred.get("ou25_value_pct") or {}
+    ou_total = ou25_value_pct.get("total")
+    if ou_total is None or not (-20 <= ou_total <= 0):
+        return False
+
+    return True
+
+
+def post_to_blogger(access_token, blog_id, title, content):
     resp = requests.post(
-        f"https://www.googleapis.com/blogger/v3/blogs/{BLOG_ID}/posts/",
+        f"https://www.googleapis.com/blogger/v3/blogs/{blog_id}/posts/",
         headers={"Authorization": f"Bearer {access_token}",
                  "Content-Type": "application/json"},
         json={"title": title, "content": content}
@@ -406,6 +473,20 @@ def main():
     failed_matches = 0
     na_matches = 0
     current_time = None
+
+    # NEW — blog 2 gets its own separate HTML, built alongside blog 1's
+    # in the same loop (one set of predictions, two filtered outputs —
+    # no extra backend calls needed for blog 2).
+    blog2_html = f"""
+<div style="background:#0A3D1F;color:#AAFF3C;padding:16px;border-radius:8px;font-family:Arial,sans-serif;text-align:center">
+  <h2 style="margin:0;font-size:24px">⚽ Kickwise Standard Picks</h2>
+  <p style="margin:4px 0;color:#fff">{today_display}</p>
+  <p style="margin:4px 0;font-size:12px;color:#aaa">Filtered picks meeting the standard | Data from SoccerStats</p>
+</div>
+"""
+    blog2_matches = 0
+    blog2_current_time = None
+
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
 
@@ -434,23 +515,50 @@ def main():
             all_html += match_html
             total_matches += 1
 
+            # NEW — check blog 2's standard on this same match, using the
+            # same already-fetched prediction (no extra backend call)
+            if BLOG2_ENABLED and meets_blog2_standard(pred):
+                if match_time != blog2_current_time:
+                    blog2_current_time = match_time
+                    blog2_html += f'\n<div style="background:#2C3E50;color:#AAFF3C;padding:8px 12px;margin:16px 0 4px;border-radius:4px;font-family:Arial;font-weight:bold;font-size:15px">🕐 {match_time}</div>\n'
+                blog2_html += match_html
+                blog2_matches += 1
+
     if total_matches == 0:
         print("No matches found today.")
         return
 
     print(f"\n📊 Summary: {total_matches} posted | {na_matches} skipped (genuine N/A) | {failed_matches} dropped (request failed after retries)")
+    if BLOG2_ENABLED:
+        print(f"📊 Blog 2 (standard picks): {blog2_matches} of {total_matches} matches qualified")
 
     all_html += f'\n<p style="text-align:center;color:#888;font-size:12px;margin-top:20px">Generated by Kickwise | {today_display} | {total_matches} matches processed</p>'
 
     print(f"\n📝 Posting {total_matches} matches to Blogger...")
     access_token = get_access_token()
     title = f"⚽ Kickwise Predictions — {today_display}"
-    status, result = post_to_blogger(access_token, title, all_html)
+    status, result = post_to_blogger(access_token, BLOG_ID, title, all_html)
 
     if status == 200:
         print(f"✅ Posted successfully! URL: {result.get('url','')}")
     else:
         print(f"❌ Failed to post: {status} — {result}")
+
+    # NEW — post to blog 2, only if enabled and at least one match qualified
+    if BLOG2_ENABLED:
+        if blog2_matches == 0:
+            print("\nℹ️ Blog 2: no matches met the standard today — skipping post.")
+        else:
+            blog2_html += f'\n<p style="text-align:center;color:#888;font-size:12px;margin-top:20px">Generated by Kickwise | {today_display} | {blog2_matches} matches processed</p>'
+            print(f"\n📝 Posting {blog2_matches} matches to Blog 2...")
+            access_token_2 = get_access_token(CLIENT_ID_2, CLIENT_SECRET_2, REFRESH_TOKEN_2)
+            title_2 = f"⚽ Kickwise Standard Picks — {today_display}"
+            status_2, result_2 = post_to_blogger(access_token_2, BLOG_ID_2, title_2, blog2_html)
+
+            if status_2 == 200:
+                print(f"✅ Blog 2 posted successfully! URL: {result_2.get('url','')}")
+            else:
+                print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
 if __name__ == "__main__":
     main()
