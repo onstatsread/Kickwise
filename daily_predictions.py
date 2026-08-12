@@ -26,6 +26,36 @@ CLIENT_SECRET_2 = os.environ.get("GOOGLE_CLIENT_SECRET_2")
 REFRESH_TOKEN_2 = os.environ.get("GOOGLE_REFRESH_TOKEN_2")
 BLOG2_ENABLED = all([BLOG_ID_2, CLIENT_ID_2, CLIENT_SECRET_2, REFRESH_TOKEN_2])
 
+# NEW — WhatsApp notification via CallMeBot (free) when blog 2 posts
+# successfully. Requires a one-time opt-in: save +34 644 51 71 41 as a
+# contact, WhatsApp it "I allow callmebot to send me messages", then use
+# the API key it replies with. Silently skipped if not configured.
+# NEW — Telegram notification when blog 2 posts successfully. Switched
+# from CallMeBot (WhatsApp) after it never delivered the opt-in reply —
+# Telegram's official Bot API is free and far more reliable since it's
+# run by Telegram itself, not a third-party community service.
+# Requires a one-time setup: create a bot via @BotFather, message it
+# once, then get the token + chat ID. Silently skipped if not configured.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID")
+TELEGRAM_ENABLED = all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID])
+
+
+def send_telegram_notification(message):
+    """Sends a message via Telegram Bot API. Fails silently (prints a
+    warning) — a notification failure should never crash the actual
+    blog-posting run."""
+    if not TELEGRAM_ENABLED:
+        return
+    try:
+        requests.get(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            params={"chat_id": TELEGRAM_CHAT_ID, "text": message},
+            timeout=15,
+        )
+    except Exception as e:
+        print(f"⚠️ Telegram notification failed: {e}")
+
 # All league codes to check
 # Trimmed from ~114 to 41 leagues (Aug 2026) — dropped every league on an
 # Aug-May calendar since those seasons just started (0-2 games played,
@@ -557,6 +587,9 @@ def main():
 
             if status_2 == 200:
                 print(f"✅ Blog 2 posted successfully! URL: {result_2.get('url','')}")
+                send_telegram_notification(
+                    f"⚽ Kickwise Standard Picks posted! {blog2_matches} match(es) today.\n{result_2.get('url','')}"
+                )
             else:
                 print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
