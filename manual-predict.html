@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kickwise — Manual Predictor</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0d1f14;
+    color: #eee;
+    padding-bottom: 60px;
+  }
+  header {
+    background: #0A3D1F;
+    color: #AAFF3C;
+    padding: 20px 16px;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+  }
+  header p {
+    margin: 6px 0 0;
+    color: #fff;
+    font-size: 13px;
+  }
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .card {
+    background: #142a1c;
+    border: 1px solid #1f3d29;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    color: #AAFF3C;
+    font-size: 15px;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    background: #0d1f14;
+    color: #eee;
+    border: 1px solid #2a4a35;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    resize: vertical;
+  }
+  .hint {
+    font-size: 11px;
+    color: #8a9a90;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  button {
+    background: #AAFF3C;
+    color: #0A3D1F;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 18px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+  }
+  button:disabled {
+    background: #4a5a4e;
+    color: #8a9a90;
+    cursor: not-allowed;
+  }
+  button.secondary {
+    background: transparent;
+    color: #AAFF3C;
+    border: 1px solid #AAFF3C;
+  }
+  select {
+    width: 100%;
+    background: #0d1f14;
+    color: #eee;
+    border: 1px solid #2a4a35;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  label {
+    font-size: 12px;
+    color: #8a9a90;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .status {
+    font-size: 13px;
+    padding: 8px 0;
+  }
+  .status.ok { color: #AAFF3C; }
+  .status.err { color: #ff6b6b; }
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+  .row > div { flex: 1; }
+  #resultsArea { margin-top: 8px; }
+  #resultsArea a { color: #AAFF3C; }
+  .config {
+    font-size: 11px;
+    color: #6a7a70;
+    text-align: center;
+    padding: 10px 16px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h2 style="margin:0;font-size:24px">⚽ Kickwise Manual Predictor</h2>
+  <p>Paste team stats, pick a matchup, get the real model's prediction</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>1. Paste Team Stats</h2>
+    <textarea id="rawData" placeholder="Paste the team stats table here, one team per line — e.g.
+
+Manly Utd	27	1.22	1.15	2.37		1.64	0.64	2.29		0.77	1.69	2.46
+Marconi S.	27	1.74	0.78	2.52		1.85	0.46	2.31		1.64	1.07	2.71
+..."></textarea>
+    <div class="hint">
+      Format per row: <b>Team&nbsp;&nbsp;GP&nbsp;&nbsp;GF&nbsp;&nbsp;GA&nbsp;&nbsp;Total&nbsp;&nbsp;(blank)&nbsp;&nbsp;HomeGF&nbsp;&nbsp;HomeGA&nbsp;&nbsp;HomeTotal&nbsp;&nbsp;(blank)&nbsp;&nbsp;AwayGF&nbsp;&nbsp;AwayGA&nbsp;&nbsp;AwayTotal</b>
+      — up to 40 teams, tab or space separated, same as an AnnaBet stats table.
+    </div>
+    <button id="parseBtn">Parse Teams</button>
+    <div id="parseStatus" class="status"></div>
+  </div>
+
+  <div class="card" id="matchupCard" style="display:none">
+    <h2>2. Pick the Matchup</h2>
+    <div class="row">
+      <div>
+        <label>Home</label>
+        <select id="homeSelect"></select>
+      </div>
+      <div>
+        <label>Away</label>
+        <select id="awaySelect"></select>
+      </div>
+    </div>
+    <button id="predictBtn">Get Prediction</button>
+    <div id="predictStatus" class="status"></div>
+  </div>
+
+  <div id="resultsArea"></div>
+
+</div>
+
+<div class="config">
+  Backend: <span id="backendDisplay"></span>
+</div>
+
+<script>
+// ── Configure this once ──────────────────────────────────────────────
+// Point this at your Render backend (same one daily_predictions.py uses).
+const BACKEND_URL = "https://YOUR-BACKEND.onrender.com";
+// ────────────────────────────────────────────────────────────────────
+
+document.getElementById("backendDisplay").textContent = BACKEND_URL;
+
+let parsedTeamData = {};
+
+// ── Parsing ─────────────────────────────────────────────────────────
+// Same shape fetch_stats_annabet() already produces on the backend:
+// gp, gf, ga, tot, hgf, hga, htot, agf, aga, atot per team.
+function parseLine(line) {
+  const raw = line.trim();
+  if (!raw) return null;
+
+  const tokens = raw.split(/\s+/).filter(Boolean);
+  let i = 0;
+  const nameParts = [];
+  while (i < tokens.length && isNaN(parseFloat(tokens[i]))) {
+    nameParts.push(tokens[i]);
+    i++;
+  }
+  const name = nameParts.join(" ").trim();
+  const nums = tokens.slice(i).map(Number).filter(n => !isNaN(n));
+
+  if (!name || nums.length < 10) return null;
+
+  const [gp, gf, ga, tot, hgf, hga, htot, agf, aga, atot] = nums;
+  return { name, stats: { gp, gf, ga, tot, hgf, hga, htot, agf, aga, atot } };
+}
+
+function parseTeamData(text) {
+  const teamData = {};
+  const lines = text.split("\n");
+  let count = 0;
+  for (const line of lines) {
+    const parsed = parseLine(line);
+    if (parsed) {
+      teamData[parsed.name] = parsed.stats;
+      count++;
+    }
+  }
+  return { teamData, count };
+}
+
+document.getElementById("parseBtn").addEventListener("click", () => {
+  const text = document.getElementById("rawData").value;
+  const { teamData, count } = parseTeamData(text);
+  const statusEl = document.getElementById("parseStatus");
+
+  if (count === 0) {
+    statusEl.className = "status err";
+    statusEl.textContent = "⚠️ No valid team rows found — check the format and try again.";
+    document.getElementById("matchupCard").style.display = "none";
+    return;
+  }
+
+  parsedTeamData = teamData;
+  statusEl.className = "status ok";
+  statusEl.textContent = `✅ Parsed ${count} team(s).`;
+
+  const homeSelect = document.getElementById("homeSelect");
+  const awaySelect = document.getElementById("awaySelect");
+  homeSelect.innerHTML = "";
+  awaySelect.innerHTML = "";
+
+  const names = Object.keys(teamData).sort();
+  for (const name of names) {
+    homeSelect.appendChild(new Option(name, name));
+    awaySelect.appendChild(new Option(name, name));
+  }
+  if (names.length > 1) awaySelect.selectedIndex = 1;
+
+  document.getElementById("matchupCard").style.display = "block";
+  document.getElementById("resultsArea").innerHTML = "";
+});
+
+// ── Prediction card rendering — mirrors format_match_html() /
+// build_pred2_text() from the backend, minus market-odds sections
+// (null here since there's no league context for live odds). ─────────
+function buildPred2Text(pred) {
+  const o73 = (pred.o73 || pred.o73r || "").trim();
+  const d69n = (pred.d70 || "").toLowerCase();
+  const d70n = (pred.d70val || "").toLowerCase();
+  const d69r = (pred.d70r || "").toLowerCase();
+  const d70r2 = (pred.d70valr || "").toLowerCase();
+  const o73l = o73.toLowerCase();
+  const b46v = pred.b46 || pred.b46r || "";
+
+  const d64_both = ((pred.d64 || "") + (pred.d64r || "")).toLowerCase().includes("both");
+  const b120_combined = ((pred.b120 || "") + " " + (pred.b120r || "")).toLowerCase();
+  const b120_double = b120_combined.includes("double");
+
+  const c120Match = (v) => {
+    const s = (v || "").toLowerCase().trim();
+    return s === "match" || (s.includes("match") && !s.includes("not"));
+  };
+  const c120_ok = c120Match(pred.c120) || c120Match(pred.c120r);
+
+  const r1 = !!o73l && (d69n.includes(o73l) || d69r.includes(o73l)) &&
+             (d70n.includes(o73l) || d70r2.includes(o73l)) && b120_double && c120_ok;
+
+  const aa15_not_no = !["aa15", "aa15r"].every(k => (pred[k] || "").toLowerCase() === "no");
+  const b54_empty = !(pred.b54 || "").trim() && !(pred.b54r || "").trim();
+  const o73_in_d69d70 = !!o73l && (d69n.includes(o73l) || d70n.includes(o73l) || d69r.includes(o73l) || d70r2.includes(o73l));
+  const r2 = aa15_not_no && d64_both && b54_empty && c120_ok && o73_in_d69d70;
+
+  let pred2 = "";
+  const all_handicap = [d69n, d70n, d69r, d70r2].every(x => x.includes("handicap"));
+
+  if (r1 || r2) {
+    if (all_handicap && o73) {
+      pred2 = `${o73} only`;
+    } else if (r1 && r2) {
+      pred2 = `${o73} / ${b46v}`;
+    } else if (r1) {
+      pred2 = o73;
+    } else if (r2) {
+      pred2 = b46v;
+    }
+
+    if (pred2 && !all_handicap) {
+      const b118n = (pred.b118 || "").toLowerCase();
+      const b118r = (pred.b118r || "").toLowerCase();
+      const n_home = b118n.includes("home g") || b118n.includes("home c");
+      const n_away = b118n.includes("away g") || b118n.includes("away c");
+      const r_home = b118r.includes("home");
+      const r_away = b118r.includes("away");
+      if ((n_home && r_home) || (n_away && r_away)) {
+        pred2 += " / same";
+      }
+    }
+  }
+  return pred2;
+}
+
+function formatMatchHtml(pred) {
+  const c120Match = (v) => {
+    const s = (v || "").toLowerCase().trim();
+    return s === "match" || (s.includes("match") && !s.includes("not"));
+  };
+  const d64_both = ((pred.d64 || "") + (pred.d64r || "")).toLowerCase().includes("both");
+  const d64_one  = ((pred.d64 || "") + (pred.d64r || "")).toLowerCase().includes("one");
+  const b120_combined = ((pred.b120 || "") + " " + (pred.b120r || "")).toLowerCase();
+  const b120_double = b120_combined.includes("double");
+  const b120_under  = b120_combined.includes("under");
+  const c120_ok = c120Match(pred.c120) || c120Match(pred.c120r);
+  const d70_main = c120Match(pred.c120) ? pred.d70 : (pred.d70r || pred.d70 || "");
+
+  let pred1 = "";
+  if (c120_ok) {
+    let labels = [];
+    if (b120_double) labels.push(d64_both ? "double" : (d64_one ? "2-handicap" : null));
+    if (b120_under)  labels.push(d64_both ? "under" : (d64_one ? "under extend" : null));
+    labels = [...new Set(labels.filter(Boolean))];
+    if (labels.length) {
+      const b46Match = ((pred.b46 || "") + " " + (pred.b46r || "")).toLowerCase().match(/(\d+\s*goals)/);
+      const b46Goals = b46Match ? b46Match[1].replace(/\s/g, "") : "";
+      const aa15Ok = ["aa15", "aa15r"].some(k => ["yes", "yes1", "both"].includes((pred[k] || "").toLowerCase()));
+      const goalsSuffix = (aa15Ok && b46Goals) ? ` / ${b46Goals}` : "";
+      pred1 = `${d70_main} / ${labels.join(" + ")}${goalsSuffix}`;
+    }
+  }
+
+  const pred2 = buildPred2Text(pred);
+
+  const odds = pred.odds || pred.oddsr || {};
+  let oddsHtml = "";
+  if (odds && odds.home_odds) {
+    oddsHtml = `
+      <tr>
+        <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+          📊 Model Odds: Home ${odds.home_odds} (${odds.home_pct}%) |
+          Draw ${odds.draw_odds} (${odds.draw_pct}%) |
+          Away ${odds.away_odds} (${odds.away_pct}%)
+        </td>
+      </tr>`;
+  }
+
+  const ou25 = pred.ou25 || {};
+  let ou25Html = "";
+  if (ou25.over_odds) {
+    ou25Html = `
+      <tr>
+        <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
+          ⚽ O/U 2.5: Model Over ${ou25.over_odds} (${ou25.over_pct}%) / Under ${ou25.under_odds} (${ou25.under_pct}%)
+        </td>
+      </tr>`;
+  }
+
+  const pred1Html = pred1 ? `
+      <tr>
+        <td colspan="2" style="padding:6px 12px;background:#1a472a;color:#AAFF3C;font-weight:bold">
+          ⚡ PREDICTION 1: ${pred1}
+        </td>
+      </tr>` : "";
+
+  let pred2Html = "";
+  if (pred2) {
+    const aa15No = (pred.aa15 || "").toLowerCase() === "no" || (pred.aa15r || "").toLowerCase() === "no";
+    const b54Over = (pred.b54 || "").toLowerCase().includes("over") || (pred.b54r || "").toLowerCase().includes("over");
+    let bg, color;
+    if (b54Over) { bg = "#000000"; color = "#ffffff"; }
+    else if (aa15No) { bg = "#C0392B"; color = "#ffffff"; }
+    else { bg = "#1a3a47"; color = "#F39C12"; }
+    pred2Html = `
+      <tr>
+        <td colspan="2" style="padding:6px 12px;background:${bg};color:${color};font-weight:bold">
+          🎯 PREDICTION 2: ${pred2}
+        </td>
+      </tr>`;
+  }
+
+  return `
+<div style="border:1px solid #ddd;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif;background:#fff">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr style="background:#0A3D1F;color:white">
+      <td colspan="2" style="padding:8px 12px;font-weight:bold">${pred.home} vs ${pred.away}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;font-size:13px;color:#222"><b>D69:</b> ${pred.d70 || ""} | <b>B120:</b> ${pred.b120 || ""} | <b>C120:</b> ${pred.c120 || ""}</td>
+      <td style="padding:6px 12px;font-size:13px;color:#666"><b>D64:</b> ${pred.d64 || ""} | <b>B46:</b> ${pred.b46 || ""}</td>
+    </tr>
+    <tr style="background:#f9f9f9">
+      <td style="padding:6px 12px;font-size:13px;color:#222"><b>REV D69:</b> ${pred.d70r || ""} | <b>B120:</b> ${pred.b120r || ""} | <b>C120:</b> ${pred.c120r || ""}</td>
+      <td style="padding:6px 12px;font-size:13px;color:#666"><b>D64:</b> ${pred.d64r || ""} | <b>B46:</b> ${pred.b46r || ""}</td>
+    </tr>
+    ${pred1Html}
+    ${pred2Html}
+    ${oddsHtml}
+    ${ou25Html}
+  </table>
+</div>`;
+}
+
+// ── Predict button ──────────────────────────────────────────────────
+document.getElementById("predictBtn").addEventListener("click", async () => {
+  const home = document.getElementById("homeSelect").value;
+  const away = document.getElementById("awaySelect").value;
+  const statusEl = document.getElementById("predictStatus");
+  const resultsEl = document.getElementById("resultsArea");
+  const btn = document.getElementById("predictBtn");
+
+  if (home === away) {
+    statusEl.className = "status err";
+    statusEl.textContent = "⚠️ Home and away teams must be different.";
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.className = "status";
+  statusEl.textContent = "⏳ Running model — this can take up to a minute...";
+  resultsEl.innerHTML = "";
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/predict_manual`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ team_data: parsedTeamData, home, away }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data.detail || `Request failed (${resp.status})`);
+    }
+
+    statusEl.className = "status ok";
+    statusEl.textContent = "✅ Prediction ready.";
+    resultsEl.innerHTML = formatMatchHtml(data);
+  } catch (err) {
+    statusEl.className = "status err";
+    statusEl.textContent = `❌ ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
