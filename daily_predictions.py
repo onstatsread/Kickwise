@@ -528,26 +528,11 @@ def main():
             continue
 
         # Skip ONLY if all key predictions are genuinely N/A
-        #
-        # PATCHED: now also logs whether odds / market_odds came back, plus
-        # the full set of keys the backend returned. This tells you WHERE
-        # the failure is:
-        #   - odds/market_odds present, model fields empty  -> AnnaBet stats
-        #     scrape is failing for this match specifically (backend issue).
-        #   - odds/market_odds AND model fields all empty   -> nothing came
-        #     back at all for this fixture; check Render logs around this
-        #     timestamp for that specific match/league.
         if all(
             (pred.get(k) or "N/A") in ("N/A", "", "None")
             for k in ["d70", "b120", "c120", "d64", "b46"]
         ):
-            has_odds = bool((pred.get("odds") or {}).get("home_odds"))
-            has_market = bool((pred.get("market_odds") or {}).get("home_odds"))
-            print(
-                f"    ⚠️ Skipping {m['fix']['home']} vs {m['fix']['away']} "
-                f"(all N/A) — odds={has_odds} market_odds={has_market} "
-                f"raw_keys={list(pred.keys())}"
-            )
+            print(f"    ⚠️ Skipping {m['fix']['home']} vs {m['fix']['away']} (all N/A)")
             na_matches += 1
             continue
         match_html = format_match_html(m["league_name"], m["fix"], pred)
