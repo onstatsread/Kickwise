@@ -93,6 +93,19 @@ def check_league(code, serie_id):
             # we'd need to parse fixtures out of if we build this out
             tables = tab_div.find_all("table")
             print(f"\n  📋 Found {len(tables)} <table> element(s) inside tabs-5")
+
+            for i, t in enumerate(tables):
+                rows = t.find_all("tr")
+                print(f"    Table {i}: {len(rows)} row(s)")
+
+            # The text snippet above matched the team-filter dropdown, not
+            # real fixture data — dump the RAW HTML (not just extracted
+            # text) so we can see the actual tag structure: is there an
+            # empty table waiting for JS/AJAX to fill it, or something
+            # else entirely (e.g. a nested sub-tab, a different div,
+            # a "no upcoming matches" placeholder)?
+            raw_html_snippet = str(tab_div)[:3000]
+            print(f"\n  🔍 RAW HTML inside tabs-5 (first 3000 chars):\n{raw_html_snippet}")
         else:
             print(f"  ⚠️ String match found but BeautifulSoup couldn't locate the element — check for malformed HTML")
     else:
