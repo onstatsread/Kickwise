@@ -2,7 +2,7 @@
 Kickwise Backend — FastAPI server
 Deploy to Render.com (free tier)
 """
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time
 from scipy.stats import poisson
@@ -961,6 +961,68 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# NEW — manual predictor endpoint for the paste-your-own-data mini site.
+# Accepts team stats pasted/parsed on the frontend (same shape fetch_stats
+# / fetch_stats_annabet() already produce: gp, gf, ga, tot, hgf, hga,
+# htot, agf, aga, atot per team) instead of scraping AnnaBet. Runs the
+# exact same run_model() function as /predict, so predictions are
+# identical in method — just skips the market-odds/value% sections since
+# there's no league context to look up live odds against. The frontend
+# already renders those sections conditionally (only when present), so
+# leaving them null here doesn't break anything, it just shows fewer
+# rows on the card — same behavior as any league where market odds
+# simply aren't available.
+@app.post("/predict_manual")
+def predict_manual(payload: dict = Body(...)):
+    team_data = payload.get("team_data")
+    home = payload.get("home")
+    away = payload.get("away")
+
+    if not team_data or not isinstance(team_data, dict):
+        raise HTTPException(400, "team_data is required and must be a non-empty object")
+    if not home or not away:
+        raise HTTPException(400, "home and away are both required")
+    if home not in team_data:
+        raise HTTPException(400, f"'{home}' not found in the pasted team data")
+    if away not in team_data:
+        raise HTTPException(400, f"'{away}' not found in the pasted team data")
+
+    # Basic shape check on one team's stats so a malformed paste fails
+    # with a clear message instead of a confusing 500 deep inside
+    # run_model()'s openpyxl/LibreOffice step.
+    required_keys = {"gp", "gf", "ga", "tot", "hgf", "hga", "htot", "agf", "aga", "atot"}
+    sample = team_data[home]
+    missing = required_keys - set(sample.keys())
+    if missing:
+        raise HTTPException(400, f"Team data is missing expected fields: {sorted(missing)}")
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        f1 = executor.submit(run_model, home, away, team_data)
+        f2 = executor.submit(run_model, away, home, team_data)
+        r1, r2 = f1.result(), f2.result()
+
+    return {
+        "home": home, "away": away,
+        "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
+        "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
+        "odds": r1.get("odds"),
+        "ou25": r1.get("ou25"),
+        "market_ou25": None,  # no league context to fetch live odds against
+        "ou25_value_pct": None,
+        "ou25_value_signal": None,
+        "market_odds": None,
+        "value_pct": None,
+        "value_signal": None,
+        "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
+        "o73": r1["o73"], "o74": r1["o74"],
+        "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
+        "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
+        "oddsr": r2.get("odds"),
+        "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
+        "o73r": r2["o73"], "o74r": r2["o74"],
+    }
 
 
 @app.get("/league_gp")
