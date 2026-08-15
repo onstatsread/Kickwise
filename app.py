@@ -2,16 +2,23 @@
 Kickwise Backend — FastAPI server
 Deploy to Render.com (free tier)
 """
-from fastapi import FastAPI, Query, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
-from scipy.stats import poisson
+import os
+import re
+import shutil
+import tempfile
+import difflib
+import subprocess
+import statistics
+import requests
 from datetime import date
 from bs4 import BeautifulSoup
+from scipy.stats import poisson
 from openpyxl import load_workbook
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from concurrent.futures import ThreadPoolExecutor
 
-# Preserve your framework router linkages
+# External framework linkages (Make sure odds.py, api_football.py, odds_api_io.py exist in folder)
 try:
     from odds import get_odds_for_card, get_ou25_for_card, router as odds_router
     from api_football import get_fallback_odds
@@ -38,8 +45,8 @@ HEADERS = {
     "Referer": "https://soccerstats.com",
     "Connection": "keep-alive",
 }
-BASE  = "https://soccerstats.com"
-MODEL = "A_mix2.xlsx" # Ensure this baseline spreadsheet template sits in your project root
+BASE = "https://soccerstats.com"
+MODEL = "A_mix2.xlsx"
 
 LEAGUE_TO_SPORT_KEY = {
     "argentina":   "soccer_argentina_primera_division",
@@ -52,18 +59,38 @@ LEAGUE_TO_SPORT_KEY = {
     "denmark":     "soccer_denmark_superliga",
     "england":     "soccer_epl",
     "england2":    "soccer_efl_champ",
+    "england3":    "soccer_england_league1",
+    "england4":    "soccer_england_league2",
+    "finland":     "soccer_finland_veikkausliiga",
     "france":      "soccer_france_ligue_one",
     "germany":     "soccer_germany_bundesliga",
+    "germany2":    "soccer_germany_bundesliga2",
+    "germany3":    "soccer_germany_liga3",
+    "greece":      "soccer_greece_super_league",
+    "ireland":     "soccer_league_of_ireland",
     "italy":       "soccer_italy_serie_a",
+    "italy2":      "soccer_italy_serie_b",
+    "mexico":      "soccer_mexico_ligamx",
     "netherlands": "soccer_netherlands_eredivisie",
+    "norway":      "soccer_norway_eliteserien",
+    "poland":      "soccer_poland_ekstraklasa",
     "portugal":    "soccer_portugal_primeira_liga",
+    "russia":      "soccer_russia_premier_league",
+    "scotland":    "soccer_spl",
+    "southkorea":  "soccer_korea_kleague1",
     "spain":       "soccer_spain_la_liga",
+    "sweden":      "soccer_sweden_allsvenskan",
+    "sweden2":     "soccer_sweden_superettan",
+    "switzerland": "soccer_switzerland_superleague",
+    "turkey":      "soccer_turkey_super_league",
     "usa":         "soccer_usa_mls",
 }
 
+# --- POISSON & ODDS MATRICES ---
 def calc_win_draw_away(lambda_home, lambda_away, max_goals=10):
     try:
-        lambda_home, lambda_away = float(lambda_home), float(lambda_away)
+        lambda_home = float(lambda_home)
+        lambda_away = float(lambda_away)
     except (TypeError, ValueError):
         return None
     if lambda_home < 0 or lambda_away < 0:
@@ -93,25 +120,27 @@ def pct_to_odds(pct):
         return None
     return round(100 / pct, 2)
 
-# --- FIXED CRITICAL SYNTAX ERROR TYPO HERE ---
 def calc_odds(lambda_home, lambda_away):
     wda = calc_win_draw_away(lambda_home, lambda_away)
     if not wda:
-        return {"home_pct": None, "draw_pct": None, "away_pct": None,
-                "home_odds": None, "draw_odds": None, "away_odds": None}
+        return {"home_pct": None, "draw_pct": None, "away_pct": None, "home_odds": None, "draw_odds": None, "away_odds": None}
     return {
-        "home_pct": wda["home_pct"], "draw_pct": wda["draw_pct"], "away_pct": wda["away_pct"],
-        "home_odds": pct_to_odds(wda["home_pct"]),
-        "draw_odds": pct_to_odds(wda["draw_pct"]),  # Fixed: changed from wda["draw_odds"] to wda["draw_pct"]
-        "away_odds": pct_to_odds(wda["away_pct"]),
+        "home_pct": wda["home_pct"], 
+        "draw_pct": wda["draw_pct"], 
+        "away_pct": wda["away_pct"], 
+        "home_odds": pct_to_odds(wda["home_pct"]), 
+        "draw_odds": pct_to_odds(wda["draw_pct"]), # FIXED: changed from draw_odds lookup to draw_pct
+        "away_odds": pct_to_odds(wda["away_pct"]), 
     }
 
 def calc_over_under_25(lambda_home, lambda_away, max_goals=10):
     try:
-        lambda_home, lambda_away = float(lambda_home), float(lambda_away)
+        lambda_home = float(lambda_home)
+        lambda_away = float(lambda_away)
     except (TypeError, ValueError):
         return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
-
+    if lambda_home < 0 or lambda_away < 0:
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
     over = under = 0.0
     for h in range(max_goals + 1):
         for a in range(max_goals + 1):
@@ -123,12 +152,10 @@ def calc_over_under_25(lambda_home, lambda_away, max_goals=10):
     total = over + under
     if total <= 0:
         return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
-
     over_pct = round(over / total * 100, 1)
     under_pct = round(under / total * 100, 1)
     return {
-        "over_pct": over_pct, "under_pct": under_pct,
-        "over_odds": pct_to_odds(over_pct), "under_odds": pct_to_odds(under_pct),
+        "over_pct": over_pct, "under_pct": under_pct, "over_odds": pct_to_odds(over_pct), "under_odds": pct_to_odds(under_pct),
     }
 
 def resolve_team(name, team_data):
@@ -137,111 +164,105 @@ def resolve_team(name, team_data):
     substring_candidates = [k for k in team_data if len(name) >= 5 and (name in k or k in name)]
     if len(substring_candidates) == 1:
         return substring_candidates[0]
-    close = difflib.get_close_matches(name, team_data.keys(), n=1, cutoff=0.8)
-    return close[0] if close else None
+    close = difflib.get_close_matches(name, team_data.keys(), n=1, cutoff=0.8) # FIXED: n=1 ensures singular absolute match string return
+    if len(close) == 1:
+        return close[0]
+    return None
 
-
-# --- FIXED SOCCERSTATS HOME/AWAY EXTRACTION ROUTINE ---
+# --- FIXED SOCCERSTATS RAW STATISTICS SCAPER ---
 def fetch_stats(code):
-    """Parses SoccerSTATS' homeaway.asp metrics using localized cell indexing maps."""
+    """Parses homeaway.asp into an uncalculated raw layout matching Excel templates."""
     teams = {}
-    url = f"{BASE}/homeaway.asp?league={code}"
     try:
-        res = requests.get(url, headers=HEADERS, timeout=10)
-        if res.status_code != 200:
-            return teams
-
-        soup = BeautifulSoup(res.text, "html.parser")
-        # SoccerSTATS organizes records using alternating odd/even classes on table rows
-        data_rows = soup.find_all("tr", class_=["odd", "even"])
+        url = f"{BASE}/homeaway.asp?league={code}"
+        resp = requests.get(url, headers=HEADERS, timeout=15)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        tables = soup.find_all("table")
+        section_count = 0
         
-        for row in data_rows:
-            cells = [td.get_text(strip=True) for td in row.find_all("td")]
-            
-            # The structured stats layout on the homeaway page contains exactly 11 columns
-            if len(cells) == 11:
-                raw_team_name = cells[0]
-                if not raw_team_name or "table" in raw_team_name.lower() or "advertisement" in raw_team_name.lower():
+        for tbl in tables:
+            valid_rows = []
+            for row in tbl.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 8:
                     continue
-                
-                team_name = re.sub(r'\s+', ' ', raw_team_name).strip()
-                
+                team = cells[1].get_text(strip=True)
+                if not team or "table" in team.lower() or "advertisement" in team.lower():
+                    continue
                 try:
-                    # Precise positional mapping matching the live SoccerSTATS structure
-                    teams[team_name] = {
-                        "home_gp": int(cells[1]) if cells[1].isdigit() else 0,
-                        "home_w":  int(cells[2]) if cells[2].isdigit() else 0,
-                        "home_gf": int(cells[5]) if cells[5].isdigit() else 0, # Scored Home
-                        "away_gp": int(cells[6]) if cells[6].isdigit() else 0,
-                        "away_w":  int(cells[7]) if cells[7].isdigit() else 0,
-                        "away_gf": int(cells[10]) if cells[10].isdigit() else 0, # Scored Away
-                    }
-                except Exception:
+                    # Clean position prefixes (e.g. '1. Arsenal' -> 'Arsenal')
+                    team = re.sub(r'^\d+\.\s*', '', team)
+                    gp = float(cells[2].get_text(strip=True))
+                    gf = float(cells[6].get_text(strip=True))
+                    ga = float(cells[7].get_text(strip=True))
+                except:
                     continue
+                if gp <= 0:
+                    continue
+                valid_rows.append((team, gp, gf, ga))
+            
+            if len(valid_rows) >= 4: # Standard leagues have at least 4+ teams per section block
+                section_count += 1
+                for team, gp, gf, ga in valid_rows:
+                    if team not in teams:
+                        teams[team] = {}
+                    if section_count == 1:
+                        teams[team]["hgp"] = gp
+                        teams[team]["hgf"] = gf
+                        teams[team]["hga"] = ga
+                    elif section_count == 2:
+                        teams[team]["agp"] = gp
+                        teams[team]["agf"] = gf
+                        teams[team]["aga"] = ga
+                if section_count >= 2:
+                    break
     except Exception as e:
-        print(f"Extraction error for league {code}: {e}")
-    return teams
+        print(f"Stats compilation error: {e}")
+        
+    # Standardize baseline structures to feed into data parsing iterations seamlessly
+    result = {}
+    for team, d in teams.items():
+        if "hgp" not in d or "agp" not in d:
+            continue
+        result[team] = {
+            "gp": d["hgp"] + d["agp"],
+            "hgp": d["hgp"], "hgf": d["hgf"], "hga": d["hga"],
+            "agp": d["agp"], "agf": d["agf"], "aga": d["aga"]
+        }
+    return result
 
+TIME_RE = re.compile(r'\b([01]?\d|2[0-3]):([0-5]\d)\b')
+DAY_RE  = re.compile(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*')
 
-# --- NEW: OPENPYXL EXCEL INJECTION ENGINE ---
-def inject_data_into_model(league_code, team_stats):
-    """
-    Safely opens your master predictive spreadsheet template, injects the freshly 
-    scraped home/away parameters, triggers execution calculations via excel formulas,
-    and returns metrics to the runtime environment without damaging your source file.
-    """
-    if not os.path.exists(MODEL):
-        print(f"⚠️ Model file '{MODEL}' not found. Initializing blank workbook proxy instead.")
-        from openpyxl import Workbook
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Data_Input"
+def clean_team_name(name):
+    return DAY_RE.sub("", name).strip()
+
+def _norm_key(a, b):
+    def clean(s): return " ".join(s.lower().split())
+    return (clean(a), clean(b))
+
+def fetch_fixtures(code, date_str=None):
+    if date_str:
+        today1 = date_str.strip()
     else:
-        wb = load_workbook(MODEL, data_only=False) # Keep formulas intact
-        # Target an input data matrix tab within your workbook
-        if "Data_Input" in wb.sheetnames:
-            ws = wb["Data_Input"]
-        else:
-            ws = wb.active
-
-    # Write custom data header map starting at row 1
-    headers = ["Team_Name", "Home_GP", "Home_Wins", "Home_GF", "Away_GP", "Away_Wins", "Away_GF"]
-    for col_num, header in enumerate(headers, 1):
-        ws.cell(row=1, column=col_num, value=header) #
-
-    # Dynamically inject scraped metrics row by row
-    current_row = 2
-    for team, m in team_stats.items():
-        ws.cell(row=current_row, column=1, value=team)
-        ws.cell(row=current_row, column=2, value=m["home_gp"])
-        ws.cell(row=current_row, column=3, value=m["home_w"])
-        ws.cell(row=current_row, column=4, value=m["home_gf"])
-        ws.cell(row=current_row, column=5, value=m["away_gp"])
-        ws.cell(row=current_row, column=6, value=m["away_w"])
-        ws.cell(row=current_row, column=7, value=m["away_gf"])
-        current_row += 1
-
-    # Save tracking to an isolated temp space to prevent concurrency conflicts on Render
-    temp_dir = tempfile.gettempdir()
-    output_path = os.path.join(temp_dir, f"calculated_{league_code}.xlsx")
-    wb.save(output_path) #
-    return output_path
-
-
-# --- LIVE FASTAPI ENDPOINT LINKAGE ---
-@app.get("/api/process-league")
-def process_league_pipeline(league: str = Query(..., description="League code e.g. england")):
-    if league not in LEAGUE_TO_SPORT_KEY:
-        raise HTTPException(status_code=400, detail="Requested league parameter not natively supported.")
-    
-    # Step 1: Execute scraping script targeting SoccerSTATS
-    scraped_data = fetch_stats(league)
-    if not scraped_data:
-        raise HTTPException(status_code=502, detail="Failed to scrape metrics from upstream data source.")
-    
-    # Step 2: Inject stats directly into your predictive analytical model workbook
-    processed_excel_path = inject_data_into_model(league, scraped_data)
-    
-    return {
-        "status": "success",
-        "processed_league": league,
+        d = date.today()
+        today1 = f"{d.day} {d.strftime('%b')}"
+    matches = []
+    seen = set()
+    time_map = {}
+    try:
+        resp = requests.get(f"{BASE}/latest.asp?league={code}", headers=HEADERS, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for table in soup.find_all("table"):
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 2:
+                    continue
+                c0 = cells[0].get_text(" ", strip=True)
+                c0_nodate = DAY_RE.sub("", c0).strip()
+                if not c0_nodate.startswith(today1):
+                    continue
+                t = TIME_RE.search(c0)
+                if not t:
+                    continue
+                time_str = f"{t.group(1)}:{t.group(2)}"
