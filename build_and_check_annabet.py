@@ -104,8 +104,18 @@ def check_league(code, serie_id):
             # empty table waiting for JS/AJAX to fill it, or something
             # else entirely (e.g. a nested sub-tab, a different div,
             # a "no upcoming matches" placeholder)?
-            raw_html_snippet = str(tab_div)[:3000]
-            print(f"\n  🔍 RAW HTML inside tabs-5 (first 3000 chars):\n{raw_html_snippet}")
+            #
+            # Previous run: the first 3000 chars turned out to be just the
+            # h2h.php "Compare Teams" form (team1/team2 dropdowns) — the
+            # dump got cut off right at the START of a second <div>, which
+            # is likely where the real fixtures content begins. Raised the
+            # limit substantially to actually see past that point, and
+            # print the FULL tab_div length too so we know how much more
+            # there might be beyond even this larger cutoff.
+            full_html = str(tab_div)
+            print(f"\n  📏 Full tabs-5 HTML length: {len(full_html)} chars")
+            raw_html_snippet = full_html[:12000]
+            print(f"\n  🔍 RAW HTML inside tabs-5 (first 12000 chars):\n{raw_html_snippet}")
         else:
             print(f"  ⚠️ String match found but BeautifulSoup couldn't locate the element — check for malformed HTML")
     else:
