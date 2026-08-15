@@ -178,6 +178,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
+    margin-bottom: 12px;
     animation: fadeIn 0.3s ease both;
   }
   @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
@@ -292,7 +293,6 @@
 <footer>Kickwise • Data from SoccerStats Predictions via A_mix2 Model</footer>
 
 <script>
-// Verified League mapping from your original repository list configuration
 const LEAGUES = [
     ["Argentina - Liga Profesional", "argentina"],
     ["Austria - Bundesliga", "austria"],
@@ -333,9 +333,10 @@ const LEAGUES = [
 
 const API_BASE = "https://onrender.com";
 
-// Populate dropdown selector cleanly
+// Populate dropdown select element
 const sel = document.getElementById("leagueSelect");
-LEAGUES.forEach(([name, code]) => {
-    const opt = document.createElement("option");
-    opt.value = code;
-    opt.textContent = name;
+if (sel) {
+    LEAGUES.forEach(([name, code]) => {
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = name;
