@@ -1,1048 +1,258 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kickwise — Match Predictions</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --pitch:    #0A3D1F;
-    --turf:     #0F5132;
-    --lime:     #AAFF3C;
-    --white:    #F5F7F2;
-    --grey:     #8A9B82;
-    --dark:     #07200F;
-    --card:     #0D2918;
-    --border:   rgba(170,255,60,0.15);
-    --match:    #27AE60;
-    --nomatch:  #C0392B;
-    --double:   #8E44AD;
-    --under:    #E67E22;
-    --handicap: #2980B9;
-    --low:      #16A085;
-  }
+"""
+Kickwise Backend — FastAPI server
+Deploy to Render.com (free tier)
+"""
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re
+from scipy.stats import poisson
+from datetime import date
+from bs4 import BeautifulSoup
+from openpyxl import load_workbook
+from concurrent.futures import ThreadPoolExecutor
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+# Preserve framework router linkages
+try:
+    from odds import get_odds_for_card, get_ou25_for_card, router as odds_router
+    from api_football import get_fallback_odds
+    from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
+except ImportError:
+    from fastapi import APIRouter
+    odds_router = APIRouter()
 
-  body {
-    background: var(--dark);
-    color: var(--white);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    min-height: 100vh;
-  }
+app = FastAPI(title="Kickwise API")
 
-  /* ── Header ── */
-  header {
-    background: var(--pitch);
-    border-bottom: 2px solid var(--border);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
-  .logo {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--lime);
-    line-height: 1;
-  }
-  .logo span { color: var(--white); }
+app.include_router(odds_router)
 
-  .tagline {
-    font-size: 11px;
-    color: var(--grey);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://soccerstats.com",
+    "Connection": "keep-alive",
+}
+BASE  = "https://soccerstats.com"
+MODEL = "A_mix2.xlsx"
 
-  /* ── Controls ── */
-  .controls {
-    padding: 20px;
-    background: var(--pitch);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .date-bar {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--lime);
-  }
-
-  .select-wrap {
-    position: relative;
-  }
-
-  select {
-    width: 100%;
-    background: var(--card);
-    color: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 40px 12px 14px;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    appearance: none;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  select:focus { border-color: var(--lime); }
-
-  .select-arrow {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--lime);
-    pointer-events: none;
-    font-size: 12px;
-  }
-
-  .run-btn {
-    background: var(--lime);
-    color: var(--dark);
-    border: none;
-    border-radius: 8px;
-    padding: 14px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: opacity 0.2s, transform 0.1s;
-    width: 100%;
-  }
-  .run-btn:active { transform: scale(0.98); opacity: 0.9; }
-  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* ── Status / Loading ── */
-  #status {
-    padding: 16px 20px;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--grey);
-  }
-
-  .spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--border);
-    border-top-color: var(--lime);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-    display: none;
-  }
-  .spinner.active { display: block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Empty / Error states ── */
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--grey);
-  }
-  .empty .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; color: var(--white); margin-bottom: 6px; }
-  .empty p { font-size: 14px; line-height: 1.5; }
-
-  /* ── Match Cards ── */
-  #results { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 12px; }
-
-  .league-header {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--lime);
-    padding: 8px 0 4px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
-  }
-
-  .match-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-
-  .match-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: var(--turf);
-    border-bottom: 1px solid var(--border);
-  }
-  .match-time {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--lime);
-    letter-spacing: 0.5px;
-  }
-  .match-teams {
-    text-align: right;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-  }
-  .match-teams .vs { color: var(--grey); font-weight: 400; margin: 0 6px; }
-
-  /* Result rows */
-  .result-section {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .result-section:last-child { border-bottom: none; }
-
-  .result-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--grey);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .result-label::before {
-    content: '';
-    display: block;
-    width: 3px;
-    height: 10px;
-    background: var(--lime);
-    border-radius: 2px;
-  }
-  .result-label.rev::before { background: var(--under); }
-
-  .result-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-  .pill-label {
-    font-size: 10px;
-    font-weight: 400;
-    opacity: 0.75;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .pill.match    { background: rgba(39,174,96,0.2);  color: #6EE7A0; border: 1px solid rgba(39,174,96,0.4); }
-  .pill.nomatch  { background: rgba(192,57,43,0.2);  color: #F1948A; border: 1px solid rgba(192,57,43,0.4); }
-  .pill.double   { background: rgba(142,68,173,0.2); color: #D7A9F0; border: 1px solid rgba(142,68,173,0.4); }
-  .pill.under    { background: rgba(230,126,34,0.2); color: #F0B27A; border: 1px solid rgba(230,126,34,0.4); }
-  .pill.handicap { background: rgba(41,128,185,0.2); color: #85C1E9; border: 1px solid rgba(41,128,185,0.4); }
-  .pill.low      { background: rgba(22,160,133,0.2); color: #76D7C4; border: 1px solid rgba(22,160,133,0.4); }
-  .pill.neutral  { background: rgba(138,155,130,0.15); color: var(--grey); border: 1px solid rgba(138,155,130,0.2); }
-  .pill.empty    { background: transparent; color: var(--grey); border: 1px dashed rgba(138,155,130,0.2); font-style: italic; font-weight: 400; }
-
-  /* ── Footer ── */
-  footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 11px;
-    color: var(--grey);
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── Desktop ── */
-  @media(min-width:640px) {
-    .controls { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
-    .select-wrap { flex: 1; min-width: 260px; }
-    .run-btn { width: auto; padding: 13px 28px; flex-shrink: 0; }
-    #results { padding: 16px 24px 40px; }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div>
-    <div class="logo">Kick<span>wise</span></div>
-    <div class="tagline">Match Prediction Engine</div>
-  </div>
-</header>
-
-<div class="controls">
-  <div class="date-bar" id="dateBar">—</div>
-  <div class="select-wrap">
-    <select id="leagueSelect"></select>
-    <span class="select-arrow">▼</span>
-  </div>
-  <button class="run-btn" id="runBtn" onclick="runAnalysis()">
-    ⚡ Analyze Today
-  </button>
-</div>
-
-<div id="status">
-  <div class="spinner" id="spinner"></div>
-  <span id="statusText">Select a league and tap Analyze Today</span>
-</div>
-
-<div id="results"></div>
-
-<footer>Kickwise · Data from SoccerStats · Predictions via A_mix2 Model</footer>
-
-<script>
-// ── League list ──────────────────────────────────────────────
-const LEAGUES = [
-  ["Albania - Abissnet Superiore", "albania"],
-  ["Andorra - Primera Divisio", "andorra"],
-  ["Argentina - Liga Profesional - Apertura", "argentina"],
-  ["Argentina - Liga Profesional - Clausura", "argentina2"],
-  ["Argentina - Primera B", "argentina4"],
-  ["Argentina - Primera B - Clausura", "argentina5"],
-  ["Argentina - Primera Nacional", "argentina3"],
-  ["Armenia - Premier League", "armenia"],
-  ["Australia - A-League", "australia"],
-  ["Australia - A-League Women", "australia2"],
-  ["Australia - NPL Capital Territory", "australia10"],
-  ["Australia - NPL New South Wales", "australia11"],
-  ["Australia - NPL Northern NSW", "australia7"],
-  ["Australia - NPL Queensland", "australia4"],
-  ["Australia - NPL South Australia", "australia6"],
-  ["Australia - NPL Tasmania", "australia8"],
-  ["Australia - NPL Victoria", "australia3"],
-  ["Australia - NPL Western Australia", "australia5"],
-  ["Australia - Queensland Premier League", "australia16"],
-  ["Australia - Victoria Premier League", "australia13"],
-  ["Australia - WA State League", "australia14"],
-  ["Austria - 2. Liga", "austria2"],
-  ["Austria - Bundesliga", "austria"],
-  ["Austria - Bundesliga Women", "austria8"],
-  ["Austria - Regionalliga Ost", "austria7"],
-  ["Austria - Regionalliga West", "austria5"],
-  ["Azerbaijan - First Division", "azerbaijan2"],
-  ["Azerbaijan - Premier League", "azerbaijan"],
-  ["Bahrain - Premier League", "bahrain"],
-  ["Bangladesh - Premier League", "bangladesh"],
-  ["Belarus - Vysshaya Liga", "belarus"],
-  ["Belgium - Challenger Pro League", "belgium2"],
-  ["Belgium - Pro League", "belgium"],
-  ["Belgium - U21 Pro League", "belgium6"],
-  ["Bolivia - Division Profesional", "bolivia"],
-  ["Bosnia - Premier Liga", "bosnia"],
-  ["Bosnia - Prva Liga FBiH", "bosnia2"],
-  ["Brazil - Brasileiro Women", "brazil5"],
-  ["Brazil - Brasiliense", "brazil11"],
-  ["Brazil - Goiano", "brazil8"],
-  ["Brazil - Matogrossense", "brazil12"],
-  ["Brazil - Mineiro", "brazil7"],
-  ["Brazil - Parabaino", "brazil17"],
-  ["Brazil - Paulista A1", "brazil14"],
-  ["Brazil - Paulista A2", "brazil15"],
-  ["Brazil - Paulista A3", "brazil16"],
-  ["Brazil - Sergipano", "brazil19"],
-  ["Brazil - Serie A", "brazil"],
-  ["Brazil - Serie B", "brazil2"],
-  ["Brazil - Serie C", "brazil3"],
-  ["Brazil - Tocantinense", "brazil21"],
-  ["Bulgaria - Parva Liga", "bulgaria"],
-  ["Bulgaria - Vtora Liga", "bulgaria2"],
-  ["Canada - Premier League", "canada"],
-  ["Chile - Liga de Ascenso", "chile2"],
-  ["Chile - Liga de Primera", "chile"],
-  ["China - League One", "china2"],
-  ["China - League Two", "china3"],
-  ["China - Super League", "china"],
-  ["Colombia - Primera A - Apertura", "colombia"],
-  ["Colombia - Primera A - Clausura", "colombia2"],
-  ["Colombia - Primera B - Apertura", "colombia3"],
-  ["Colombia - Primera B - Clausura", "colombia4"],
-  ["Costa Rica - Primera Div. - Apertura", "costarica"],
-  ["Costa Rica - Primera Div. - Clausura", "costarica2"],
-  ["Croatia - 1. HNL", "croatia"],
-  ["Croatia - 1. NL", "croatia2"],
-  ["Cyprus - Cyprus League", "cyprus"],
-  ["Czech Republic - 1. Liga", "czechrepublic"],
-  ["Czech Republic - 1. Liga Women", "czechrepublic4"],
-  ["Czech Republic - FNL", "czechrepublic2"],
-  ["Czech Republic - U19 League", "czechrepublic3"],
-  ["Denmark - 1st Division", "denmark2"],
-  ["Denmark - 2nd Division", "denmark3"],
-  ["Denmark - Superligaen", "denmark"],
-  ["Ecuador - Liga Pro", "ecuador"],
-  ["Egypt - Premier League", "egypt"],
-  ["England - Championship", "england2"],
-  ["England - Isthmian League", "england8"],
-  ["England - League One", "england3"],
-  ["England - League Two", "england4"],
-  ["England - National League", "england5"],
-  ["England - National League North", "england6"],
-  ["England - National League South", "england7"],
-  ["England - Northern League", "england9"],
-  ["England - Premier League", "england"],
-  ["England - Premier League 2", "england15"],
-  ["England - Professional Development League", "england19"],
-  ["England - Southern Central", "england10"],
-  ["England - Southern South", "england11"],
-  ["England - WSL 2", "england18"],
-  ["England - Women Super League", "england17"],
-  ["Estonia - Meistriliiga", "estonia"],
-  ["Faroe Islands - 1. Deild", "faroeislands2"],
-  ["Faroe Islands - Premier League", "faroeislands"],
-  ["Finland - Kakkonen Group A", "finland4"],
-  ["Finland - Kakkonen Group B", "finland5"],
-  ["Finland - Kakkonen Group C", "finland6"],
-  ["Finland - Kansallinen Liiga Women", "finland7"],
-  ["Finland - Veikkausliiga", "finland"],
-  ["Finland - Ykkonen", "finland3"],
-  ["Finland - Ykkosliiga", "finland2"],
-  ["France - Ligue 1", "france"],
-  ["France - Ligue 2", "france2"],
-  ["France - National", "france3"],
-  ["France - Premiere Ligue Women", "france14"],
-  ["Georgia - Erovnuli Liga", "georgia"],
-  ["Georgia - Erovnuli Liga 2", "georgia2"],
-  ["Germany - 2. Bundesliga", "germany2"],
-  ["Germany - 2. Bundesliga Women", "germany24"],
-  ["Germany - 3. Liga", "germany3"],
-  ["Germany - Bundesliga", "germany"],
-  ["Germany - Bundesliga Women", "germany23"],
-  ["Germany - Oberliga Baden-Wurttemberg", "germany9"],
-  ["Germany - Oberliga Bayern Nord", "germany21"],
-  ["Germany - Oberliga Bayern Sud", "germany22"],
-  ["Germany - Oberliga Hamburg", "germany10"],
-  ["Germany - Oberliga Hessen", "germany15"],
-  ["Germany - Oberliga Mittelrhein", "germany19"],
-  ["Germany - Oberliga Niederrhein", "germany11"],
-  ["Germany - Oberliga Niedersachsen", "germany17"],
-  ["Germany - Regionalliga Bayern", "germany8"],
-  ["Germany - Regionalliga Nord", "germany4"],
-  ["Germany - Regionalliga Nordost", "germany5"],
-  ["Germany - Regionalliga Sudwest", "germany7"],
-  ["Germany - Regionalliga West", "germany6"],
-  ["Greece - Super League", "greece"],
-  ["Guatemala - Liga Nacional - Apertura", "guatemala"],
-  ["Guatemala - Liga Nacional - Clausura", "guatemala2"],
-  ["Hong Kong - Premier League", "hongkong"],
-  ["Hungary - NB I", "hungary"],
-  ["Hungary - NB I Women", "hungary3"],
-  ["Hungary - NB II", "hungary2"],
-  ["Iceland - 1. Deild", "iceland2"],
-  ["Iceland - 2. Deild", "iceland3"],
-  ["Iceland - Besta deild", "iceland"],
-  ["Iceland - Besta deild Women", "iceland5"],
-  ["India - Super League", "india"],
-  ["Indonesia - Liga 1", "indonesia"],
-  ["Iran - Pro League", "iran"],
-  ["Ireland - First Division", "ireland2"],
-  ["Ireland - Premier Division", "ireland"],
-  ["Ireland - Women National League", "ireland3"],
-  ["Israel - Ligat HaAl", "israel"],
-  ["Italy - Primavera 1", "italy15"],
-  ["Italy - Serie A", "italy"],
-  ["Italy - Serie A Women", "italy17"],
-  ["Italy - Serie B", "italy2"],
-  ["Italy - Serie B Women", "italy18"],
-  ["Italy - Serie C Group A", "italy3"],
-  ["Italy - Serie C Group B", "italy4"],
-  ["Italy - Serie C Group C", "italy5"],
-  ["Italy - Serie D Group A", "italy6"],
-  ["Italy - Serie D Group B", "italy7"],
-  ["Italy - Serie D Group C", "italy8"],
-  ["Italy - Serie D Group D", "italy9"],
-  ["Italy - Serie D Group E", "italy10"],
-  ["Italy - Serie D Group F", "italy11"],
-  ["Italy - Serie D Group G", "italy12"],
-  ["Italy - Serie D Group H", "italy13"],
-  ["Italy - Serie D Group I", "italy14"],
-  ["Jamaica - Premier League", "jamaica"],
-  ["Japan - Nadeshiko League 1", "japan5"],
-  ["Japan - WE League", "japan4"],
-  ["Jordan - Premier League", "jordan"],
-  ["Kazakhstan - Premier League", "kazakhstan"],
-  ["Kuwait - Premier League", "kuwait"],
-  ["Latvia - 1. Liga", "latvia2"],
-  ["Latvia - Virsliga", "latvia"],
-  ["Lithuania - 1st League", "lithuania2"],
-  ["Lithuania - A Lyga", "lithuania"],
-  ["Malaysia - Super League", "malaysia"],
-  ["Mexico - Liga MX - Apertura", "mexico"],
-  ["Mexico - Liga MX - Clausura", "mexico2"],
-  ["Moldova - Divizia Nationala", "moldova"],
-  ["Montenegro - First League", "montenegro"],
-  ["Morocco - Botola Pro", "morocco"],
-  ["Netherlands - Derde Divisie Group A", "netherlands4"],
-  ["Netherlands - Derde Divisie Group B", "netherlands5"],
-  ["Netherlands - Eerste Divisie", "netherlands2"],
-  ["Netherlands - Eredivisie", "netherlands"],
-  ["Netherlands - Eredivisie Women", "netherlands6"],
-  ["Netherlands - Tweede Divisie", "netherlands3"],
-  ["North Macedonia - First League", "northmacedonia"],
-  ["Northern Ireland - NIFL Championship", "northernireland2"],
-  ["Northern Ireland - NIFL Premiership", "northernireland"],
-  ["Norway - 1. Division Women", "norway12"],
-  ["Norway - 1st Division", "norway2"],
-  ["Norway - Division 2 Group 1", "norway3"],
-  ["Norway - Division 2 Group 2", "norway4"],
-  ["Norway - Division 3 Group 1", "norway5"],
-  ["Norway - Division 3 Group 2", "norway6"],
-  ["Norway - Division 3 Group 3", "norway7"],
-  ["Norway - Division 3 Group 4", "norway8"],
-  ["Norway - Division 3 Group 5", "norway9"],
-  ["Norway - Division 3 Group 6", "norway10"],
-  ["Norway - Eliteserien", "norway"],
-  ["Norway - Toppserien Women", "norway11"],
-  ["Paraguay - Division Intermedia", "paraguay3"],
-  ["Paraguay - Primera Div. - Apertura", "paraguay"],
-  ["Paraguay - Primera Div. - Clausura", "paraguay2"],
-  ["Peru - Liga 1 - Apertura", "peru"],
-  ["Peru - Liga 1 - Clausura", "peru2"],
-  ["Philippines - PFL", "philippines"],
-  ["Poland - 1. Liga", "poland2"],
-  ["Poland - 2. Liga", "poland3"],
-  ["Poland - Ekstraklasa", "poland"],
-  ["Poland - Ekstraliga Women", "poland4"],
-  ["Portugal - First Division Women", "portugal8"],
-  ["Portugal - Liga Portugal", "portugal"],
-  ["Portugal - Liga Portugal 2", "portugal2"],
-  ["Qatar - Division 2", "qatar2"],
-  ["Qatar - Stars League", "qatar"],
-  ["Romania - Liga 1", "romania"],
-  ["Romania - Liga 2", "romania2"],
-  ["Romania - Superliga Women", "romania3"],
-  ["Russia - FNL", "russia2"],
-  ["Russia - Premier League", "russia"],
-  ["San Marino - Campionato Sammarinese", "sanmarino"],
-  ["Saudi Arabia - Division 1", "saudiarabia2"],
-  ["Saudi Arabia - Professional League", "saudiarabia"],
-  ["Scotland - Championship", "scotland2"],
-  ["Scotland - League One", "scotland3"],
-  ["Scotland - League Two", "scotland4"],
-  ["Scotland - Premiership", "scotland"],
-  ["Scotland - SWPL 1 Women", "scotland7"],
-  ["Serbia - Prva Liga", "serbia2"],
-  ["Serbia - Super Liga", "serbia"],
-  ["Singapore - Premier League", "singapore"],
-  ["Slovakia - 1. Liga", "slovakia"],
-  ["Slovakia - 1. Liga Women", "slovakia3"],
-  ["Slovakia - 2. Liga", "slovakia2"],
-  ["Slovenia - Prva Liga", "slovenia"],
-  ["South Africa - First Division", "southafrica2"],
-  ["South Africa - Premier Division", "southafrica"],
-  ["South Korea - K League 1", "southkorea"],
-  ["South Korea - K League 2", "southkorea2"],
-  ["South Korea - WK League Women", "southkorea4"],
-  ["Spain - LaLiga", "spain"],
-  ["Spain - LaLiga2", "spain2"],
-  ["Spain - Primera RFEF Group 1", "spain3"],
-  ["Spain - Primera RFEF Group 2", "spain4"],
-  ["Spain - Segunda RFEF Group 1", "spain5"],
-  ["Spain - Segunda RFEF Group 2", "spain6"],
-  ["Spain - Segunda RFEF Group 3", "spain7"],
-  ["Spain - Segunda RFEF Group 4", "spain8"],
-  ["Spain - Segunda RFEF Group 5", "spain9"],
-  ["Sweden - Allsvenskan", "sweden"],
-  ["Sweden - Allsvenskan Women", "sweden11"],
-  ["Sweden - Div 1 Norra", "sweden3"],
-  ["Sweden - Div 1 Sodra", "sweden4"],
-  ["Sweden - Div 2 Norra Gotaland", "sweden5"],
-  ["Sweden - Div 2 Norra Svealand", "sweden6"],
-  ["Sweden - Div 2 Norrland", "sweden7"],
-  ["Sweden - Div 2 Sodra Gotaland", "sweden10"],
-  ["Sweden - Div 2 Sodra Svealand", "sweden8"],
-  ["Sweden - Div 2 Vastra Gotaland", "sweden9"],
-  ["Sweden - Elitettan Women", "sweden12"],
-  ["Sweden - Superettan", "sweden2"],
-  ["Switzerland - Challenge League", "switzerland2"],
-  ["Switzerland - Promotion League", "switzerland3"],
-  ["Switzerland - Super League", "switzerland"],
-  ["Switzerland - Women Super League", "switzerland4"],
-  ["Thailand - Thai League 1", "thailand"],
-  ["Turkiye - 1. Lig", "turkey2"],
-  ["Turkiye - 2. Lig Red Group", "turkey4"],
-  ["Turkiye - 2. Lig White Group", "turkey3"],
-  ["Turkiye - 3. Lig Group 1", "turkey5"],
-  ["Turkiye - 3. Lig Group 2", "turkey6"],
-  ["Turkiye - 3. Lig Group 3", "turkey7"],
-  ["Turkiye - 3. Lig Group 4", "turkey8"],
-  ["Turkiye - Super Lig", "turkey"],
-  ["UAE - Pro League", "uae"],
-  ["USA - MLS", "usa"],
-  ["USA - NWSL", "usa6"],
-  ["USA - USL Championship", "usa2"],
-  ["USA - USL League One", "usa3"],
-  ["USA - USL Super League", "usa7"],
-  ["Ukraine - Persha Liga", "ukraine2"],
-  ["Ukraine - Premier League", "ukraine"],
-  ["Ukraine - U19 League", "ukraine5"],
-  ["Uruguay - Liga AUF - Apertura", "uruguay"],
-  ["Uruguay - Liga AUF - Clausura", "uruguay3"],
-  ["Uruguay - Liga AUF - Intermediate", "uruguay2"],
-  ["Venezuela - Liga FUTVE - Apertura", "venezuela"],
-  ["Venezuela - Liga FUTVE - Clausura", "venezuela2"],
-  ["Vietnam - National League Women", "vietnam3"],
-  ["Vietnam - V League", "vietnam"],
-  ["Wales - Cymru Premier", "wales"],
-];
-
-// ── Backend API URL (update after deploying backend) ─────────
-const API_BASE = "https://kickwise-v2.onrender.com";
-
-// ── Populate dropdown ────────────────────────────────────────
-const sel = document.getElementById("leagueSelect");
-LEAGUES.forEach(([name, code]) => {
-  const opt = document.createElement("option");
-  opt.value = code;
-  opt.textContent = name;
-  if (code === "belarus") opt.selected = true;
-  sel.appendChild(opt);
-});
-
-// ── Date display ─────────────────────────────────────────────
-const dateBar = document.getElementById("dateBar");
-dateBar.textContent = new Date().toLocaleDateString("en-GB", {
-  weekday:"long", day:"numeric", month:"long", year:"numeric"
-});
-
-// ── Pill renderer ─────────────────────────────────────────────
-function pillClass(val) {
-  if (!val || val.trim() === "" || val === "None" || val === "N/A") return "empty";
-  val = val.toLowerCase();
-  if (val.includes("not match")) return "nomatch";
-  if (val === "match")           return "match";
-  if (val.includes("double"))    return "double";
-  if (val.includes("under"))     return "under";
-  if (val.includes("handicap"))  return "handicap";
-  if (val.includes("low"))       return "low";
-  return "neutral";
+LEAGUE_TO_SPORT_KEY = {
+    "england":     "soccer_epl",
+    "england2":    "soccer_efl_champ",
+    "spain":       "soccer_spain_la_liga",
+    "italy":       "soccer_italy_serie_a",
+    "germany":     "soccer_germany_bundesliga",
+    "france":      "soccer_france_ligue_one",
+    "netherlands": "soccer_netherlands_eredivisie",
 }
 
-function pill(label, val) {
-  const cls   = pillClass(val);
-  const text  = (!val || val.trim() === "" || val === "None") ? "—" : val;
-  return `<div class="pill ${cls}"><span class="pill-label">${label}</span>${text}</div>`;
-}
+# --- POISSON DISTRIBUTION FUNCTIONS (FIXED) ---
+def calc_win_draw_away(lambda_home, lambda_away, max_goals=10):
+    try:
+        lambda_home, lambda_away = float(lambda_home), float(lambda_away)
+    except (TypeError, ValueError):
+        return None
+    if lambda_home < 0 or lambda_away < 0:
+        return None
 
-// ── Status helpers ────────────────────────────────────────────
-function setStatus(msg, loading=false) {
-  document.getElementById("statusText").textContent = msg;
-  document.getElementById("spinner").classList.toggle("active", loading);
-}
+    home_win = draw = away_win = 0.0
+    for h in range(max_goals + 1):
+        for a in range(max_goals + 1):
+            p = poisson.pmf(h, lambda_home) * poisson.pmf(a, lambda_away)
+            if h > a:
+                home_win += p
+            elif h == a:
+                draw += p
+            else:
+                away_win += p
+    total = home_win + draw + away_win
+    return {
+        "home_pct": round(home_win / total * 100, 1),
+        "draw_pct": round(draw / total * 100, 1),
+        "away_pct": round(away_win / total * 100, 1),
+    } if total > 0 else None
 
-// ── Main analysis call ────────────────────────────────────────
-async function runAnalysis() {
-  const code = sel.value;
-  const name = sel.options[sel.selectedIndex].text;
-  const btn  = document.getElementById("runBtn");
-  const res  = document.getElementById("results");
+def pct_to_odds(pct):
+    return round(100 / pct, 2) if pct and pct > 0 else None
 
-  btn.disabled = true;
-  res.innerHTML = "";
-
-  const today = new Date();
-  const todayStr = `${today.getDate()} ${today.toLocaleString('en-US', {month:'short'})}`;
-
-  setStatus(`Fetching ${name} fixtures…`, true);
-
-  try {
-    const resp = await fetch(`${API_BASE}/fixtures?league=${code}&date=${encodeURIComponent(todayStr)}`);
-    if (!resp.ok) throw new Error(`Server error: ${resp.status}`);
-    const data = await resp.json();
-
-    if (!data.matches || data.matches.length === 0) {
-      setStatus("Done");
-      res.innerHTML = `
-        <div class="empty">
-          <div class="icon">📅</div>
-          <h3>No fixtures today</h3>
-          <p>No matches found for ${name} today.<br>Try a different league.</p>
-        </div>`;
-      btn.disabled = false;
-      return;
+def calc_odds(lambda_home, lambda_away):
+    wda = calc_win_draw_away(lambda_home, lambda_away)
+    if not wda:
+        return {"home_pct": None, "draw_pct": None, "away_pct": None,
+                "home_odds": None, "draw_odds": None, "away_odds": None}
+    return {
+        "home_pct": wda["home_pct"], "draw_pct": wda["draw_pct"], "away_pct": wda["away_pct"],
+        "home_odds": pct_to_odds(wda["home_pct"]),
+        "draw_odds": pct_to_odds(wda["draw_pct"]), # Fixed original typo here
+        "away_odds": pct_to_odds(wda["away_pct"]),
     }
 
-    res.innerHTML = `<div class="league-header">⚽ ${name}</div>`;
+def calc_over_under_25(lambda_home, lambda_away, max_goals=10):
+    try:
+        lambda_home, lambda_away = float(lambda_home), float(lambda_away)
+    except (TypeError, ValueError):
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
 
-    data.matches.forEach((m, i) => {
-      const card = document.createElement("div");
-      card.className = "match-card";
-      card.style.animationDelay = `${i * 60}ms`;
-      card.innerHTML = `
-        <div class="match-header">
-          <span class="match-time">${m.time || "TBD"}</span>
-          <span class="match-teams">${m.home} <span class="vs">vs</span> ${m.away}</span>
-        </div>
-        <div class="result-section">
-          <div class="result-label">Normal</div>
-          <div class="result-pills" id="normal-${i}">
-            <div class="pill neutral">⏳ Calculating…</div>
-          </div>
-        </div>
-        <div class="result-section">
-          <div class="result-label rev">Reversed · ${m.away} vs ${m.home}</div>
-          <div class="result-pills" id="reversed-${i}">
-            <div class="pill neutral">⏳ Calculating…</div>
-          </div>
-        </div>
-        <div class="result-section" id="smart-${i}"></div>
-        <div class="result-section" id="smart2-${i}"></div>
-        <div class="result-section" id="odds-${i}"></div>
-        <div class="result-section" id="market-odds-${i}"></div>
-        <div class="result-section" id="value-${i}"></div>
-        <div class="result-section" id="ou25-${i}"></div>
-        <div class="result-section" id="ou25-value-${i}"></div>`;
-      res.appendChild(card);
-    });
+    over = under = 0.0
+    for h in range(max_goals + 1):
+        for a in range(max_goals + 1):
+            p = poisson.pmf(h, lambda_home) * poisson.pmf(a, lambda_away)
+            if h + a > 2.5:
+                over += p
+            else:
+                under += p
+    total = over + under
+    if total <= 0:
+        return {"over_pct": None, "under_pct": None, "over_odds": None, "under_odds": None}
 
-    for (let i = 0; i < data.matches.length; i++) {
-      const m = data.matches[i];
-      setStatus(`Calculating ${i + 1} of ${data.matches.length}: ${m.home} vs ${m.away}…`, true);
+    over_pct = round(over / total * 100, 1)
+    under_pct = round(under / total * 100, 1)
+    return {
+        "over_pct": over_pct, "under_pct": under_pct,
+        "over_odds": pct_to_odds(over_pct), "under_odds": pct_to_odds(under_pct),
+    }
 
-      try {
-        const purl = `${API_BASE}/predict?league=${code}&home=${encodeURIComponent(m.home)}&away=${encodeURIComponent(m.away)}`;
-        const presp = await fetch(purl);
-        if (!presp.ok) throw new Error(`Server error: ${presp.status}`);
-        const p = await presp.json();
+def resolve_team(name, team_data):
+    if name in team_data:
+        return name
+    close = difflib.get_close_matches(name, team_data.keys(), n=1, cutoff=0.75)
+    return close[0] if close else None
 
-        document.getElementById(`normal-${i}`).innerHTML =
-          pill("D69", p.d70) + pill("D70", p.d70val) + pill("B120", p.b120) + pill("C120", p.c120) +
-          (p.b119 ? pill("B119", p.b119) : "") +
-          (p.d119 ? pill("D119", p.d119) : "") +
-          pill("B46", p.b46) + pill("D64", p.d64) + pill("B118", p.b118) +
-          pill("AA15", p.aa15) + pill("B54", p.b54) +
-          pill("O73", p.o73) + pill("O74", p.o74);
-        document.getElementById(`reversed-${i}`).innerHTML =
-          pill("D69", p.d70r) + pill("D70", p.d70valr) + pill("B120", p.b120r) + pill("C120", p.c120r) +
-          (p.b119r ? pill("B119", p.b119r) : "") +
-          (p.d119r ? pill("D119", p.d119r) : "") +
-          pill("B46", p.b46r) + pill("D64", p.d64r) + pill("B118", p.b118r) +
-          pill("AA15", p.aa15r) + pill("B54", p.b54r) +
-          pill("O73", p.o73r) + pill("O74", p.o74r);
+# --- NEW: SOCCERSTATS LIVE FIXTURES SCRAPER ---
+def fetch_today_fixtures(code):
+    """
+    Scrapes the targeted league's main matches landing page to extract 
+    today's upcoming matches, kick-off times, and team sets.
+    """
+    fixtures = []
+    url = f"{BASE}/matches.asp?league={code}"
+    try:
+        res = requests.get(url, headers=HEADERS, timeout=10)
+        if res.status_code != 200:
+            return fixtures
+        
+        soup = BeautifulSoup(res.text, "html.parser")
+        # Match rows on SoccerSTATS are enclosed in rows containing specific font stylings or borders
+        rows = soup.find_all("tr", class_=["odd", "even"])
+        
+        for row in rows:
+            cells = [td.get_text(strip=True) for td in row.find_all("td")]
+            # Fixture rows on the matches matrix layout typically include [Time, HomeTeam, vs, AwayTeam]
+            if len(cells) >= 4 and "vs" in cells:
+                vs_index = cells.index("vs")
+                home = cells[vs_index - 1]
+                away = cells[vs_index + 1]
+                match_time = cells[0] if vs_index > 0 else "00:00"
+                
+                fixtures.append({
+                    "time": match_time,
+                    "home_team": re.sub(r'\s+', ' ', home).strip(),
+                    "away_team": re.sub(r'\s+', ' ', away).strip()
+                })
+    except Exception as e:
+        print(f"Error scraping fixtures for {code}: {e}")
+    return fixtures
 
-        // ── Win/Draw/Away odds ──────────────────────────────────
-        const oddsDiv = document.getElementById(`odds-${i}`);
-        const oddsData = p.odds || p.oddsr;
-        if (oddsData && oddsData.home_odds) {
-          oddsDiv.innerHTML = `
-            <div class="result-label" style="margin-bottom:6px">📊 ODDS (1X2)</div>
-            <div class="result-pills">
-              <div class="pill neutral"><span class="pill-label">Home</span>${oddsData.home_odds} <span style="opacity:0.6;font-size:11px">(${oddsData.home_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Draw</span>${oddsData.draw_odds} <span style="opacity:0.6;font-size:11px">(${oddsData.draw_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Away</span>${oddsData.away_odds} <span style="opacity:0.6;font-size:11px">(${oddsData.away_pct}%)</span></div>
-            </div>`;
-        } else {
-          oddsDiv.innerHTML = "";
-        }
+def fetch_stats(code):
+    teams = {}
+    url = f"{BASE}/homeaway.asp?league={code}"
+    try:
+        res = requests.get(url, headers=HEADERS, timeout=10)
+        if res.status_code != 200:
+            return teams
+        soup = BeautifulSoup(res.text, "html.parser")
+        data_rows = soup.find_all("tr", class_=["odd", "even"])
+        for row in data_rows:
+            cells = [td.get_text(strip=True) for td in row.find_all("td")]
+            if len(cells) == 11:
+                team_name = re.sub(r'\s+', ' ', cells[0]).strip()
+                try:
+                    teams[team_name] = {
+                        "home_gp": int(cells[1]) if cells[1].isdigit() else 0,
+                        "home_gf": int(cells[5]) if cells[5].isdigit() else 0,
+                        "away_gp": int(cells[6]) if cells[6].isdigit() else 0,
+                        "away_gf": int(cells[10]) if cells[10].isdigit() else 0,
+                    }
+                except Exception:
+                    continue
+    except Exception as e:
+        print(f"Error parsing stats for league {code}: {e}")
+    return teams
 
-        // ── Market odds (real bookmaker odds, if available) ─────
-        const marketOddsDiv = document.getElementById(`market-odds-${i}`);
-        const marketData = p.market_odds;
-        if (marketData && marketData.home_odds) {
-          marketOddsDiv.innerHTML = `
-            <div class="result-label" style="margin-bottom:6px">💰 MARKET ODDS (1X2)</div>
-            <div class="result-pills">
-              <div class="pill neutral"><span class="pill-label">Home</span>${marketData.home_odds} <span style="opacity:0.6;font-size:11px">(${marketData.home_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Draw</span>${marketData.draw_odds} <span style="opacity:0.6;font-size:11px">(${marketData.draw_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Away</span>${marketData.away_odds} <span style="opacity:0.6;font-size:11px">(${marketData.away_pct}%)</span></div>
-            </div>`;
-        } else {
-          marketOddsDiv.innerHTML = "";
-        }
+# --- NEW FULL INTERACTIVE PIPELINE ROUTE ---
+@app.get("/api/analyze")
+def analyze_today_matches(league: str = Query(..., description="League code e.g. england")):
+    if league not in LEAGUE_TO_SPORT_KEY:
+        raise HTTPException(status_code=400, detail="League code not verified by registration rules.")
+    
+    # 1. Scrape live upcoming schedule & raw baseline tracking parameters
+    fixtures = fetch_today_fixtures(league)
+    team_stats = fetch_stats(league)
+    
+    if not team_stats:
+        raise HTTPException(status_code=502, detail="Upstream statistics parsing failure.")
+        
+    predictions_payload = []
+    
+    # 2. Iterate through matches to calculate expected value parameters
+    for match in fixtures:
+        home_resolved = resolve_team(match["home_team"], team_stats)
+        away_resolved = resolve_team(match["away_team"], team_stats)
+        
+        # Fallback tracking if lookup matrix is incomplete
+        if not home_resolved or not away_resolved:
+            continue
+            
+        h_data = team_stats[home_resolved]
+        a_data = team_stats[away_resolved]
+        
+        # Calculate expected goal distributions (λ Parameters)
+        # Formulated via Goals Scored Per Match splits
+        lambda_home = h_data["home_gf"] / h_data["home_gp"] if h_data["home_gp"] > 0 else 1.2
+        lambda_away = a_data["away_gf"] / a_data["away_gp"] if a_data["away_gp"] > 0 else 1.0
+        
+        # Trigger Poisson distribution algorithms
+        one_x_two = calc_odds(lambda_home, lambda_away)
+        goals_line = calc_over_under_25(lambda_home, lambda_away)
+        
+        # Determine the primary value pill classification for your UI styles
+        if one_x_two["home_pct"] > 55.0:
+            pill_class = "match"
+            prediction_tip = f"{match['home_team']} Win"
+        elif one_x_two["away_pct"] > 55.0:
+            pill_class = "match"
+            prediction_tip = f"{match['away_team']} Win"
+        elif goals_line["over_pct"] > 60.0:
+            pill_class = "double"
+            prediction_tip = "Over 2.5 Goals"
+        else:
+            pill_class = "neutral"
+            prediction_tip = "Draw or Under 2.5"
 
-        // ── Value% — (market odd − model odd) / model odd × 100, signed ──
-        const valueDiv = document.getElementById(`value-${i}`);
-        const v = p.value_pct;
-        const vs = p.value_signal;
-        if (v) {
-          const fmt = (n) => {
-            if (n === null || n === undefined) return "—";
-            const sign = n > 0 ? "+" : "";
-            return `${sign}${n}%`;
-          };
-          const cls = (n) => {
-            if (n === null || n === undefined) return "neutral";
-            return n > 0 ? "match" : (n < 0 ? "nomatch" : "neutral");
-          };
-          let pills = `
-              <div class="pill ${cls(v.home)}"><span class="pill-label">Home</span>${fmt(v.home)}</div>
-              <div class="pill ${cls(v.draw)}"><span class="pill-label">Draw</span>${fmt(v.draw)}</div>
-              <div class="pill ${cls(v.away)}"><span class="pill-label">Away</span>${fmt(v.away)}</div>
-              <div class="pill ${cls(v.total)}"><span class="pill-label">Total</span>${fmt(v.total)}</div>
-              <div class="pill ${cls(v.share_diff)}"><span class="pill-label">Share Diff</span>${fmt(v.share_diff)}</div>`;
-          if (vs && vs.under) {
-            pills += `<div class="pill under"><span class="pill-label">Signal</span>${vs.under}</div>`;
-          }
-          if (vs && vs.decision) {
-            const decisionCls = vs.decision.includes("handicap") ? "handicap" : "match";
-            pills += `<div class="pill ${decisionCls}" style="font-weight:800"><span class="pill-label">Decision</span>${vs.decision}</div>`;
-          }
-          valueDiv.innerHTML = `
-            <div class="result-label" style="margin-bottom:6px">📈 VALUE (MARKET VS MODEL)</div>
-            <div class="result-pills">${pills}</div>`;
-        } else {
-          valueDiv.innerHTML = "";
-        }
-
-        // ── Over/Under 2.5 goals — model odds ────────────────────
-        const ou25Div = document.getElementById(`ou25-${i}`);
-        const ou25Data = p.ou25;
-        const marketOu25Data = p.market_ou25;
-        if ((ou25Data && ou25Data.over_odds) || (marketOu25Data && marketOu25Data.over_odds)) {
-          let ouHtml = `<div class="result-label" style="margin-bottom:6px">⚽ OVER/UNDER 2.5</div><div class="result-pills">`;
-          if (ou25Data && ou25Data.over_odds) {
-            ouHtml += `
-              <div class="pill neutral"><span class="pill-label">Model Over</span>${ou25Data.over_odds} <span style="opacity:0.6;font-size:11px">(${ou25Data.over_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Model Under</span>${ou25Data.under_odds} <span style="opacity:0.6;font-size:11px">(${ou25Data.under_pct}%)</span></div>`;
-          }
-          if (marketOu25Data && marketOu25Data.over_odds) {
-            ouHtml += `
-              <div class="pill neutral"><span class="pill-label">Market Over</span>${marketOu25Data.over_odds} <span style="opacity:0.6;font-size:11px">(${marketOu25Data.over_pct}%)</span></div>
-              <div class="pill neutral"><span class="pill-label">Market Under</span>${marketOu25Data.under_odds} <span style="opacity:0.6;font-size:11px">(${marketOu25Data.under_pct}%)</span></div>`;
-          }
-          ouHtml += `</div>`;
-          ou25Div.innerHTML = ouHtml;
-        } else {
-          ou25Div.innerHTML = "";
-        }
-
-        // ── Over/Under 2.5 — value (same formula/share/diff as 1X2) ──
-        const ou25ValueDiv = document.getElementById(`ou25-value-${i}`);
-        const ouV = p.ou25_value_pct;
-        const ouVs = p.ou25_value_signal;
-        if (ouV) {
-          const fmtOu = (n) => {
-            if (n === null || n === undefined) return "—";
-            const sign = n > 0 ? "+" : "";
-            return `${sign}${n}%`;
-          };
-          const clsOu = (n) => {
-            if (n === null || n === undefined) return "neutral";
-            return n > 0 ? "match" : (n < 0 ? "nomatch" : "neutral");
-          };
-          let ouPills = `
-              <div class="pill ${clsOu(ouV.over)}"><span class="pill-label">Over</span>${fmtOu(ouV.over)}</div>
-              <div class="pill ${clsOu(ouV.under)}"><span class="pill-label">Under</span>${fmtOu(ouV.under)}</div>
-              <div class="pill ${clsOu(ouV.total)}"><span class="pill-label">Total</span>${fmtOu(ouV.total)}</div>
-              <div class="pill ${clsOu(ouV.share_diff)}"><span class="pill-label">Share Diff</span>${fmtOu(ouV.share_diff)}</div>`;
-          if (ouVs && ouVs.result) {
-            ouPills += `<div class="pill double"><span class="pill-label">Result</span>${ouVs.result}</div>`;
-          }
-          ou25ValueDiv.innerHTML = `
-            <div class="result-label" style="margin-bottom:6px">📈 O/U 2.5 VALUE</div>
-            <div class="result-pills">${ouPills}</div>`;
-        } else {
-          ou25ValueDiv.innerHTML = "";
-        }
-
-        // ── Smart prediction logic ─────────────────────────────
-        const smartDiv = document.getElementById(`smart-${i}`);
-        const isMatch = (v) => {
-          const s = (v || "").toLowerCase().trim();
-          return s === "match" || (s.includes("match") && !s.includes("not"));
-        };
-        const c120Match = isMatch(p.c120) || isMatch(p.c120r);
-
-        // Use D69 from whichever direction has C120 = "match"
-        const d70Main = isMatch(p.c120) ? (p.d70 || "") : (p.d70r || p.d70 || "");
-
-        const d64Both   = (p.d64 || "").toLowerCase().includes("both") ||
-                          (p.d64r || "").toLowerCase().includes("both");
-        const d64One    = (p.d64 || "").toLowerCase().includes("one") ||
-                          (p.d64r || "").toLowerCase().includes("one");
-        const b120Combined = ((p.b120 || "") + " " + (p.b120r || "")).toLowerCase();
-        const b120Double = b120Combined.includes("double");
-        const b120Under  = b120Combined.includes("under");
-
-        // B46 — extract just the goals part (e.g. "3goals", "4goals")
-        const b46Combined = ((p.b46 || "") + " " + (p.b46r || "")).toLowerCase();
-        const b46Goals = (() => {
-          const m = b46Combined.match(/(\d+\s*goals)/);
-          return m ? m[1].replace(/\s+/, "") : "";
-        })();
-
-        // AA15 — valid when either says "yes", "yes1", or "both"
-        const aa15Valid = (v) => {
-          const s = (v || "").toLowerCase();
-          return s === "yes" || s === "yes1" || s === "both";
-        };
-        const aa15Ok = aa15Valid(p.aa15) || aa15Valid(p.aa15r);
-
-        let smartResult = null;
-
-        if (c120Match) {
-          const labels = [];
-          let cls = "neutral";
-
-          if (b120Double) {
-            labels.push(d64Both ? "double" : (d64One ? "2-handicap" : null));
-          }
-          if (b120Under) {
-            labels.push(d64Both ? "under" : (d64One ? "under extend" : null));
-          }
-          const validLabels = labels.filter(Boolean);
-
-          if (validLabels.length > 0) {
-            const lbl = validLabels.join(" + ");
-            cls = lbl.includes("double") ? "double" : (lbl.includes("handicap") ? "handicap" : "under");
-
-            // Add B46 goals only when AA15 is valid AND b46 has a goals value
-            const goalsSuffix = (aa15Ok && b46Goals) ? " / " + b46Goals : "";
-            smartResult = { label: d70Main + " / " + lbl + goalsSuffix, cls: cls };
-          }
-        }
-
-        if (smartResult) {
-          smartDiv.innerHTML = `
-            <div style="margin-top:4px">
-              <div class="result-label" style="color:var(--lime);margin-bottom:6px">⚡ PREDICTION</div>
-              <div class="pill ${smartResult.cls}" style="font-size:14px;padding:8px 14px;font-weight:700">
-                ${smartResult.label}
-              </div>
-            </div>`;
-        } else {
-          smartDiv.innerHTML = "";
-        }
-
-        // ── Prediction 2: Rules based on O73, D69, D70, B120, C120, AA15, D64, B54, B46 ──
-        const smart2Div = document.getElementById(`smart2-${i}`);
-        const o73Val = (p.o73 || p.o73r || "").trim();
-        const d69n = (p.d70 || "").toLowerCase();
-        const d70n = (p.d70val || "").toLowerCase();
-        const d69r = (p.d70r || "").toLowerCase();
-        const d70r2 = (p.d70valr || "").toLowerCase();
-        const o73Low = o73Val.toLowerCase();
-
-        // Rule 1: D69+D70 both contain O73, B120=double (either), C120=match (either)
-        const r1_d69_ok = o73Low && (d69n.includes(o73Low) && d70n.includes(o73Low));
-        const r1_d69r_ok = o73Low && (d69r.includes(o73Low) && d70r2.includes(o73Low));
-        const r1_match = (r1_d69_ok || r1_d69r_ok) &&
-                         b120Combined.includes("double") &&
-                         c120Match;
-
-        // Rule 2: AA15 != "no", D64="both", B54 empty both, C120 match either,
-        //         O73 contained in D69 or D70 (either direction)
-        const aa15NotNo = !((p.aa15 || "").toLowerCase() === "no" &&
-                            (p.aa15r || "").toLowerCase() === "no");
-        const d64BothR2 = d64Both;
-        const b54Empty = !(p.b54 || "").trim() && !(p.b54r || "").trim();
-        const o73InD69D70 = o73Low && (
-          d69n.includes(o73Low) || d70n.includes(o73Low) ||
-          d69r.includes(o73Low) || d70r2.includes(o73Low)
-        );
-        const r2_match = aa15NotNo && d64BothR2 && b54Empty && c120Match && o73InD69D70;
-
-        let pred2 = "";
-        if (r1_match && r2_match) {
-          pred2 = o73Val + " / " + (p.b46 || p.b46r || "");
-        } else if (r1_match) {
-          pred2 = o73Val;
-        } else if (r2_match) {
-          pred2 = (p.b46 || p.b46r || "");
-        }
-
-        if (pred2) {
-          // Check if all D69 and D70 (normal + reversed) contain "handicap"
-          const allHandicap = d69n.includes("handicap") && d70n.includes("handicap") &&
-                              d69r.includes("handicap") && d70r2.includes("handicap");
-
-          let finalPred2 = pred2;
-          if (allHandicap && o73Val) {
-            finalPred2 = o73Val + " only";
-          } else {
-            // B118 "same" check — only when pred2 is showing and not overridden
-            const b118n = (p.b118 || "").toLowerCase();
-            const b118r2 = (p.b118r || "").toLowerCase();
-            const b118nHome = b118n.includes("home g") || b118n.includes("home c");
-            const b118nAway = b118n.includes("away g") || b118n.includes("away c");
-            const b118rHome = b118r2.includes("home g") || b118r2.includes("home c") ||
-                              b118r2.includes("home");
-            const b118rAway = b118r2.includes("away g") || b118r2.includes("away c") ||
-                              b118r2.includes("away");
-            let sameSuffix = "";
-            if ((b118nHome && b118rHome) || (b118nAway && b118rAway)) {
-              sameSuffix = " / same";
+        # Build full JSON layout matching your frontend requirements
+        predictions_payload.append({
+            "time": match["time"],
+            "home": match["home_team"],
+            "away": match["away_team"],
+            "pill_style": pill_class,
+            "tip": prediction_tip,
+            "probabilities": {
+                "home": f"{one_x_two['home_pct']}%",
+                "draw": f"{one_x_two['draw_pct']}%",
+                "away": f"{one_x_two['away_pct']}%",
+                "over25": f"{goals_line['over_pct']}%",
+                "under25": f"{goals_line['under_pct']}%",
+            },
+            "implied_odds": {
+                "home": one_x_two["home_odds"],
+                "draw": one_x_two["draw_odds"],
+                "away": one_x_two["away_odds"],
             }
-            finalPred2 = pred2 + sameSuffix;
-          }
-
-          const aa15IsNo = (p.aa15 || "").toLowerCase() === "no" ||
-                           (p.aa15r || "").toLowerCase() === "no";
-          const b54HasOver = (p.b54 || "").toLowerCase().includes("over") ||
-                             (p.b54r || "").toLowerCase().includes("over");
-          let pred2Style = "";
-          let pred2Cls = "under";
-          if (b54HasOver) {
-            pred2Style = "background:#000000;color:white;border:1px solid #333";
-            pred2Cls = "";
-          } else if (aa15IsNo) {
-            pred2Style = "background:#C0392B;color:white;border:1px solid #E74C3C";
-            pred2Cls = "";
-          }
-          smart2Div.innerHTML = `
-            <div style="margin-top:4px">
-              <div class="result-label" style="color:#F39C12;margin-bottom:6px">🎯 PREDICTION 2</div>
-              <div class="pill ${pred2Cls}" style="font-size:14px;padding:8px 14px;font-weight:700;${pred2Style}">
-                ${finalPred2}
-              </div>
-            </div>`;
-        } else {
-          smart2Div.innerHTML = "";
-        }
-      } catch (e) {
-        document.getElementById(`normal-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
-        document.getElementById(`reversed-${i}`).innerHTML = `<div class="pill empty">Error</div>`;
-      }
-    }
-
-    setStatus(`Done — ${data.matches.length} match${data.matches.length > 1 ? "es" : ""}`);
-
-  } catch (err) {
-    setStatus("Error — see below");
-    res.innerHTML = `
-      <div class="empty">
-        <div class="icon">⚠️</div>
-        <h3>Could not load data</h3>
-        <p>${err.message}<br><br>The backend may be starting up.<br>Wait 30 seconds and try again.</p>
-      </div>`;
-  } finally {
-    btn.disabled = false;
-  }
-}
-</script>
-</body>
-</html>
+        })
+        
+    return {
