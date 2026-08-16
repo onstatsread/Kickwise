@@ -214,13 +214,35 @@ def _annabet_parse_table(table):
     return teams
 
 
-def fetch_stats_annabet(serie_id):
+def fetch_stats_annabet(serie_id, retries=3):
     """Fetch team stats from AnnaBet for one league. Returns the same
     shape fetch_stats() (SoccerStats version) returns, so run_model()
-    doesn't need to know which source the data came from."""
+    doesn't need to know which source the data came from.
+
+    Retries on connection/timeout errors — a single 20s timeout with no
+    retry was reporting entire leagues as having zero stats coverage
+    (and every match in them as N/A) even when AnnaBet was reachable
+    again just seconds later. Confirmed via Render logs: a 'lithuania'
+    request timed out once, and every match in that league got skipped
+    as N/A even though the teams involved DO have real stat coverage —
+    this was a transient network blip being misread as missing data.
+    """
     url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
-    resp = ANNABET_SESSION.get(url, timeout=20)
-    resp.raise_for_status()
+    last_error = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            resp = ANNABET_SESSION.get(url, timeout=20)
+            resp.raise_for_status()
+            break
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                print(f"    ⏳ AnnaBet stats attempt {attempt} failed for serie_{serie_id} ({e}) — retrying...")
+                time.sleep(2)
+            else:
+                raise last_error
+
     soup = BeautifulSoup(resp.text, "html.parser")
 
     tables = soup.find_all("table")
@@ -782,19 +804,28 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
     resolved_h = resolve_team(home, team_data)
     resolved_a = resolve_team(away, team_data)
-    # DEBUG — log resolution failures so we can tell "no stats for this
-    # team at all" apart from "stats exist but the name didn't match."
-    # Shows a handful of actual team_data keys for the league so mismatch
-    # patterns (spacing, diacritics, abbreviations, FC prefix/suffix) are
-    # visible directly in the log instead of needing a separate lookup.
-    if resolved_h is None and team_data:
-        sample_names = list(team_data.keys())[:8]
-        print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — "
-              f"sample available names: {sample_names}")
-    if resolved_a is None and team_data:
-        sample_names = list(team_data.keys())[:8]
-        print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — "
-              f"sample available names: {sample_names}")
+    # DEBUG — now logs in BOTH cases: when team_data is completely empty
+    # (the AnnaBet fetch itself failed/timed out — the "no stats at all"
+    # case, now less common with the retry added to fetch_stats_annabet)
+    # and when team_data has real entries but the specific name didn't
+    # match (the actual name-mismatch case, worth fixing resolve_team()
+    # for). These were previously indistinguishable in the logs — an
+    # earlier version of this check only fired when team_data was
+    # non-empty, silently missing the "fetch failed entirely" case.
+    if resolved_h is None:
+        if not team_data:
+            print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — team_data is EMPTY (stats fetch likely failed)")
+        else:
+            sample_names = list(team_data.keys())[:8]
+            print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — "
+                  f"sample available names: {sample_names}")
+    if resolved_a is None:
+        if not team_data:
+            print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — team_data is EMPTY (stats fetch likely failed)")
+        else:
+            sample_names = list(team_data.keys())[:8]
+            print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — "
+                  f"sample available names: {sample_names}")
     # If resolution failed, fall back to the raw name for display/model lookup —
     # run_model already returns clean "N/A" values when a name isn't in
     # team_data, so this doesn't risk silently using a wrong team anymore.
