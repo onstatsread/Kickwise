@@ -26,8 +26,23 @@ import threading
 import formulas
 from openpyxl.utils import get_column_letter
 
-MODEL_PATH = "A_mix2.xlsx"
-_SHEET1 = "'[A_mix2.xlsx]SHEET1'!"
+MODEL_PATH = "A_mix2_fast.xlsx"
+_SHEET1 = "'[A_mix2_fast.xlsx]SHEET1'!"
+
+# NOTE: this is a TRIMMED copy of A_mix2.xlsx — NOT the same file /predict
+# (the LibreOffice path) uses. Only the 3 sheets actually needed for our
+# outputs are kept (Sheet1, Sheet2, Sheet3), and Sheet3 itself was
+# stripped down to just its 2 required cells (G3, H3) — everything else
+# was confirmed, via a full dependency trace, to be unreachable from any
+# value this module reads. Validated field-by-field against true
+# LibreOffice output on two different real match datasets after trimming
+# — byte-identical results, just with a smaller memory footprint (a real
+# concern on Render's free 512MB tier, where the untrimmed workbook's
+# parse alone used ~450MB).
+#
+# If you ever regenerate this file, you MUST re-run the same validation
+# (see final_validate.py from the session this was built in) before
+# trusting it — do not just re-export the sheet and assume it's safe.
 
 # The base parsed model is expensive (~15-25s) but only needs to happen
 # once per process — cache it globally and guard with a lock so concurrent
