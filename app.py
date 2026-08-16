@@ -2,7 +2,7 @@
 Kickwise Backend — FastAPI server
 Deploy to Render.com (free tier)
 """
-from fastapi import FastAPI, Query, HTTPException, Body
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time
 from scipy.stats import poisson
@@ -16,22 +16,10 @@ from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback  # NE
 
 app = FastAPI(title="Kickwise API")
 
-# NOTE: fast_model.run_model_fast() already lazy-loads its parsed model on
-# first use (see fast_model.py's _get_model() with its threading.Lock
-# guard) — that's the correct behavior. An earlier version of this file
-# tried to force that ~15-25s parse to happen at server startup via an
-# @app.on_event("startup") hook, but on Render's free tier that parse
-# took far longer than expected and blocked the ENTIRE app (every
-# endpoint, not just /predict_manual) from accepting any requests for an
-# extended period after each cold start. Removed — the first call to
-# /predict_manual after a cold start just pays that cost itself instead,
-# same as before, without holding the rest of the API hostage.
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET"],
     allow_headers=["*"],
 )
 
@@ -107,15 +95,7 @@ def fetch_all_upcoming_annabet():
     """Fetch the single global upcoming-fixtures page and group matches
     by our league codes (via serie_ID matched from each row's league
     link). One fetch covers every AnnaBet-mapped league at once —
-    cheaper than the old per-league fixture calls SoccerStats needed.
-
-    NOTE: this page only shows a short rolling window (observed to cut
-    off ~12-14 hours ahead of the current time, not a full day) — late
-    kickoffs (e.g. MLS evening US games) may not appear here yet even
-    though they're the correct day. See fetch_fixtures_annabet_perleague()
-    below for a per-league alternative under investigation that may have
-    a longer (multi-day) lookahead window instead.
-    """
+    cheaper than the old per-league fixture calls SoccerStats needed."""
     cached = _ANNABET_FIXTURES_CACHE.get("_all")
     if cached and (time.time() - cached[0]) < ANNABET_FIXTURES_CACHE_TTL:
         return cached[1]
@@ -214,35 +194,13 @@ def _annabet_parse_table(table):
     return teams
 
 
-def fetch_stats_annabet(serie_id, retries=3):
+def fetch_stats_annabet(serie_id):
     """Fetch team stats from AnnaBet for one league. Returns the same
     shape fetch_stats() (SoccerStats version) returns, so run_model()
-    doesn't need to know which source the data came from.
-
-    Retries on connection/timeout errors — a single 20s timeout with no
-    retry was reporting entire leagues as having zero stats coverage
-    (and every match in them as N/A) even when AnnaBet was reachable
-    again just seconds later. Confirmed via Render logs: a 'lithuania'
-    request timed out once, and every match in that league got skipped
-    as N/A even though the teams involved DO have real stat coverage —
-    this was a transient network blip being misread as missing data.
-    """
+    doesn't need to know which source the data came from."""
     url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
-    last_error = None
-
-    for attempt in range(1, retries + 1):
-        try:
-            resp = ANNABET_SESSION.get(url, timeout=20)
-            resp.raise_for_status()
-            break
-        except Exception as e:
-            last_error = e
-            if attempt < retries:
-                print(f"    ⏳ AnnaBet stats attempt {attempt} failed for serie_{serie_id} ({e}) — retrying...")
-                time.sleep(2)
-            else:
-                raise last_error
-
+    resp = ANNABET_SESSION.get(url, timeout=20)
+    resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
     tables = soup.find_all("table")
@@ -804,28 +762,6 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
     resolved_h = resolve_team(home, team_data)
     resolved_a = resolve_team(away, team_data)
-    # DEBUG — now logs in BOTH cases: when team_data is completely empty
-    # (the AnnaBet fetch itself failed/timed out — the "no stats at all"
-    # case, now less common with the retry added to fetch_stats_annabet)
-    # and when team_data has real entries but the specific name didn't
-    # match (the actual name-mismatch case, worth fixing resolve_team()
-    # for). These were previously indistinguishable in the logs — an
-    # earlier version of this check only fired when team_data was
-    # non-empty, silently missing the "fetch failed entirely" case.
-    if resolved_h is None:
-        if not team_data:
-            print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — team_data is EMPTY (stats fetch likely failed)")
-        else:
-            sample_names = list(team_data.keys())[:8]
-            print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — "
-                  f"sample available names: {sample_names}")
-    if resolved_a is None:
-        if not team_data:
-            print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — team_data is EMPTY (stats fetch likely failed)")
-        else:
-            sample_names = list(team_data.keys())[:8]
-            print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — "
-                  f"sample available names: {sample_names}")
     # If resolution failed, fall back to the raw name for display/model lookup —
     # run_model already returns clean "N/A" values when a name isn't in
     # team_data, so this doesn't risk silently using a wrong team anymore.
@@ -1019,122 +955,6 @@ def health():
     return {"status": "ok"}
 
 
-# NEW — manual predictor endpoint for the paste-your-own-data mini site.
-# Accepts team stats pasted/parsed on the frontend (same shape fetch_stats
-# / fetch_stats_annabet() already produce: gp, gf, ga, tot, hgf, hga,
-# htot, agf, aga, atot per team) instead of scraping AnnaBet. Runs the
-# exact same run_model() function as /predict, so predictions are
-# identical in method — just skips the market-odds/value% sections since
-# there's no league context to look up live odds against. The frontend
-# already renders those sections conditionally (only when present), so
-# leaving them null here doesn't break anything, it just shows fewer
-# rows on the card — same behavior as any league where market odds
-# simply aren't available.
-# NEW — async job pattern for the manual predictor. Render's free-tier
-# CPU turned out to be dramatically slower than expected for the
-# formulas-library parse/calculate steps (a warm-up that took ~22s in
-# testing took nearly 90 minutes on Render's free tier during one cold
-# start). A single blocking POST /predict_manual request can end up
-# running far longer than any browser, mobile network, or Render's own
-# proxy will wait — which is exactly what "Failed to fetch" looks like,
-# regardless of whether the calculation would have eventually finished.
-#
-# Fix: POST starts the job and returns a job_id immediately (no long-held
-# connection). The frontend polls a lightweight GET status endpoint every
-# few seconds instead. Each individual HTTP request/response stays short,
-# so no timeout — however slow the underlying calculation is.
-import uuid
-import threading
-
-_PREDICT_JOBS = {}          # job_id -> {"status", "result", "error", "created_at"}
-_PREDICT_JOBS_LOCK = threading.Lock()
-
-_REQUIRED_TEAM_KEYS = {"gp", "gf", "ga", "tot", "hgf", "hga", "htot", "agf", "aga", "atot"}
-
-
-def _run_predict_job(job_id, team_data, home, away):
-    from fast_model import run_model_fast
-    try:
-        r1 = run_model_fast(home, away, team_data)
-        r2 = run_model_fast(away, home, team_data)
-
-        result = {
-            "home": home, "away": away,
-            "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
-            "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
-            "odds": r1.get("odds"),
-            "ou25": r1.get("ou25"),
-            "market_ou25": None,
-            "ou25_value_pct": None,
-            "ou25_value_signal": None,
-            "market_odds": None,
-            "value_pct": None,
-            "value_signal": None,
-            "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
-            "o73": r1["o73"], "o74": r1["o74"],
-            "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
-            "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
-            "oddsr": r2.get("odds"),
-            "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
-            "o73r": r2["o73"], "o74r": r2["o74"],
-        }
-        with _PREDICT_JOBS_LOCK:
-            _PREDICT_JOBS[job_id] = {"status": "done", "result": result, "error": None,
-                                      "created_at": _PREDICT_JOBS[job_id]["created_at"]}
-    except Exception as e:
-        with _PREDICT_JOBS_LOCK:
-            _PREDICT_JOBS[job_id] = {"status": "error", "result": None, "error": str(e),
-                                      "created_at": _PREDICT_JOBS[job_id]["created_at"]}
-
-
-@app.post("/predict_manual/start")
-def predict_manual_start(payload: dict = Body(...)):
-    team_data = payload.get("team_data")
-    home = payload.get("home")
-    away = payload.get("away")
-
-    if not team_data or not isinstance(team_data, dict):
-        raise HTTPException(400, "team_data is required and must be a non-empty object")
-    if not home or not away:
-        raise HTTPException(400, "home and away are both required")
-    if home not in team_data:
-        raise HTTPException(400, f"'{home}' not found in the pasted team data")
-    if away not in team_data:
-        raise HTTPException(400, f"'{away}' not found in the pasted team data")
-
-    missing = _REQUIRED_TEAM_KEYS - set(team_data[home].keys())
-    if missing:
-        raise HTTPException(400, f"Team data is missing expected fields: {sorted(missing)}")
-
-    job_id = str(uuid.uuid4())
-    with _PREDICT_JOBS_LOCK:
-        _PREDICT_JOBS[job_id] = {"status": "pending", "result": None, "error": None, "created_at": time.time()}
-
-    thread = threading.Thread(target=_run_predict_job, args=(job_id, team_data, home, away), daemon=True)
-    thread.start()
-
-    return {"job_id": job_id}
-
-
-@app.get("/predict_manual/status/{job_id}")
-def predict_manual_status(job_id: str):
-    with _PREDICT_JOBS_LOCK:
-        job = _PREDICT_JOBS.get(job_id)
-    if not job:
-        raise HTTPException(404, "Unknown job_id — it may have expired or the server restarted")
-
-    if job["status"] == "pending":
-        elapsed = round(time.time() - job["created_at"], 1)
-        return {"status": "pending", "elapsed_seconds": elapsed}
-    elif job["status"] == "error":
-        return {"status": "error", "error": job["error"]}
-    else:
-        return {"status": "done", "result": job["result"]}
-
-
-
-
-
 @app.get("/league_gp")
 def league_gp(league: str = Query(...)):
     """Lightweight check — just fetches team stats for one league and
@@ -1149,70 +969,6 @@ def league_gp(league: str = Query(...)):
         return {"league": league, "team_count": 0, "max_gp": 0}
     max_gp = max(d.get("gp", 0) for d in team_data.values())
     return {"league": league, "team_count": len(team_data), "max_gp": max_gp}
-
-
-# NEW — one-off diagnostic for the AnnaBet "Upcoming Games" tab question.
-# The global /upcoming/ page (fetch_all_upcoming_annabet above) only has a
-# short rolling lookahead window, which was confirmed to miss late-kickoff
-# leagues like MLS (evening US kickoffs = late UTC, past where /upcoming/
-# currently cuts off). Each league's own serie_ID page has an "Upcoming
-# Games" tab showing several days ahead — but AnnaBet renders tabs via
-# jQuery UI, so it's unknown whether that tab's HTML is already present in
-# the raw page (just hidden by CSS/JS, like the Results tab clearly is)
-# or loaded separately via AJAX after the page renders (which plain
-# requests can't see).
-#
-# This endpoint fetches one league's serie_ID page directly and reports
-# whether the "Upcoming Games" tab content (div id="tabs-5") is present in
-# the raw HTML. tabs_5_present == True means we can add a BeautifulSoup
-# parser for that div and use it as a proper multi-day fixtures source —
-# tabs_5_present == False means it's AJAX-loaded and needs a different
-# approach (finding AnnaBet's internal API endpoint via browser dev tools).
-@app.get("/debug_upcoming_tab")
-def debug_upcoming_tab(league: str = Query(...)):
-    if league not in ANNABET_SERIE_ID:
-        return {"error": f"'{league}' has no AnnaBet serie_ID mapping"}
-
-    serie_id = ANNABET_SERIE_ID[league]
-    # URL slug after the ID doesn't need to match exactly — AnnaBet
-    # resolves the page from the numeric ID alone — so a generic "_x"
-    # slug works the same as the full name slug for this check.
-    url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
-
-    try:
-        resp = ANNABET_SESSION.get(url, timeout=20)
-        resp.raise_for_status()
-    except Exception as e:
-        return {"error": str(e), "url": url}
-
-    html = resp.text
-    tabs_5_present = 'id="tabs-5"' in html or "id='tabs-5'" in html
-    gamereport_count = html.count("gamereport")
-
-    result = {
-        "url": url,
-        "status_code": resp.status_code,
-        "page_length": len(html),
-        "tabs_5_present": tabs_5_present,
-        "gamereport_link_count": gamereport_count,  # sanity check — Results
-                                                      # tab links use this
-                                                      # pattern, so a high
-                                                      # count here confirms
-                                                      # at least Results
-                                                      # loaded fully
-    }
-
-    # If the tab IS present, also pull out a snippet of that div so we can
-    # see its actual structure (table layout, date format, etc.) without
-    # needing a second round trip.
-    if tabs_5_present:
-        soup = BeautifulSoup(html, "html.parser")
-        tab_div = soup.find(id="tabs-5")
-        if tab_div:
-            snippet = tab_div.get_text(" ", strip=True)[:1000]
-            result["tabs_5_text_snippet"] = snippet
-
-    return result
 
 
 @app.get("/debug")
