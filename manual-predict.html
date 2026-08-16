@@ -176,7 +176,7 @@ Marconi S.	27	1.74	0.78	2.52		1.85	0.46	2.31		1.64	1.07	2.71
 <script>
 // ── Configure this once ──────────────────────────────────────────────
 // Point this at your Render backend (same one daily_predictions.py uses).
-const BACKEND_URL = "https://kickwise-v2.onrender.com";
+const BACKEND_URL = "https://YOUR-BACKEND.onrender.com";
 // ────────────────────────────────────────────────────────────────────
 
 document.getElementById("backendDisplay").textContent = BACKEND_URL;
@@ -410,7 +410,22 @@ function formatMatchHtml(pred) {
 </div>`;
 }
 
-// ── Predict button ──────────────────────────────────────────────────
+// ── Predict button — start job, then poll for completion ──────────────
+// A single blocking request to /predict_manual could run far longer
+// than a browser or mobile network will wait, especially on a slow
+// cold-started free-tier backend. Instead: POST starts the job and
+// returns immediately, then this polls a lightweight status endpoint
+// every few seconds until it's done. No single request is ever
+// long-lived, so nothing times out — however long the calculation takes.
+let pollTimer = null;
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
 document.getElementById("predictBtn").addEventListener("click", async () => {
   const home = document.getElementById("homeSelect").value;
   const away = document.getElementById("awaySelect").value;
@@ -424,33 +439,65 @@ document.getElementById("predictBtn").addEventListener("click", async () => {
     return;
   }
 
+  stopPolling();
   btn.disabled = true;
   statusEl.className = "status";
-  statusEl.textContent = "⏳ Running model — this can take up to a minute...";
+  statusEl.textContent = "⏳ Starting model run...";
   resultsEl.innerHTML = "";
 
+  let jobId;
   try {
-    const resp = await fetch(`${BACKEND_URL}/predict_manual`, {
+    const startResp = await fetch(`${BACKEND_URL}/predict_manual/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ team_data: parsedTeamData, home, away }),
     });
-
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      throw new Error(data.detail || `Request failed (${resp.status})`);
+    const startData = await startResp.json();
+    if (!startResp.ok) {
+      throw new Error(startData.detail || `Failed to start (${startResp.status})`);
     }
-
-    statusEl.className = "status ok";
-    statusEl.textContent = "✅ Prediction ready.";
-    resultsEl.innerHTML = formatMatchHtml(data);
+    jobId = startData.job_id;
   } catch (err) {
     statusEl.className = "status err";
     statusEl.textContent = `❌ ${err.message}`;
-  } finally {
     btn.disabled = false;
+    return;
   }
+
+  // Poll every 4 seconds. Each poll is a fast, lightweight GET — even if
+  // the backend is slow overall, no individual request here can time out.
+  pollTimer = setInterval(async () => {
+    try {
+      const resp = await fetch(`${BACKEND_URL}/predict_manual/status/${jobId}`);
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(data.detail || `Status check failed (${resp.status})`);
+      }
+
+      if (data.status === "pending") {
+        const elapsed = data.elapsed_seconds != null ? `${Math.round(data.elapsed_seconds)}s` : "...";
+        statusEl.className = "status";
+        statusEl.textContent = `⏳ Model still running (${elapsed})... this can take a while on a cold backend.`;
+      } else if (data.status === "done") {
+        stopPolling();
+        statusEl.className = "status ok";
+        statusEl.textContent = "✅ Prediction ready.";
+        resultsEl.innerHTML = formatMatchHtml(data.result);
+        btn.disabled = false;
+      } else if (data.status === "error") {
+        stopPolling();
+        statusEl.className = "status err";
+        statusEl.textContent = `❌ ${data.error}`;
+        btn.disabled = false;
+      }
+    } catch (err) {
+      stopPolling();
+      statusEl.className = "status err";
+      statusEl.textContent = `❌ ${err.message}`;
+      btn.disabled = false;
+    }
+  }, 4000);
 });
 </script>
 
