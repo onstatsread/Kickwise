@@ -16,22 +16,16 @@ from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback  # NE
 
 app = FastAPI(title="Kickwise API")
 
-
-@app.on_event("startup")
-def _warm_up_fast_model():
-    # Pays the one-time ~15-25s formula-parse cost during Render's deploy
-    # boot, not on a real user's first request. fast_model imports main
-    # (for calc_odds/calc_over_under_25) so this import must happen after
-    # `app` exists, which is why it's deferred to inside the function.
-    try:
-        from fast_model import warm_up
-        warm_up()
-        print("fast_model warmed up successfully")
-    except Exception as e:
-        # Don't crash the whole server if the fast model fails to load —
-        # /predict_manual will just eat the one-time cost on first use
-        # instead, and /predict (LibreOffice path) is unaffected either way.
-        print(f"fast_model warm-up failed (non-fatal): {e}")
+# NOTE: fast_model.run_model_fast() already lazy-loads its parsed model on
+# first use (see fast_model.py's _get_model() with its threading.Lock
+# guard) — that's the correct behavior. An earlier version of this file
+# tried to force that ~15-25s parse to happen at server startup via an
+# @app.on_event("startup") hook, but on Render's free tier that parse
+# took far longer than expected and blocked the ENTIRE app (every
+# endpoint, not just /predict_manual) from accepting any requests for an
+# extended period after each cold start. Removed — the first call to
+# /predict_manual after a cold start just pays that cost itself instead,
+# same as before, without holding the rest of the API hostage.
 
 
 app.add_middleware(
