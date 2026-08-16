@@ -986,8 +986,65 @@ def health():
 # leaving them null here doesn't break anything, it just shows fewer
 # rows on the card — same behavior as any league where market odds
 # simply aren't available.
-@app.post("/predict_manual")
-def predict_manual(payload: dict = Body(...)):
+# NEW — async job pattern for the manual predictor. Render's free-tier
+# CPU turned out to be dramatically slower than expected for the
+# formulas-library parse/calculate steps (a warm-up that took ~22s in
+# testing took nearly 90 minutes on Render's free tier during one cold
+# start). A single blocking POST /predict_manual request can end up
+# running far longer than any browser, mobile network, or Render's own
+# proxy will wait — which is exactly what "Failed to fetch" looks like,
+# regardless of whether the calculation would have eventually finished.
+#
+# Fix: POST starts the job and returns a job_id immediately (no long-held
+# connection). The frontend polls a lightweight GET status endpoint every
+# few seconds instead. Each individual HTTP request/response stays short,
+# so no timeout — however slow the underlying calculation is.
+import uuid
+import threading
+
+_PREDICT_JOBS = {}          # job_id -> {"status", "result", "error", "created_at"}
+_PREDICT_JOBS_LOCK = threading.Lock()
+
+_REQUIRED_TEAM_KEYS = {"gp", "gf", "ga", "tot", "hgf", "hga", "htot", "agf", "aga", "atot"}
+
+
+def _run_predict_job(job_id, team_data, home, away):
+    from fast_model import run_model_fast
+    try:
+        r1 = run_model_fast(home, away, team_data)
+        r2 = run_model_fast(away, home, team_data)
+
+        result = {
+            "home": home, "away": away,
+            "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
+            "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
+            "odds": r1.get("odds"),
+            "ou25": r1.get("ou25"),
+            "market_ou25": None,
+            "ou25_value_pct": None,
+            "ou25_value_signal": None,
+            "market_odds": None,
+            "value_pct": None,
+            "value_signal": None,
+            "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
+            "o73": r1["o73"], "o74": r1["o74"],
+            "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
+            "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
+            "oddsr": r2.get("odds"),
+            "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
+            "o73r": r2["o73"], "o74r": r2["o74"],
+        }
+        with _PREDICT_JOBS_LOCK:
+            _PREDICT_JOBS[job_id] = {"status": "done", "result": result, "error": None,
+                                      "created_at": _PREDICT_JOBS[job_id]["created_at"]}
+    except Exception as e:
+        with _PREDICT_JOBS_LOCK:
+            _PREDICT_JOBS[job_id] = {"status": "error", "result": None, "error": str(e),
+                                      "created_at": _PREDICT_JOBS[job_id]["created_at"]}
+
+
+@app.post("/predict_manual/start")
+def predict_manual_start(payload: dict = Body(...)):
     team_data = payload.get("team_data")
     home = payload.get("home")
     away = payload.get("away")
@@ -1001,47 +1058,37 @@ def predict_manual(payload: dict = Body(...)):
     if away not in team_data:
         raise HTTPException(400, f"'{away}' not found in the pasted team data")
 
-    # Basic shape check on one team's stats so a malformed paste fails
-    # with a clear message instead of a confusing 500 deep inside
-    # run_model()'s openpyxl/LibreOffice step.
-    required_keys = {"gp", "gf", "ga", "tot", "hgf", "hga", "htot", "agf", "aga", "atot"}
-    sample = team_data[home]
-    missing = required_keys - set(sample.keys())
+    missing = _REQUIRED_TEAM_KEYS - set(team_data[home].keys())
     if missing:
         raise HTTPException(400, f"Team data is missing expected fields: {sorted(missing)}")
 
-    # Uses the validated Python-formula engine (fast_model.py) instead of
-    # the LibreOffice subprocess path — cross-checked field-by-field
-    # against true LibreOffice output on real match data before being
-    # wired in here. ~5-7s per call instead of 30-90s+, after a one-time
-    # startup warm-up cost (see the @app.on_event("startup") hook above).
-    from fast_model import run_model_fast
+    job_id = str(uuid.uuid4())
+    with _PREDICT_JOBS_LOCK:
+        _PREDICT_JOBS[job_id] = {"status": "pending", "result": None, "error": None, "created_at": time.time()}
 
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        f1 = executor.submit(run_model_fast, home, away, team_data)
-        f2 = executor.submit(run_model_fast, away, home, team_data)
-        r1, r2 = f1.result(), f2.result()
+    thread = threading.Thread(target=_run_predict_job, args=(job_id, team_data, home, away), daemon=True)
+    thread.start()
 
-    return {
-        "home": home, "away": away,
-        "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
-        "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"], "aa15": r1["aa15"], "b54": r1["b54"],
-        "odds": r1.get("odds"),
-        "ou25": r1.get("ou25"),
-        "market_ou25": None,  # no league context to fetch live odds against
-        "ou25_value_pct": None,
-        "ou25_value_signal": None,
-        "market_odds": None,
-        "value_pct": None,
-        "value_signal": None,
-        "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
-        "o73": r1["o73"], "o74": r1["o74"],
-        "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
-        "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"], "aa15r": r2["aa15"], "b54r": r2["b54"],
-        "oddsr": r2.get("odds"),
-        "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
-        "o73r": r2["o73"], "o74r": r2["o74"],
-    }
+    return {"job_id": job_id}
+
+
+@app.get("/predict_manual/status/{job_id}")
+def predict_manual_status(job_id: str):
+    with _PREDICT_JOBS_LOCK:
+        job = _PREDICT_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(404, "Unknown job_id — it may have expired or the server restarted")
+
+    if job["status"] == "pending":
+        elapsed = round(time.time() - job["created_at"], 1)
+        return {"status": "pending", "elapsed_seconds": elapsed}
+    elif job["status"] == "error":
+        return {"status": "error", "error": job["error"]}
+    else:
+        return {"status": "done", "result": job["result"]}
+
+
+
 
 
 @app.get("/league_gp")
