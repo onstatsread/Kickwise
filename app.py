@@ -16,6 +16,24 @@ from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback  # NE
 
 app = FastAPI(title="Kickwise API")
 
+
+@app.on_event("startup")
+def _warm_up_fast_model():
+    # Pays the one-time ~15-25s formula-parse cost during Render's deploy
+    # boot, not on a real user's first request. fast_model imports main
+    # (for calc_odds/calc_over_under_25) so this import must happen after
+    # `app` exists, which is why it's deferred to inside the function.
+    try:
+        from fast_model import warm_up
+        warm_up()
+        print("fast_model warmed up successfully")
+    except Exception as e:
+        # Don't crash the whole server if the fast model fails to load —
+        # /predict_manual will just eat the one-time cost on first use
+        # instead, and /predict (LibreOffice path) is unaffected either way.
+        print(f"fast_model warm-up failed (non-fatal): {e}")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -998,9 +1016,16 @@ def predict_manual(payload: dict = Body(...)):
     if missing:
         raise HTTPException(400, f"Team data is missing expected fields: {sorted(missing)}")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        f1 = executor.submit(run_model, home, away, team_data)
-        f2 = executor.submit(run_model, away, home, team_data)
+    # Uses the validated Python-formula engine (fast_model.py) instead of
+    # the LibreOffice subprocess path — cross-checked field-by-field
+    # against true LibreOffice output on real match data before being
+    # wired in here. ~5-7s per call instead of 30-90s+, after a one-time
+    # startup warm-up cost (see the @app.on_event("startup") hook above).
+    from fast_model import run_model_fast
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f1 = executor.submit(run_model_fast, home, away, team_data)
+        f2 = executor.submit(run_model_fast, away, home, team_data)
         r1, r2 = f1.result(), f2.result()
 
     return {
