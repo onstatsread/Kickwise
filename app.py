@@ -782,6 +782,19 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
     resolved_h = resolve_team(home, team_data)
     resolved_a = resolve_team(away, team_data)
+    # DEBUG — log resolution failures so we can tell "no stats for this
+    # team at all" apart from "stats exist but the name didn't match."
+    # Shows a handful of actual team_data keys for the league so mismatch
+    # patterns (spacing, diacritics, abbreviations, FC prefix/suffix) are
+    # visible directly in the log instead of needing a separate lookup.
+    if resolved_h is None and team_data:
+        sample_names = list(team_data.keys())[:8]
+        print(f"    ⚠️ resolve_team FAILED for home='{home}' (league={league}) — "
+              f"sample available names: {sample_names}")
+    if resolved_a is None and team_data:
+        sample_names = list(team_data.keys())[:8]
+        print(f"    ⚠️ resolve_team FAILED for away='{away}' (league={league}) — "
+              f"sample available names: {sample_names}")
     # If resolution failed, fall back to the raw name for display/model lookup —
     # run_model already returns clean "N/A" values when a name isn't in
     # team_data, so this doesn't risk silently using a wrong team anymore.
