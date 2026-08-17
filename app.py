@@ -1017,11 +1017,34 @@ def debug(league: str = Query(...), date: str = Query(None)):
 def debug_apifootball_status():
     api_key = os.environ.get("API_FOOTBALL_KEY", "")
     if not api_key:
-        return {"error": "APIFOOTBALL_KEY not set in environment"}
+        return {"error": "API_FOOTBALL_KEY not set in environment"}
     try:
         resp = requests.get(
             "https://v3.football.api-sports.io/status",
             headers={"x-apisports-key": api_key},
+            timeout=15,
+        )
+        return {"status_code": resp.status_code, "body": resp.json()}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# NEW — TEMPORARY debug route to look up league IDs and check the
+# `coverage.standings` flag before relying on API-Football for standings
+# data. 1 call per hit — search param narrows results so this doesn't
+# waste quota pulling every league in their database.
+# REMOVE after confirming coverage — same reasoning as the /status route
+# above (no auth on this route).
+@app.get("/debug_apifootball_leagues")
+def debug_apifootball_leagues():
+    api_key = os.environ.get("API_FOOTBALL_KEY", "")
+    if not api_key:
+        return {"error": "API_FOOTBALL_KEY not set in environment"}
+    try:
+        resp = requests.get(
+            "https://v3.football.api-sports.io/leagues",
+            headers={"x-apisports-key": api_key},
+            params={"search": "Lithuania"},
             timeout=15,
         )
         return {"status_code": resp.status_code, "body": resp.json()}
