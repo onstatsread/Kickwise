@@ -1001,3 +1001,29 @@ def debug(league: str = Query(...), date: str = Query(None)):
         "fixtures": fixtures,
         "resolved": resolved
     }
+
+
+# NEW — TEMPORARY debug route to confirm the API-Football key/account is
+# live before relying on it for anything (e.g. standings cross-check).
+# Hits API-Football's own /status endpoint, which just returns account
+# info (plan, requests used/remaining, subscription status) — doesn't
+# touch any football data, so it's the safest possible first call.
+# Uses the same env var name as api_football.py so we're testing the
+# actual key that module already relies on, not a new/different one.
+# REMOVE THIS ROUTE once you've confirmed the key works — it reveals
+# account/subscription details to anyone who hits the URL, since it has
+# no auth of its own.
+@app.get("/debug_apifootball_status")
+def debug_apifootball_status():
+    api_key = os.environ.get("APIFOOTBALL_KEY", "")
+    if not api_key:
+        return {"error": "APIFOOTBALL_KEY not set in environment"}
+    try:
+        resp = requests.get(
+            "https://v3.football.api-sports.io/status",
+            headers={"x-apisports-key": api_key},
+            timeout=15,
+        )
+        return {"status_code": resp.status_code, "body": resp.json()}
+    except Exception as e:
+        return {"error": str(e)}
