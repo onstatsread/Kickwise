@@ -1015,7 +1015,7 @@ def debug(league: str = Query(...), date: str = Query(None)):
 # no auth of its own.
 @app.get("/debug_apifootball_status")
 def debug_apifootball_status():
-    api_key = os.environ.get("APIFOOTBALL_KEY", "")
+    api_key = os.environ.get("API_FOOTBALL_KEY", "")
     if not api_key:
         return {"error": "APIFOOTBALL_KEY not set in environment"}
     try:
