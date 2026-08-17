@@ -1050,3 +1050,25 @@ def debug_apifootball_leagues():
         return {"status_code": resp.status_code, "body": resp.json()}
     except Exception as e:
         return {"error": str(e)}
+
+
+# NEW — TEMPORARY debug route to pull actual standings for Lithuania A
+# Lyga (league id 362, confirmed via /debug_apifootball_leagues to have
+# coverage.standings=true for the current 2026 season). 1 call per hit.
+# REMOVE after cross-checking against AnnaBet/SoccerStats — same
+# reasoning as the other debug routes above (no auth on this route).
+@app.get("/debug_apifootball_standings")
+def debug_apifootball_standings():
+    api_key = os.environ.get("API_FOOTBALL_KEY", "")
+    if not api_key:
+        return {"error": "API_FOOTBALL_KEY not set in environment"}
+    try:
+        resp = requests.get(
+            "https://v3.football.api-sports.io/standings",
+            headers={"x-apisports-key": api_key},
+            params={"league": 362, "season": 2026},
+            timeout=15,
+        )
+        return {"status_code": resp.status_code, "body": resp.json()}
+    except Exception as e:
+        return {"error": str(e)}
