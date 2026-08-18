@@ -255,6 +255,15 @@
   .pill.neutral  { background: rgba(138,155,130,0.15); color: var(--grey); border: 1px solid rgba(138,155,130,0.2); }
   .pill.empty    { background: transparent; color: var(--grey); border: 1px dashed rgba(138,155,130,0.2); font-style: italic; font-weight: 400; }
 
+  .error-card {
+    background: rgba(192,57,43,0.12);
+    border: 1px solid rgba(192,57,43,0.35);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #F1948A;
+  }
+
   footer { text-align: center; padding: 20px; font-size: 11px; color: var(--grey); border-top: 1px solid var(--border); }
 
   @media(min-width:640px) {
@@ -290,7 +299,7 @@
 
 <div id="results"></div>
 
-<footer>Kickwise • Data from SoccerStats Predictions via A_mix2 Model</footer>
+<footer>Kickwise • Data from AnnaBet via A_mix2 Model</footer>
 
 <script>
 const LEAGUES = [
@@ -331,7 +340,8 @@ const LEAGUES = [
     ["USA - MLS", "usa"]
 ];
 
-const API_BASE = "https://onrender.com";
+// NOTE: set to your actual live Render service URL
+const API_BASE = "https://kickwise-v2.onrender.com";
 
 // Populate dropdown select element
 const sel = document.getElementById("leagueSelect");
@@ -340,3 +350,249 @@ if (sel) {
         const opt = document.createElement("option");
         opt.value = code;
         opt.textContent = name;
+        sel.appendChild(opt);
+    });
+}
+
+// Set date bar to today's date, human readable
+function setDateBar() {
+    const bar = document.getElementById("dateBar");
+    if (!bar) return;
+    const today = new Date();
+    const opts = { weekday: "long", day: "numeric", month: "long" };
+    bar.textContent = today.toLocaleDateString("en-GB", opts);
+}
+setDateBar();
+
+const statusEl   = document.getElementById("statusText");
+const spinnerEl  = document.getElementById("spinner");
+const resultsEl  = document.getElementById("results");
+const runBtn     = document.getElementById("runBtn");
+
+function setStatus(text, loading) {
+    statusEl.textContent = text;
+    spinnerEl.classList.toggle("active", !!loading);
+}
+
+// ── Pill helpers ─────────────────────────────────────────────
+function pillClassFor(value) {
+    if (value === null || value === undefined || value === "") return "empty";
+    const v = String(value).toLowerCase();
+    if (v.includes("double")) return "double";
+    if (v.includes("under")) return "under";
+    if (v.includes("handicap")) return "handicap";
+    if (v === "home" || v === "away" || v.includes("confirmed") || v === "over") return "match";
+    if (v.includes("no") || v.includes("run")) return "nomatch";
+    return "neutral";
+}
+
+function pill(label, value) {
+    const display = (value === null || value === undefined || value === "") ? "—" : value;
+    const cls = pillClassFor(value);
+    return `<span class="pill ${cls}"><span class="pill-label">${label}</span>${display}</span>`;
+}
+
+function section(label, pillsHtml, rev) {
+    return `
+      <div class="result-section">
+        <div class="result-label${rev ? " rev" : ""}">${label}</div>
+        <div class="result-pills">${pillsHtml}</div>
+      </div>`;
+}
+
+// ── Odds formatting ──────────────────────────────────────────
+function oddsPills(oddsObj, prefix) {
+    if (!oddsObj) return pill(prefix, "—");
+    return [
+        pill(prefix + " Home", oddsObj.home_odds),
+        pill(prefix + " Draw", oddsObj.draw_odds),
+        pill(prefix + " Away", oddsObj.away_odds),
+    ].join("");
+}
+
+function ou25OddsPills(oddsObj, prefix) {
+    if (!oddsObj) return pill(prefix, "—");
+    return [
+        pill(prefix + " Over", oddsObj.over_odds),
+        pill(prefix + " Under", oddsObj.under_odds),
+    ].join("");
+}
+
+// ── Render one match card from /predict response ────────────
+function renderMatchCard(fixture, data) {
+    const time = fixture.time || "";
+    const home = data.home || fixture.home;
+    const away = data.away || fixture.away;
+
+    const hdaDecision = (data.value_signal && data.value_signal.decision) || "";
+    const hdaUnder    = (data.value_signal && data.value_signal.under) || "";
+    const ouStep4      = (data.ou25_value_signal && data.ou25_value_signal.step4) || "";
+    const ouStep5      = (data.ou25_value_signal && data.ou25_value_signal.step5) || "";
+    const ouStep6      = (data.ou25_value_signal && data.ou25_value_signal.step6) || "";
+    const ouResult      = (data.ou25_value_signal && data.ou25_value_signal.result) || "";
+    const prediction3   = data.prediction_3 || "";
+
+    let html = `
+      <div class="match-card">
+        <div class="match-header">
+          <span class="match-time">${time}</span>
+          <span class="match-teams">${home}<span class="vs">vs</span>${away}</span>
+        </div>`;
+
+    // Prediction 1 (forward direction)
+    html += section("Prediction 1", [
+        pill("D70", data.d70),
+        pill("B120", data.b120),
+        pill("C120", data.c120),
+        pill("B46", data.b46),
+        pill("D64", data.d64),
+        pill("B118", data.b118),
+        pill("AA15", data.aa15),
+        pill("B54", data.b54),
+        pill("B119", data.b119),
+        pill("D119", data.d119),
+        pill("D70 val", data.d70val),
+        pill("O73", data.o73),
+        pill("O74", data.o74),
+    ].join(""));
+
+    // Prediction 2 (reverse direction)
+    html += section("Prediction 2 (Reverse)", [
+        pill("D70", data.d70r),
+        pill("B120", data.b120r),
+        pill("C120", data.c120r),
+        pill("B46", data.b46r),
+        pill("D64", data.d64r),
+        pill("B118", data.b118r),
+        pill("AA15", data.aa15r),
+        pill("B54", data.b54r),
+        pill("B119", data.b119r),
+        pill("D119", data.d119r),
+        pill("D70 val", data.d70valr),
+        pill("O73", data.o73r),
+        pill("O74", data.o74r),
+    ].join(""), true);
+
+    // Model odds
+    html += section("Model Odds (H/D/A)", oddsPills(data.odds, "Model"));
+
+    // Market odds
+    html += section("Market Odds (H/D/A)", oddsPills(data.market_odds, "Market"));
+
+    // H/D/A Value + Decision
+    const vp = data.value_pct || {};
+    html += section("H/D/A Value %", [
+        pill("Home", vp.home != null ? vp.home + "%" : null),
+        pill("Draw", vp.draw != null ? vp.draw + "%" : null),
+        pill("Away", vp.away != null ? vp.away + "%" : null),
+        pill("Total", vp.total != null ? vp.total + "%" : null),
+        pill("Share Diff", vp.share_diff != null ? vp.share_diff + "%" : null),
+    ].join(""));
+
+    html += section("H/D/A Decision", [
+        pill("Decision", hdaDecision),
+        pill("Under", hdaUnder),
+    ].join(""));
+
+    // Model / Market O/U 2.5 odds
+    html += section("Model O/U 2.5 Odds", ou25OddsPills(data.ou25, "Model"));
+    html += section("Market O/U 2.5 Odds", ou25OddsPills(data.market_ou25, "Market"));
+
+    // O/U value %
+    const oup = data.ou25_value_pct || {};
+    html += section("O/U 2.5 Value %", [
+        pill("Over", oup.over != null ? oup.over + "%" : null),
+        pill("Under", oup.under != null ? oup.under + "%" : null),
+        pill("Total", oup.total != null ? oup.total + "%" : null),
+        pill("Over Share", oup.over_share != null ? oup.over_share + "%" : null),
+        pill("Under Share", oup.under_share != null ? oup.under_share + "%" : null),
+        pill("Abs Diff", oup.abs_diff != null ? oup.abs_diff + "%" : null),
+    ].join(""));
+
+    // O/U signal steps + result
+    html += section("O/U Signal (Steps 4–6)", [
+        pill("Step 4", ouStep4),
+        pill("Step 5", ouStep5),
+        pill("Step 6", ouStep6),
+        pill("Result", ouResult),
+    ].join(""));
+
+    // Prediction 3 — the cross-check result
+    html += section("Prediction 3", pill("Result", prediction3));
+
+    html += `</div>`;
+    return html;
+}
+
+// ── Main flow: fetch fixtures for selected league, then predict each ──
+async function runAnalysis() {
+    const league = sel.value;
+    if (!league) {
+        setStatus("Pick a league first.");
+        return;
+    }
+
+    runBtn.disabled = true;
+    resultsEl.innerHTML = "";
+    setStatus("Fetching today's fixtures…", true);
+
+    try {
+        const fxResp = await fetch(`${API_BASE}/fixtures?league=${encodeURIComponent(league)}`);
+        if (!fxResp.ok) throw new Error(`Fixtures request failed (${fxResp.status})`);
+        const fxData = await fxResp.json();
+        const matches = fxData.matches || [];
+
+        if (matches.length === 0) {
+            resultsEl.innerHTML = `
+              <div class="empty">
+                <div class="icon">📭</div>
+                <h3>No fixtures today</h3>
+                <p>No matches found for this league today. Try another league or check back later.</p>
+              </div>`;
+            setStatus("No fixtures found.");
+            runBtn.disabled = false;
+            return;
+        }
+
+        setStatus(`Found ${matches.length} match(es). Running predictions…`, true);
+
+        const leagueName = (LEAGUES.find(l => l[1] === league) || [league])[0];
+        let html = `<div class="league-header">${leagueName}</div>`;
+        resultsEl.innerHTML = html;
+
+        // Run predictions sequentially so status can update per match
+        // (kept sequential rather than Promise.all to avoid hammering the
+        // free-tier backend with a burst of concurrent LibreOffice runs)
+        for (let i = 0; i < matches.length; i++) {
+            const m = matches[i];
+            setStatus(`Analyzing ${i + 1}/${matches.length}: ${m.home} vs ${m.away}…`, true);
+            try {
+                const params = new URLSearchParams({ league, home: m.home, away: m.away });
+                const predResp = await fetch(`${API_BASE}/predict?${params.toString()}`);
+                if (!predResp.ok) throw new Error(`Predict failed (${predResp.status})`);
+                const predData = await predResp.json();
+                resultsEl.insertAdjacentHTML("beforeend", renderMatchCard(m, predData));
+            } catch (err) {
+                resultsEl.insertAdjacentHTML("beforeend", `
+                  <div class="error-card">
+                    Couldn't get a prediction for <strong>${m.home} vs ${m.away}</strong>: ${err.message}
+                  </div>`);
+            }
+        }
+
+        setStatus(`Done — ${matches.length} match(es) analyzed.`);
+    } catch (err) {
+        resultsEl.innerHTML = `
+          <div class="error-card">
+            Something went wrong: ${err.message}. Check that the backend is awake (Render free tier can take ~50s to spin up) and try again.
+          </div>`;
+        setStatus("Failed to load fixtures.");
+    } finally {
+        runBtn.disabled = false;
+        spinnerEl.classList.remove("active");
+    }
+}
+</script>
+
+</body>
+</html>
