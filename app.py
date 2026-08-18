@@ -885,10 +885,12 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
         value_signal = {"decision": decision, "under": under_flag}
 
-    # ── Over/Under 2.5 goals — value% (UNCHANGED, still uses the original
-    # share/share_diff formula for O/U, separate from the H/A/D logic above) ──
+    # ── Over/Under 2.5 goals — value% (NEW step 3-6 logic, replaces the old
+    # single share_diff signal) — plus Prediction 3, which cross-checks the
+    # O/U signal against the H/D/A decision computed above ──
     ou25_value_pct = None
     ou25_value_signal = None
+    prediction_3 = ""
     model_ou25 = r1.get("ou25")
     if model_ou25 and market_ou25:
         def pct_diff_ou(market_o, model_o):
@@ -900,33 +902,67 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         under_v = pct_diff_ou(market_ou25.get("under_odds"), model_ou25.get("under_odds"))
 
         if over_v is not None or under_v is not None:
-            ou_total_v = round(sum(x for x in [over_v, under_v] if x is not None), 1)
+            ou_total_v = round(sum(x for x in [over_v, under_v] if x is not None), 1)  # Step 2
 
             ou_abs_sum = abs(over_v or 0) + abs(under_v or 0)
+            ou_abs_diff = abs(over_v or 0) - abs(under_v or 0)  # Step 3
 
             def ou_share(v):
                 if v is None or ou_abs_sum == 0:
                     return None
                 return round(abs(v) / ou_abs_sum * 100, 1)
 
-            over_share_v = ou_share(over_v)
-            under_share_v = ou_share(under_v)
+            over_share_v = ou_share(over_v)   # Step 3
+            under_share_v = ou_share(under_v)  # Step 3
 
             ou25_value_pct = {
                 "over": over_v, "under": under_v, "total": ou_total_v,
                 "over_share": over_share_v, "under_share": under_share_v,
+                "abs_diff": round(ou_abs_diff, 1),
             }
 
-            ou_share_diff = None
-            if over_share_v is not None and under_share_v is not None:
-                ou_share_diff = round(over_share_v - under_share_v, 1)
-                ou25_value_pct["share_diff"] = ou_share_diff
+            # Step 4 — initial signal from ou_abs_diff
+            if ou_abs_diff > 0:
+                step4 = "under"
+            elif ou_abs_diff < 0:
+                step4 = "over"
+            else:
+                step4 = ""
 
-            ou_result_signal = ""
-            if ou_share_diff is not None and ou_share_diff != 0:
-                ou_result_signal = "Under" if ou_share_diff > 0 else "Over"
+            # Step 5 — refined signal, folds in over_v/under_v sign checks
+            step5 = ""
+            cv, dv = over_v or 0, under_v or 0
+            if step4 == "over" and cv < 0 and dv > 0:
+                step5 = "over"
+            elif cv < 0 and dv < 0:
+                step5 = "over+" if cv < dv else "under+"
+            elif cv < 0:
+                step5 = "over+"
+            elif dv < 0:
+                step5 = "under+"
 
-            ou25_value_signal = {"result": ou_result_signal}
+            # Step 6 — separate "under" flag from total value, same-sign suppressed
+            same_sign = (cv < 0 and dv < 0) or (cv > 0 and dv > 0)
+            step6 = "" if same_sign else ("under" if -30 <= ou_total_v <= 0 else "")
+
+            # Final O/U decision — combines step4 + step6
+            if step4 == "under" and step6 == "under":
+                ou_result_signal = "under confirmed"
+            elif step4 != "under" and step6 == "under":
+                ou_result_signal = "under"
+            else:
+                ou_result_signal = "over"
+
+            ou25_value_signal = {"result": ou_result_signal, "step4": step4, "step5": step5, "step6": step6}
+
+            # Prediction 3 — only when step4 is non-blank ("visible"), cross-check
+            # step5 against the H/D/A decision computed earlier in this function
+            if step4:
+                hda_decision = (value_signal or {}).get("decision", "").lower()
+                if step5 in ("over+", "over"):
+                    prediction_3 = "Home" if "home" in hda_decision else "Home handicap"
+                elif step5 in ("under+", "under"):
+                    prediction_3 = "Away" if "away" in hda_decision else "Away handicap"
 
     return {
         "home": h, "away": a,
@@ -936,7 +972,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "ou25": r1.get("ou25"),  # model's own Over/Under 2.5 goals odds
         "market_ou25": market_ou25,  # market Over/Under 2.5 goals odds (primary provider only for now)
         "ou25_value_pct": ou25_value_pct,  # O/U 2.5 value% (unchanged formula)
-        "ou25_value_signal": ou25_value_signal,  # Over/Under decision from share_diff
+        "ou25_value_signal": ou25_value_signal,  # Over/Under decision (step4/step5/step6 + final result)
+        "prediction_3": prediction_3,  # cross-check of O/U step5 vs H/D/A decision (Home/Away/handicap)
         "market_odds": market_odds,
         "value_pct": value_pct,  # signed % diff between market and model odds, plus share_diff
         "value_signal": value_signal,  # H/A/D decision (Home / Away / Home 2-handicap / Away 2-handicap)
