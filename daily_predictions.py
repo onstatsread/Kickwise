@@ -247,6 +247,11 @@ def format_match_html(league_name, match, pred):
     # meets_blog2_standard() for the filter, so both stay in sync)
     pred2 = build_pred2_text(pred)
 
+    # NEW — Prediction 3, straight from the backend (/predict already
+    # computes this — cross-check of the O/U step5 signal against the
+    # H/D/A decision). No extra logic needed here, just display it.
+    pred3 = pred.get("prediction_3", "")
+
     # Odds
     odds = pred.get("odds") or pred.get("oddsr") or {}
     odds_html = ""
@@ -307,8 +312,6 @@ def format_match_html(league_name, match, pred):
         </tr>"""
 
     # Over/Under 2.5 — model + market odds, and the same value/share formula
-    # (UNCHANGED — still uses its own share_diff/result logic, separate
-    # from the H/A/D decision above)
     ou25 = pred.get("ou25") or {}
     market_ou25 = pred.get("market_ou25") or {}
     ou25_html = ""
@@ -325,6 +328,9 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
+    # O/U 2.5 value — NEW step 2-6 shape: over/under/total/over_share/
+    # under_share/abs_diff, plus step4/step5/step6 + final result
+    # ("under confirmed" / "under" / "over") from ou25_value_signal.
     ou25_value_pct = pred.get("ou25_value_pct") or {}
     ou25_value_signal = pred.get("ou25_value_signal") or {}
     ou25_value_html = ""
@@ -344,7 +350,9 @@ def format_match_html(league_name, match, pred):
             📈 O/U 2.5 Value: Over {fmt_val_ou(ou25_value_pct.get('over'))} |
             Under {fmt_val_ou(ou25_value_pct.get('under'))} |
             Total {fmt_val_ou(ou25_value_pct.get('total'))} |
-            Share Diff {fmt_val_ou(ou25_value_pct.get('share_diff'))}
+            Over Share {fmt_val_ou(ou25_value_pct.get('over_share'))} |
+            Under Share {fmt_val_ou(ou25_value_pct.get('under_share'))} |
+            Abs Diff {fmt_val_ou(ou25_value_pct.get('abs_diff'))}
             {ou_signal_line}
           </td>
         </tr>"""
@@ -379,6 +387,25 @@ def format_match_html(league_name, match, pred):
     else:
         pred2_html = ""
 
+    # NEW — Prediction 3 block. Styled blue to match the frontend's
+    # Prediction 3 card. "handicap" outcomes get a slightly darker/flagged
+    # background, same visual language as Prediction 2's handicap/no cases.
+    if pred3:
+        if "handicap" in pred3.lower():
+            pred3_bg    = "#12283a"
+            pred3_color = "#85C1E9"
+        else:
+            pred3_bg    = "#1a3a52"
+            pred3_color = "#3498DB"
+        pred3_html = f"""
+        <tr>
+          <td colspan="2" style="padding:6px 12px;background:{pred3_bg};color:{pred3_color};font-weight:bold">
+            🧭 PREDICTION 3: {pred3}
+          </td>
+        </tr>"""
+    else:
+        pred3_html = ""
+
     return f"""
 <div style="border:1px solid #ddd;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0">
@@ -401,6 +428,7 @@ def format_match_html(league_name, match, pred):
     {value_html}
     {ou25_html}
     {ou25_value_html}
+    {pred3_html}
   </table>
 </div>"""
 
