@@ -891,6 +891,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
     ou25_value_pct = None
     ou25_value_signal = None
     prediction_3 = ""
+    prediction_3_gate = False  # NEW — hidden gate flag, never shown on the card.
+                                # True only when all 4 conditions below are met.
     model_ou25 = r1.get("ou25")
     if model_ou25 and market_ou25:
         def pct_diff_ou(market_o, model_o):
@@ -964,6 +966,33 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
                 elif step5 in ("under+", "under"):
                     prediction_3 = "Away" if "away" in hda_decision else "Away handicap"
 
+            # ── Hidden Prediction 3 gate — never shown on the card. Checks:
+            # 1) O/U total between -20 and 0
+            # 2) O/U result is "under" or "under confirmed"
+            # 3) H/D/A total between -20 and 0
+            # 4) H/D/A under-signal is "under"
+            # If all 4 pass: prediction_3 becomes "{decision}/ under {b46 goals}"
+            # (e.g. "Away/ under 5goals") — the existing H/D/A decision
+            # (Home/Away/Home 2-handicap/Away 2-handicap) combined with the
+            # goals figure pulled from B46, same "Ngoals" format the blog
+            # already extracts from B46 for Prediction 1 — and the match is
+            # flagged eligible for blog 2.
+            hda_total = (value_pct or {}).get("total")
+            hda_under = (value_signal or {}).get("under", "")
+            if (
+                ou_total_v is not None and -20 <= ou_total_v <= 0
+                and ou_result_signal in ("under", "under confirmed")
+                and hda_total is not None and -20 <= hda_total <= 0
+                and hda_under == "under"
+            ):
+                prediction_3_gate = True
+                decision_base = (value_signal or {}).get("decision", "")
+                b46_combined = ((r1.get("b46") or "") + " " + (r2.get("b46") or "")).lower()
+                b46_match = re.search(r'(\d+\s*goals)', b46_combined)
+                b46_goals = b46_match.group(1).replace(" ", "") if b46_match else ""
+                suffix = f"under {b46_goals}" if b46_goals else "under"
+                prediction_3 = f"{decision_base}/ {suffix}" if decision_base else suffix.capitalize()
+
     return {
         "home": h, "away": a,
         "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
@@ -973,7 +1002,8 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
         "market_ou25": market_ou25,  # market Over/Under 2.5 goals odds (primary provider only for now)
         "ou25_value_pct": ou25_value_pct,  # O/U 2.5 value% (unchanged formula)
         "ou25_value_signal": ou25_value_signal,  # Over/Under decision (step4/step5/step6 + final result)
-        "prediction_3": prediction_3,  # cross-check of O/U step5 vs H/D/A decision (Home/Away/handicap)
+        "prediction_3": prediction_3,  # cross-check of O/U step5 vs H/D/A decision (Home/Away/handicap), or "Under" if the hidden gate passed
+        "prediction_3_gate": prediction_3_gate,  # NEW — hidden flag, never rendered on the card. True if all 4 gate conditions were met (used by blog.py for the blog 2 filter).
         "market_odds": market_odds,
         "value_pct": value_pct,  # signed % diff between market and model odds, plus share_diff
         "value_signal": value_signal,  # H/A/D decision (Home / Away / Home 2-handicap / Away 2-handicap)
