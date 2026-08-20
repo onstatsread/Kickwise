@@ -249,7 +249,8 @@ def format_match_html(league_name, match, pred):
 
     # NEW — Prediction 3, straight from the backend (/predict already
     # computes this — cross-check of the O/U step5 signal against the
-    # H/D/A decision). No extra logic needed here, just display it.
+    # H/D/A decision, or "Under" if the hidden 4-condition gate passed).
+    # No extra logic needed here, just display it.
     pred3 = pred.get("prediction_3", "")
 
     # Odds
@@ -466,6 +467,18 @@ def meets_blog2_standard(pred):
     return True
 
 
+# NEW — second, separate blog-2 gate based on Prediction 3. Unlike
+# meets_blog2_standard() above, this doesn't recompute anything itself —
+# the backend (/predict) already evaluates the 4 conditions (O/U total
+# -20..0, O/U result under/under confirmed, H/D/A total -20..0, H/D/A
+# under-signal) and returns the result as prediction_3_gate. This
+# function just reads that flag. Kept as its own function (rather than
+# inlining pred.get(...) at the call site) so the intent is named and
+# it's easy to find/adjust later.
+def meets_prediction3_standard(pred):
+    return bool(pred.get("prediction_3_gate"))
+
+
 def post_to_blogger(access_token, blog_id, title, content):
     resp = requests.post(
         f"https://www.googleapis.com/blogger/v3/blogs/{blog_id}/posts/",
@@ -574,8 +587,11 @@ def main():
             total_matches += 1
 
             # NEW — check blog 2's standard on this same match, using the
-            # same already-fetched prediction (no extra backend call)
-            if BLOG2_ENABLED and meets_blog2_standard(pred):
+            # same already-fetched prediction (no extra backend call).
+            # A match qualifies for blog 2 if it meets EITHER the original
+            # Prediction-2-based standard OR the new Prediction-3-based
+            # gate — both standards stay live side by side.
+            if BLOG2_ENABLED and (meets_blog2_standard(pred) or meets_prediction3_standard(pred)):
                 if match_time != blog2_current_time:
                     blog2_current_time = match_time
                     blog2_html += f'\n<div style="background:#2C3E50;color:#AAFF3C;padding:8px 12px;margin:16px 0 4px;border-radius:4px;font-family:Arial;font-weight:bold;font-size:15px">🕐 {match_time}</div>\n'
