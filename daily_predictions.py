@@ -159,10 +159,10 @@ def get_prediction(league_code, home, away, retries=2):
     return None
 
 def build_pred2_text(pred):
-    """Builds the Prediction 2 string from a /predict response. Extracted
-    from format_match_html() so both the display logic and the blog-2
-    filter (meets_blog2_standard) can reuse the exact same logic without
-    duplicating it."""
+    """Builds the Prediction 2 string from a /predict response. Used by
+    format_match_html() to display Prediction 2 on the card. (No longer
+    used by the blog 2 filter — meets_blog2_standard() now checks odds,
+    O/U result, and Prediction 3 instead.)"""
     o73 = (pred.get("o73") or pred.get("o73r") or "").strip()
     d69n = (pred.get("d70") or "").lower()
     d70n = (pred.get("d70val") or "").lower()
@@ -243,8 +243,7 @@ def format_match_html(league_name, match, pred):
             goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
             pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
 
-    # Smart Prediction 2 — built via shared helper (also used by
-    # meets_blog2_standard() for the filter, so both stay in sync)
+    # Smart Prediction 2 — built via shared helper build_pred2_text()
     pred2 = build_pred2_text(pred)
 
     # NEW — Prediction 3, straight from the backend (/predict already
@@ -434,50 +433,37 @@ def format_match_html(league_name, match, pred):
   </table>
 </div>"""
 
-# NEW — "Standard" filter for blog 2: a match only qualifies if it meets
-# ALL four conditions:
-#   1. Prediction 2 must exist (non-empty)
-#   2. Prediction 2 must be JUST a team name, or "team name only" — not
-#      combined with goals or "/same" (those forms all contain a "/",
-#      so excluding any "/" plus excluding a bare goals value like
-#      "5goals" catches exactly the disallowed forms)
-#   3. value_pct['total'] (H/A/D) between -20 and 0 inclusive
-#   4. ou25_value_pct['total'] (O/U 2.5) between -20 and 0 inclusive
-_BARE_GOALS_RE = re.compile(r'^\d+\s*goals\b', re.IGNORECASE)
-
-
+# NEW — blog 2 standard (replaces the earlier Prediction-2-based standard
+# AND the Prediction-3-gate standard — this is now the ONLY filter). A
+# match qualifies only if ALL 3 conditions are met:
+#   1. None of the model or market odds (Home/Draw/Away, both directions)
+#      are below 1.4 — filters out heavily lopsided/near-certain matches.
+#   2. ou25_value_signal['result'] is "under" or "under confirmed".
+#   3. prediction_3 contains "away" (covers "Away", "Away handicap",
+#      "Away 2-handicap", and the hidden-gate "Away/ under Ngoals" form).
 def meets_blog2_standard(pred):
-    pred2 = build_pred2_text(pred)
-    if not pred2:
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    market_odds = pred.get("market_odds") or {}
+
+    odds_to_check = [
+        model_odds.get("home_odds"), model_odds.get("draw_odds"), model_odds.get("away_odds"),
+        market_odds.get("home_odds"), market_odds.get("draw_odds"), market_odds.get("away_odds"),
+    ]
+    if any(o is None for o in odds_to_check):
         return False
-    if "/" in pred2:
-        return False
-    if _BARE_GOALS_RE.match(pred2.strip()):
+    if any(o < 1.4 for o in odds_to_check):
         return False
 
-    value_pct = pred.get("value_pct") or {}
-    total = value_pct.get("total")
-    if total is None or not (-20 <= total <= 0):
+    ou25_value_signal = pred.get("ou25_value_signal") or {}
+    result = ou25_value_signal.get("result", "")
+    if result not in ("under", "under confirmed"):
         return False
 
-    ou25_value_pct = pred.get("ou25_value_pct") or {}
-    ou_total = ou25_value_pct.get("total")
-    if ou_total is None or not (-20 <= ou_total <= 0):
+    prediction_3 = (pred.get("prediction_3") or "").lower()
+    if "away" not in prediction_3:
         return False
 
     return True
-
-
-# NEW — second, separate blog-2 gate based on Prediction 3. Unlike
-# meets_blog2_standard() above, this doesn't recompute anything itself —
-# the backend (/predict) already evaluates the 4 conditions (O/U total
-# -20..0, O/U result under/under confirmed, H/D/A total -20..0, H/D/A
-# under-signal) and returns the result as prediction_3_gate. This
-# function just reads that flag. Kept as its own function (rather than
-# inlining pred.get(...) at the call site) so the intent is named and
-# it's easy to find/adjust later.
-def meets_prediction3_standard(pred):
-    return bool(pred.get("prediction_3_gate"))
 
 
 def post_to_blogger(access_token, blog_id, title, content):
@@ -589,10 +575,11 @@ def main():
 
             # NEW — check blog 2's standard on this same match, using the
             # same already-fetched prediction (no extra backend call).
-            # A match qualifies for blog 2 if it meets EITHER the original
-            # Prediction-2-based standard OR the new Prediction-3-based
-            # gate — both standards stay live side by side.
-            if BLOG2_ENABLED and (meets_blog2_standard(pred) or meets_prediction3_standard(pred)):
+            # This is now the ONLY blog 2 standard — the old Prediction-2
+            # and Prediction-3-gate standards were both retired in favor
+            # of this odds-floor + O/U-result + Prediction-3-contains-Away
+            # rule.
+            if BLOG2_ENABLED and meets_blog2_standard(pred):
                 if match_time != blog2_current_time:
                     blog2_current_time = match_time
                     blog2_html += f'\n<div style="background:#2C3E50;color:#AAFF3C;padding:8px 12px;margin:16px 0 4px;border-radius:4px;font-family:Arial;font-weight:bold;font-size:15px">🕐 {match_time}</div>\n'
