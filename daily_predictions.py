@@ -353,7 +353,8 @@ def format_match_html(league_name, match, pred):
             Total {fmt_val_ou(ou25_value_pct.get('total'))} |
             Over Share {fmt_val_ou(ou25_value_pct.get('over_share'))} |
             Under Share {fmt_val_ou(ou25_value_pct.get('under_share'))} |
-            Abs Diff {fmt_val_ou(ou25_value_pct.get('abs_diff'))}
+            Abs Diff {fmt_val_ou(ou25_value_pct.get('abs_diff'))} |
+            Share Diff {fmt_val_ou(ou25_value_pct.get('share_diff'))}
             {ou_signal_line}
           </td>
         </tr>"""
