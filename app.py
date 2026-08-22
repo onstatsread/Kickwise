@@ -916,25 +916,33 @@ async def predict(league: str = Query(...), home: str = Query(...), away: str = 
 
             over_share_v = ou_share(over_v)   # Step 3
             under_share_v = ou_share(under_v)  # Step 3
+            share_diff_v = round((over_share_v or 0) - (under_share_v or 0), 1)  # NEW — over_share minus under_share
 
             ou25_value_pct = {
                 "over": over_v, "under": under_v, "total": ou_total_v,
                 "over_share": over_share_v, "under_share": under_share_v,
                 "abs_diff": round(ou_abs_diff, 1),
+                "share_diff": share_diff_v,  # NEW
             }
 
-            # Step 4 — initial signal from ou_abs_diff
+            # Step 4 — initial signal from ou_abs_diff (corrected — labels
+            # were backwards: a bigger |over_v| swing signals "over", not
+            # "under", and vice versa)
             if ou_abs_diff > 0:
-                step4 = "under"
-            elif ou_abs_diff < 0:
                 step4 = "over"
+            elif ou_abs_diff < 0:
+                step4 = "under"
             else:
                 step4 = ""
 
             # Step 5 — refined signal, folds in over_v/under_v sign checks
+            # (matches the original Excel formula exactly — the "under"
+            # branch was previously missing here, only "over" was checked)
             step5 = ""
             cv, dv = over_v or 0, under_v or 0
-            if step4 == "over" and cv < 0 and dv > 0:
+            if step4 == "under" and dv < 0 and cv > 0:
+                step5 = "under"
+            elif step4 == "over" and cv < 0 and dv > 0:
                 step5 = "over"
             elif cv < 0 and dv < 0:
                 step5 = "over+" if cv < dv else "under+"
