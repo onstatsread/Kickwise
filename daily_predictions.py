@@ -41,20 +41,62 @@ TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID")
 TELEGRAM_ENABLED = all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID])
 
 
+TELEGRAM_MAX_LEN = 4096
+_TELEGRAM_SPLIT_BUFFER = 60  # room reserved for the "(part X/Y)" label added to each chunk
+
+
+def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_BUFFER):
+    """Splits `message` into chunks under `max_len`, breaking on blank-line
+    boundaries (paragraph/card breaks) so a single match card is never cut
+    across two messages. Falls back to a hard character split only if one
+    paragraph on its own still exceeds max_len."""
+    if len(message) <= max_len:
+        return [message]
+
+    paragraphs = message.split("\n\n")
+    chunks = []
+    current = ""
+    for p in paragraphs:
+        candidate = f"{current}\n\n{p}" if current else p
+        if len(candidate) <= max_len:
+            current = candidate
+        else:
+            if current:
+                chunks.append(current)
+            if len(p) <= max_len:
+                current = p
+            else:
+                # a single paragraph itself exceeds the limit — hard split it
+                for i in range(0, len(p), max_len):
+                    chunks.append(p[i:i + max_len])
+                current = ""
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def send_telegram_notification(message):
     """Sends a message via Telegram Bot API. Fails silently (prints a
     warning) — a notification failure should never crash the actual
-    blog-posting run."""
+    blog-posting run. If `message` exceeds Telegram's 4096-character
+    limit, it's split into multiple messages along card/paragraph
+    boundaries (see _split_telegram_message) and sent as consecutive
+    messages labeled "(part X/Y)"."""
     if not TELEGRAM_ENABLED:
         return
-    try:
-        requests.get(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            params={"chat_id": TELEGRAM_CHAT_ID, "text": message},
-            timeout=15,
-        )
-    except Exception as e:
-        print(f"⚠️ Telegram notification failed: {e}")
+
+    chunks = _split_telegram_message(message)
+    total = len(chunks)
+    for i, chunk in enumerate(chunks, start=1):
+        text = chunk if total == 1 else f"(part {i}/{total})\n\n{chunk}"
+        try:
+            requests.get(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                params={"chat_id": TELEGRAM_CHAT_ID, "text": text},
+                timeout=15,
+            )
+        except Exception as e:
+            print(f"⚠️ Telegram notification failed (part {i}/{total}): {e}")
 
 # All league codes to check
 # Trimmed from ~114 to 41 leagues (Aug 2026) — dropped every league on an
@@ -435,12 +477,14 @@ def format_match_html(league_name, match, pred):
 
 # NEW — blog 2 standard (replaces the earlier Prediction-2-based standard
 # AND the Prediction-3-gate standard — this is now the ONLY filter). A
-# match qualifies only if ALL 3 conditions are met:
+# match qualifies only if ALL 4 conditions are met:
 #   1. None of the model or market odds (Home/Draw/Away, both directions)
-#      are below 1.4 — filters out heavily lopsided/near-certain matches.
+#      are below 1.45 — filters out heavily lopsided/near-certain matches.
 #   2. ou25_value_signal['result'] is "under" or "under confirmed".
 #   3. prediction_3 contains "away" (covers "Away", "Away handicap",
 #      "Away 2-handicap", and the hidden-gate "Away/ under Ngoals" form).
+#   4. None of value_pct's home/draw/away is >= 98 or <= -98 — excludes
+#      matches with an extreme, likely-unreliable value blowout.
 def meets_blog2_standard(pred):
     model_odds = pred.get("odds") or pred.get("oddsr") or {}
     market_odds = pred.get("market_odds") or {}
@@ -451,7 +495,7 @@ def meets_blog2_standard(pred):
     ]
     if any(o is None for o in odds_to_check):
         return False
-    if any(o < 1.4 for o in odds_to_check):
+    if any(o < 1.45 for o in odds_to_check):
         return False
 
     ou25_value_signal = pred.get("ou25_value_signal") or {}
@@ -461,6 +505,11 @@ def meets_blog2_standard(pred):
 
     prediction_3 = (pred.get("prediction_3") or "").lower()
     if "away" not in prediction_3:
+        return False
+
+    value_pct = pred.get("value_pct") or {}
+    hda_values = [value_pct.get("home"), value_pct.get("draw"), value_pct.get("away")]
+    if any(v is not None and abs(v) >= 98 for v in hda_values):
         return False
 
     return True
@@ -544,6 +593,7 @@ def main():
 """
     blog2_matches = 0
     blog2_current_time = None
+    blog2_notify_cards = []  # NEW — per-match info for the Telegram notification card list
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -586,8 +636,22 @@ def main():
                 blog2_html += match_html
                 blog2_matches += 1
 
-    if total_matches == 0:
-        print("No matches found today.")
+                # NEW — build the card for the Telegram notification:
+                # time, league, teams, H/D/A decision, B46 output, O/U
+                # result, and Prediction 3 output.
+                value_signal = pred.get("value_signal") or {}
+                ou25_value_signal = pred.get("ou25_value_signal") or {}
+                b46_out = pred.get("b46") or pred.get("b46r") or "—"
+                blog2_notify_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"⚡ Decision: {value_signal.get('decision') or '—'}\n"
+                    f"📋 B46: {b46_out}\n"
+                    f"📈 O/U Result: {ou25_value_signal.get('result') or '—'}\n"
+                    f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}"
+                )
+
+
         return
 
     print(f"\n📊 Summary: {total_matches} posted | {na_matches} skipped (genuine N/A) | {failed_matches} dropped (request failed after retries)")
@@ -619,9 +683,17 @@ def main():
 
             if status_2 == 200:
                 print(f"✅ Blog 2 posted successfully! URL: {result_2.get('url','')}")
-                send_telegram_notification(
-                    f"⚽ Kickwise Standard Picks posted! {blog2_matches} match(es) today.\n{result_2.get('url','')}"
+                # NEW — card-list notification: one block per qualifying
+                # match (time, league, teams, decision, B46, O/U result,
+                # Prediction 3), followed by the blog 2 URL.
+                cards_text = "\n\n".join(blog2_notify_cards)
+                notify_message = (
+                    f"⚽ Kickwise Standard Picks — {today_display}\n"
+                    f"{blog2_matches} match(es) qualified\n\n"
+                    f"{cards_text}\n\n"
+                    f"{result_2.get('url','')}"
                 )
+                send_telegram_notification(notify_message)
             else:
                 print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
