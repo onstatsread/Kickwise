@@ -9,17 +9,20 @@ on:
 jobs:
   post_predictions:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
       - name: Run daily predictions poster
         env:
@@ -29,10 +32,13 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+
           BLOG_ID_2: ${{ secrets.BLOG_ID_2 }}
           GOOGLE_CLIENT_ID_2: ${{ secrets.GOOGLE_CLIENT_ID_2 }}
           GOOGLE_CLIENT_SECRET_2: ${{ secrets.GOOGLE_CLIENT_SECRET_2 }}
           GOOGLE_REFRESH_TOKEN_2: ${{ secrets.GOOGLE_REFRESH_TOKEN_2 }}
+
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
         run: python daily_predictions.py
