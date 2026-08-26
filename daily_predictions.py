@@ -523,6 +523,14 @@ def meets_blog2_standard(pred):
 #      qualify at once it's too ambiguous and the match is skipped)
 #   2. The qualifying side's |value| is bigger than |draw_v|
 # Returns "Home win or draw", "Away win or draw", or None (no signal).
+# NEW — "Double chance" side check. Independent of the blog 2 standard —
+# this is checked across ALL matches (not just blog2-qualifying ones).
+# Only detects WHICH side qualifies ("home"/"away"/None) — the final
+# label (handicap vs win-or-draw) is computed separately by
+# refine_double_chance_signal() below.
+#   1. home_v < -40 OR away_v < -40 (whichever side, not both — if both
+#      qualify at once it's too ambiguous and the match is skipped)
+#   2. The qualifying side's |value| is bigger than |draw_v|
 def check_double_chance_signal(pred):
     value_pct = pred.get("value_pct") or {}
     home_v = value_pct.get("home")
@@ -540,9 +548,46 @@ def check_double_chance_signal(pred):
         return None
 
     if home_qualifies:
-        return "Home win or draw" if abs(home_v) > abs(draw_v) else None
+        return "home" if abs(home_v) > abs(draw_v) else None
     else:
-        return "Away win or draw" if abs(away_v) > abs(draw_v) else None
+        return "away" if abs(away_v) > abs(draw_v) else None
+
+
+# NEW — refines the qualifying side into a final label. Formula:
+#   ratio = (|side_v| * 100) / ((selected_market_odd / opposite_market_odd) * 10)
+# where selected_market_odd is the market odd for the qualifying side
+# (home or away) and opposite_market_odd is the market odd for the
+# OTHER side (home vs away — not draw). Maps ratio to:
+#   ratio <= 2.4        -> "{Side} 3-handicap"
+#   2.4 < ratio <= 5     -> "{Side} 2-handicap"
+#   ratio > 5            -> "{Side} win or draw"
+def refine_double_chance_signal(pred, side):
+    value_pct = pred.get("value_pct") or {}
+    side_v = value_pct.get(side)
+
+    market_odds = pred.get("market_odds") or {}
+    if side == "home":
+        selected_odd = market_odds.get("home_odds")
+        opposite_odd = market_odds.get("away_odds")
+        side_label = "Home"
+    else:
+        selected_odd = market_odds.get("away_odds")
+        opposite_odd = market_odds.get("home_odds")
+        side_label = "Away"
+
+    if side_v is None or not selected_odd or not opposite_odd:
+        return None
+
+    # side_v is already a percentage (computed via pct_diff's *100), so no
+    # extra *100 is needed here — just the raw abs value over the odds ratio.
+    ratio = abs(side_v) / ((selected_odd / opposite_odd) * 10)
+
+    if ratio <= 2.4:
+        return f"{side_label} 3-handicap"
+    elif ratio <= 5:
+        return f"{side_label} 2-handicap"
+    else:
+        return f"{side_label} win or draw"
 
 
 def post_to_blogger(access_token, blog_id, title, content):
@@ -685,17 +730,19 @@ def main():
             # NEW — "Double chance" signal check (independent of blog 2 —
             # runs on every match, not just blog2-qualifying ones). Only
             # ever produces a second, separate Telegram notification.
-            dc_signal = check_double_chance_signal(pred)
-            if dc_signal:
-                value_pct = pred.get("value_pct") or {}
-                dc_notify_cards.append(
-                    f"🕐 {match_time} | {m['league_name']}\n"
-                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
-                    f"🎯 Signal: {dc_signal}\n"
-                    f"📈 Value: Home {value_pct.get('home')}% | "
-                    f"Draw {value_pct.get('draw')}% | "
-                    f"Away {value_pct.get('away')}%"
-                )
+            dc_side = check_double_chance_signal(pred)
+            if dc_side:
+                dc_signal = refine_double_chance_signal(pred, dc_side)
+                if dc_signal:
+                    value_pct = pred.get("value_pct") or {}
+                    dc_notify_cards.append(
+                        f"🕐 {match_time} | {m['league_name']}\n"
+                        f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                        f"🎯 Signal: {dc_signal}\n"
+                        f"📈 Value: Home {value_pct.get('home')}% | "
+                        f"Draw {value_pct.get('draw')}% | "
+                        f"Away {value_pct.get('away')}%"
+                    )
 
     if total_matches == 0:
         print("No matches found today.")
