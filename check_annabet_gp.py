@@ -1,18 +1,12 @@
-"""
-AnnaBet League Games-Played Checker
-Checks every league in ANNABET_LEAGUE_IDS for real games-played this
-season. Free and fast — plain requests.get(), no ScraperAPI/paid scraper
-needed, confirmed AnnaBet has no Cloudflare-style bot protection.
-
-Confirmed via slug test: AnnaBet only needs the numeric serie_ID — any
-text after it works, so every URL is built as serie_{ID}_x.html.
-
-Flags (doesn't auto-exclude) leagues under 10 games played, so they can
-be reviewed and decided on case by case, rather than guessed by calendar.
-"""
-import requests
+import csv
+import random
 import time
+import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from annabet_leagues import ANNABET_LEAGUE_IDS
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -27,106 +21,158 @@ HEADERS = {
     "Upgrade-Insecure-Requests": "1",
 }
 
-# Persistent session — reuses cookies and the underlying connection across
-# requests, closer to how a real browser behaves than opening a brand new
-# bare connection every time (which the earlier attempts were doing).
+BASE_URL = "https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
+OUTPUT_CSV = "annabet_gp_results.csv"
+
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-from annabet_leagues import ANNABET_LEAGUE_IDS
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1.5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET"],
+    raise_on_status=False,
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+SESSION.mount("https://", adapter)
+SESSION.mount("http://", adapter)
+
+
+def sleep_jitter(min_s=5, max_s=12):
+    time.sleep(random.uniform(min_s, max_s))
+
+
+def normalize_headers(headers):
+    return [h.strip().upper().replace(" ", " ") for h in headers]
 
 
 def extract_max_gp(html):
-    """Parse AnnaBet's league table(s) and find the highest games-played
-    value across all teams/rows found on the page. AnnaBet's "All Games"
-    table has columns: #, Team, GP, W, T, L, GF, GA, ... — GP is the
-    first numeric column after the team name in each row.
-    """
     soup = BeautifulSoup(html, "html.parser")
     max_gp = 0
+
     for table in soup.find_all("table"):
-        for row in table.find_all("tr"):
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+
+        header_cells = rows[0].find_all(["th", "td"])
+        headers = normalize_headers([c.get_text(" ", strip=True) for c in header_cells])
+
+        if "GP" not in headers:
+            continue
+
+        gp_idx = headers.index("GP")
+
+        for row in rows[1:]:
             cells = row.find_all("td")
-            if len(cells) < 3:
+            if len(cells) <= gp_idx:
                 continue
-            # Column 0 is usually the rank ("1."), column 1 the team name,
-            # column 2 the GP value — but be defensive and just look for
-            # any cell in the first few columns that's a small, sane
-            # integer (games played realistically won't exceed ~60).
-            for cell in cells[1:4]:
-                text = cell.get_text(strip=True)
-                if text.isdigit():
-                    val = int(text)
-                    if 0 < val <= 60:
-                        max_gp = max(max_gp, val)
-                        break
+
+            gp_text = cells[gp_idx].get_text(" ", strip=True).replace(",", "")
+            if gp_text.isdigit():
+                gp = int(gp_text)
+                if gp > max_gp:
+                    max_gp = gp
+
     return max_gp
 
 
-def check_league(name, serie_id, retries=1):
-    url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
+def fetch_league(name, serie_id, max_retries=3):
+    url = BASE_URL.format(serie_id=serie_id)
     last_error = None
-    for attempt in range(1, retries + 1):
+
+    for attempt in range(1, max_retries + 1):
         try:
-            resp = SESSION.get(url, timeout=15)
+            resp = SESSION.get(url, timeout=20)
+            if resp.status_code == 429:
+                wait = (2 ** attempt) + random.uniform(0.5, 2.5)
+                time.sleep(wait)
+                continue
+
             resp.raise_for_status()
+
             max_gp = extract_max_gp(resp.text)
-            if max_gp == 0:
-                # DEBUG — show what actually came back so we can see why
-                # parsing found nothing (wrong page? redirect? consent
-                # wall?) instead of just guessing.
-                snippet = resp.text[:300].replace("\n", " ")
+            if max_gp > 0:
                 return {
-                    "status": "no_data", "max_gp": 0,
-                    "debug": f"status={resp.status_code} len={len(resp.text)} url={resp.url} snippet={snippet}"
+                    "status": "ok",
+                    "name": name,
+                    "serie_id": serie_id,
+                    "gp": max_gp,
+                    "url": resp.url,
                 }
-            return {"status": "ok", "max_gp": max_gp}
+
+            snippet = resp.text[:500].replace("
+", " ").replace("
+", " ")
+            return {
+                "status": "no_data",
+                "name": name,
+                "serie_id": serie_id,
+                "gp": 0,
+                "url": resp.url,
+                "debug": snippet,
+            }
+
         except Exception as e:
             last_error = e
-            if attempt < retries:
-                time.sleep(3)
-    return {"status": "error", "error": str(last_error), "max_gp": 0}
+            if attempt < max_retries:
+                wait = (2 ** attempt) + random.uniform(0.5, 2.5)
+                time.sleep(wait)
+
+    return {
+        "status": "error",
+        "name": name,
+        "serie_id": serie_id,
+        "gp": -1,
+        "error": str(last_error),
+    }
 
 
 def main():
-    print(f"🔍 Checking games-played across {len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet...\n")
-
-    # Testing a small batch first with slower pacing — a full 162-league
-    # run at full speed got blocked after ~8 requests, and even slowing
-    # to 5s between requests still only let the same first few leagues
-    # through. No GP filter applied here — just reporting the real
-    # number for whatever successfully loads, no pre-judging by count.
-    test_leagues = dict(list(ANNABET_LEAGUE_IDS.items())[40:])
+    print(f"🔍 Checking games-played across {len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet...
+")
 
     results = []
-    for name, serie_id in test_leagues.items():
-        r = check_league(name, serie_id)
-        if r["status"] == "ok":
-            print(f"  ✅  {name} (serie_{serie_id}): {r['max_gp']} games played")
-            results.append((name, serie_id, r["max_gp"]))
-        elif r["status"] == "no_data":
-            print(f"  ❓  {name} (serie_{serie_id}): no table data found")
-            print(f"      DEBUG: {r.get('debug', 'n/a')}")
-            results.append((name, serie_id, 0))
+
+    for i, (name, serie_id) in enumerate(ANNABET_LEAGUE_IDS.items(), start=1):
+        result = fetch_league(name, serie_id)
+
+        if result["status"] == "ok":
+            print(f"  ✅  {name} (serie_{serie_id}): {result['gp']} games played")
+        elif result["status"] == "no_data":
+            print(f"  ❓  {name} (serie_{serie_id}): no GP table found")
         else:
-            print(f"  ❌  {name} (serie_{serie_id}): failed — {r['error']}")
-            results.append((name, serie_id, -1))
+            print(f"  ❌  {name} (serie_{serie_id}): failed — {result['error']}")
 
-        time.sleep(20)  # much longer gap — testing if this is a time-window limit
+        results.append(result)
 
-    print(f"\n📊 Summary — {len(results)} leagues checked\n")
+        if i < len(ANNABET_LEAGUE_IDS):
+            sleep_jitter(5, 12)
 
-    ok = [r for r in results if r[2] > 0]
-    failed = [r for r in results if r[2] == -1]
+    with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["name", "serie_id", "status", "gp", "url", "error_or_debug"])
+        for r in results:
+            writer.writerow([
+                r.get("name", ""),
+                r.get("serie_id", ""),
+                r.get("status", ""),
+                r.get("gp", ""),
+                r.get("url", ""),
+                r.get("error", r.get("debug", "")),
+            ])
 
-    print(f"✅ GAMES PLAYED (real numbers, no filtering):")
-    for name, sid, gp in sorted(ok, key=lambda x: -x[2]):
-        print(f"    {name}: {gp} GP")
+    ok = [r for r in results if r["status"] == "ok"]
+    print(f"
+📊 Summary — {len(results)} leagues checked")
+    print(f"✅ Successful: {len(ok)}")
+    print(f"📁 Saved CSV: {OUTPUT_CSV}")
 
-    if failed:
-        print(f"\n❌ FAILED TO CHECK ({len(failed)} leagues — connection blocked, unrelated to GP):")
-        for name, sid, gp in failed:
-            print(f"    {name} (serie_{sid})")
+    print("
+✅ GAMES PLAYED:")
+    for r in sorted(ok, key=lambda x: -x["gp"]):
+        print(f"    {r['name']}: {r['gp']} GP")
 
 
 if __name__ == "__main__":
