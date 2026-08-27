@@ -11,7 +11,7 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-url = "https://annabet.com/en/soccerstats/serie_351_x.html"
+url = "https://annabet.com/en/soccerstats/serie_257_x.html"
 
 session = requests.Session()
 session.headers.update(HEADERS)
