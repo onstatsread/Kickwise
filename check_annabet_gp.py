@@ -1,16 +1,39 @@
-import csv
-import random
-import time
+"""
+AnnaBet League Games-Played Checker
+-----------------------------------
+
+Gets ACTUAL team GP from AnnaBet league tables.
+
+Instead of guessing that one of the first few numeric cells is GP,
+this version:
+
+1. Finds tables.
+2. Reads the table headers.
+3. Locates the GP column by header name.
+4. Extracts GP for every team.
+5. Reports min/max/average GP.
+6. Shows every team's GP.
+7. Flags leagues where teams have different GP.
+"""
+
 import requests
+import time
+import statistics
 from bs4 import BeautifulSoup
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from annabet_leagues import ANNABET_LEAGUE_IDS
 
+
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;"
+        "q=0.9,image/webp,*/*;q=0.8"
+    ),
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive",
@@ -21,158 +44,518 @@ HEADERS = {
     "Upgrade-Insecure-Requests": "1",
 }
 
-BASE_URL = "https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
-OUTPUT_CSV = "annabet_gp_results.csv"
 
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-retry_strategy = Retry(
-    total=3,
-    backoff_factor=1.5,
-    status_forcelist=[429, 500, 502, 503, 504],
-    allowed_methods=["GET"],
-    raise_on_status=False,
-)
-adapter = HTTPAdapter(max_retries=retry_strategy)
-SESSION.mount("https://", adapter)
-SESSION.mount("http://", adapter)
+
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
+
+def clean_text(text):
+    """Normalize whitespace."""
+    return " ".join(text.split()).strip()
 
 
-def sleep_jitter(min_s=5, max_s=12):
-    time.sleep(random.uniform(min_s, max_s))
+def find_gp_column(headers):
+    """
+    Find the GP column from table headers.
+
+    Accepts:
+        GP
+        Games Played
+        Games
+        P
+        Pl
+
+    GP is preferred because it is the most explicit.
+    """
+
+    normalized = []
+
+    for h in headers:
+        h = clean_text(h).lower()
+        normalized.append(h)
+
+    # Strongest match first
+    for i, h in enumerate(normalized):
+        if h in ("gp", "games played", "games-played"):
+            return i
+
+    # Possible alternatives
+    for i, h in enumerate(normalized):
+        if h in ("games", "played"):
+            return i
+
+    return None
 
 
-def normalize_headers(headers):
-    return [h.strip().upper().replace(" ", " ") for h in headers]
+def extract_team_gp(html):
+    """
+    Extract team names and their actual GP from tables.
 
+    Returns:
 
-def extract_max_gp(html):
+    {
+        "teams": [
+            {"team": "...", "gp": 23},
+            ...
+        ],
+        "table_found": True/False,
+        "gp_column": index,
+        "headers": [...]
+    }
+    """
+
     soup = BeautifulSoup(html, "html.parser")
-    max_gp = 0
+
+    all_teams = []
+    found_table = False
+    gp_column_found = None
+    selected_headers = []
 
     for table in soup.find_all("table"):
+
         rows = table.find_all("tr")
+
         if not rows:
             continue
 
-        header_cells = rows[0].find_all(["th", "td"])
-        headers = normalize_headers([c.get_text(" ", strip=True) for c in header_cells])
+        # -------------------------------------------------
+        # FIND HEADER ROW
+        # -------------------------------------------------
 
-        if "GP" not in headers:
+        header_row = None
+        headers = []
+
+        for row in rows[:5]:
+
+            ths = row.find_all(["th", "td"])
+
+            if not ths:
+                continue
+
+            row_headers = [
+                clean_text(x.get_text(" ", strip=True))
+                for x in ths
+            ]
+
+            gp_index = find_gp_column(row_headers)
+
+            if gp_index is not None:
+                header_row = row
+                headers = row_headers
+                gp_column_found = gp_index
+                selected_headers = headers
+                found_table = True
+                break
+
+        if header_row is None:
             continue
 
-        gp_idx = headers.index("GP")
+        # -------------------------------------------------
+        # EXTRACT DATA ROWS
+        # -------------------------------------------------
 
-        for row in rows[1:]:
+        header_index = rows.index(header_row)
+
+        for row in rows[header_index + 1:]:
+
             cells = row.find_all("td")
-            if len(cells) <= gp_idx:
+
+            if not cells:
                 continue
 
-            gp_text = cells[gp_idx].get_text(" ", strip=True).replace(",", "")
-            if gp_text.isdigit():
-                gp = int(gp_text)
-                if gp > max_gp:
-                    max_gp = gp
+            texts = [
+                clean_text(cell.get_text(" ", strip=True))
+                for cell in cells
+            ]
 
-    return max_gp
-
-
-def fetch_league(name, serie_id, max_retries=3):
-    url = BASE_URL.format(serie_id=serie_id)
-    last_error = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            resp = SESSION.get(url, timeout=20)
-            if resp.status_code == 429:
-                wait = (2 ** attempt) + random.uniform(0.5, 2.5)
-                time.sleep(wait)
+            # Need enough cells to reach GP column
+            if len(texts) <= gp_column_found:
                 continue
 
-            resp.raise_for_status()
+            gp_text = texts[gp_column_found]
 
-            max_gp = extract_max_gp(resp.text)
-            if max_gp > 0:
-                return {
-                    "status": "ok",
-                    "name": name,
-                    "serie_id": serie_id,
-                    "gp": max_gp,
-                    "url": resp.url,
-                }
+            # GP must be an integer
+            if not gp_text.isdigit():
+                continue
 
-            snippet = resp.text[:500].replace("
-", " ").replace("
-", " ")
-            return {
-                "status": "no_data",
-                "name": name,
-                "serie_id": serie_id,
-                "gp": 0,
-                "url": resp.url,
-                "debug": snippet,
+            gp = int(gp_text)
+
+            # Sanity check
+            if gp < 0 or gp > 100:
+                continue
+
+            # -------------------------------------------------
+            # TEAM NAME
+            # -------------------------------------------------
+
+            # Usually team is column 1 because:
+            # column 0 = rank
+            # column 1 = team
+            #
+            # But be defensive.
+
+            team_name = ""
+
+            if len(texts) > 1:
+                team_name = texts[1]
+
+            if not team_name:
+                team_name = texts[0]
+
+            # Ignore obvious footer/summary rows
+            bad_names = {
+                "total",
+                "average",
+                "home",
+                "away",
+                "all games",
+                "team",
+                "league average",
             }
 
-        except Exception as e:
-            last_error = e
-            if attempt < max_retries:
-                wait = (2 ** attempt) + random.uniform(0.5, 2.5)
-                time.sleep(wait)
+            if team_name.lower() in bad_names:
+                continue
+
+            # Ignore rows that are clearly not teams
+            if len(team_name) < 2:
+                continue
+
+            all_teams.append({
+                "team": team_name,
+                "gp": gp
+            })
 
     return {
-        "status": "error",
-        "name": name,
-        "serie_id": serie_id,
-        "gp": -1,
-        "error": str(last_error),
+        "teams": all_teams,
+        "table_found": found_table,
+        "gp_column": gp_column_found,
+        "headers": selected_headers,
     }
 
 
+# ---------------------------------------------------------
+# LEAGUE CHECK
+# ---------------------------------------------------------
+
+def check_league(name, serie_id, retries=2):
+
+    url = (
+        f"https://annabet.com/en/soccerstats/"
+        f"serie_{serie_id}_x.html"
+    )
+
+    last_error = None
+
+    for attempt in range(1, retries + 1):
+
+        try:
+
+            response = SESSION.get(
+                url,
+                timeout=20
+            )
+
+            response.raise_for_status()
+
+            data = extract_team_gp(response.text)
+
+            teams = data["teams"]
+
+            if not teams:
+
+                snippet = (
+                    response.text[:500]
+                    .replace("\n", " ")
+                    .replace("\r", " ")
+                )
+
+                return {
+                    "status": "no_data",
+                    "teams": [],
+                    "debug": (
+                        f"status={response.status_code} "
+                        f"len={len(response.text)} "
+                        f"url={response.url} "
+                        f"headers={data['headers']} "
+                        f"snippet={snippet}"
+                    )
+                }
+
+            gps = [x["gp"] for x in teams]
+
+            minimum_gp = min(gps)
+            maximum_gp = max(gps)
+            average_gp = statistics.mean(gps)
+
+            unique_gp = sorted(set(gps))
+
+            # -------------------------------------------------
+            # DETERMINE WHETHER ALL TEAMS HAVE SAME GP
+            # -------------------------------------------------
+
+            balanced = len(unique_gp) == 1
+
+            return {
+                "status": "ok",
+
+                "teams": teams,
+
+                "team_count": len(teams),
+
+                "min_gp": minimum_gp,
+
+                "max_gp": maximum_gp,
+
+                "average_gp": round(average_gp, 2),
+
+                "unique_gp": unique_gp,
+
+                "balanced": balanced,
+
+                "gp_column": data["gp_column"],
+
+                "headers": data["headers"],
+
+            }
+
+        except Exception as e:
+
+            last_error = e
+
+            if attempt < retries:
+                time.sleep(5)
+
+    return {
+        "status": "error",
+        "error": str(last_error),
+        "teams": [],
+    }
+
+
+# ---------------------------------------------------------
+# PRINT LEAGUE
+# ---------------------------------------------------------
+
+def print_league_result(name, serie_id, result):
+
+    print()
+    print("=" * 70)
+    print(f"{name} (serie_{serie_id})")
+    print("=" * 70)
+
+    if result["status"] != "ok":
+
+        if result["status"] == "no_data":
+
+            print("❓ No usable GP table found.")
+            print(f"   DEBUG: {result.get('debug', 'n/a')}")
+
+        else:
+
+            print(
+                f"❌ Failed: "
+                f"{result.get('error', 'unknown error')}"
+            )
+
+        return
+
+    teams = result["teams"]
+
+    print(
+        f"Teams found : {result['team_count']}"
+    )
+
+    print(
+        f"GP range    : "
+        f"{result['min_gp']} - {result['max_gp']}"
+    )
+
+    print(
+        f"Average GP  : "
+        f"{result['average_gp']}"
+    )
+
+    print(
+        f"GP values   : "
+        f"{result['unique_gp']}"
+    )
+
+    if result["balanced"]:
+
+        print(
+            f"✅ All teams have the same GP: "
+            f"{result['max_gp']}"
+        )
+
+    else:
+
+        print(
+            "⚠️ Teams have different GP values."
+        )
+
+    print()
+    print(
+        f"{'TEAM':45} {'GP':>5}"
+    )
+    print("-" * 52)
+
+    for team in teams:
+
+        print(
+            f"{team['team'][:45]:45} "
+            f"{team['gp']:>5}"
+        )
+
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
+
 def main():
-    print(f"🔍 Checking games-played across {len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet...
-")
+
+    print(
+        f"🔍 Checking ACTUAL team GP across "
+        f"{len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet..."
+    )
+
+    print(
+        "📌 GP is extracted from the table's GP column — "
+        "not guessed from fixture count."
+    )
+
+    print()
+
+    # Your original script started from index 40.
+    # Change to:
+    #
+    # test_leagues = ANNABET_LEAGUE_IDS
+    #
+    # when you want all leagues.
+
+    test_leagues = dict(
+        list(ANNABET_LEAGUE_IDS.items())[40:]
+    )
 
     results = []
 
-    for i, (name, serie_id) in enumerate(ANNABET_LEAGUE_IDS.items(), start=1):
-        result = fetch_league(name, serie_id)
+    for name, serie_id in test_leagues.items():
+
+        result = check_league(
+            name,
+            serie_id
+        )
+
+        print_league_result(
+            name,
+            serie_id,
+            result
+        )
 
         if result["status"] == "ok":
-            print(f"  ✅  {name} (serie_{serie_id}): {result['gp']} games played")
-        elif result["status"] == "no_data":
-            print(f"  ❓  {name} (serie_{serie_id}): no GP table found")
+
+            results.append({
+                "name": name,
+                "serie_id": serie_id,
+                "min_gp": result["min_gp"],
+                "max_gp": result["max_gp"],
+                "average_gp": result["average_gp"],
+                "team_count": result["team_count"],
+                "balanced": result["balanced"],
+            })
+
         else:
-            print(f"  ❌  {name} (serie_{serie_id}): failed — {result['error']}")
 
-        results.append(result)
+            results.append({
+                "name": name,
+                "serie_id": serie_id,
+                "min_gp": 0,
+                "max_gp": 0,
+                "average_gp": 0,
+                "team_count": 0,
+                "balanced": False,
+            })
 
-        if i < len(ANNABET_LEAGUE_IDS):
-            sleep_jitter(5, 12)
+        # AnnaBet request pacing
+        time.sleep(20)
 
-    with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["name", "serie_id", "status", "gp", "url", "error_or_debug"])
-        for r in results:
-            writer.writerow([
-                r.get("name", ""),
-                r.get("serie_id", ""),
-                r.get("status", ""),
-                r.get("gp", ""),
-                r.get("url", ""),
-                r.get("error", r.get("debug", "")),
-            ])
+    # -----------------------------------------------------
+    # SUMMARY
+    # -----------------------------------------------------
 
-    ok = [r for r in results if r["status"] == "ok"]
-    print(f"
-📊 Summary — {len(results)} leagues checked")
-    print(f"✅ Successful: {len(ok)}")
-    print(f"📁 Saved CSV: {OUTPUT_CSV}")
+    print()
+    print()
+    print("=" * 80)
+    print("📊 FINAL SUMMARY")
+    print("=" * 80)
 
-    print("
-✅ GAMES PLAYED:")
-    for r in sorted(ok, key=lambda x: -x["gp"]):
-        print(f"    {r['name']}: {r['gp']} GP")
+    successful = [
+        x for x in results
+        if x["max_gp"] > 0
+    ]
+
+    print(
+        f"\n✅ Successfully extracted GP: "
+        f"{len(successful)} leagues"
+    )
+
+    print()
+
+    print(
+        f"{'LEAGUE':50} "
+        f"{'MIN':>5} "
+        f"{'MAX':>5} "
+        f"{'AVG':>7} "
+        f"{'TEAMS':>6}"
+    )
+
+    print("-" * 80)
+
+    for r in sorted(
+        successful,
+        key=lambda x: -x["max_gp"]
+    ):
+
+        flag = ""
+
+        if not r["balanced"]:
+            flag = " ⚠️"
+
+        print(
+            f"{r['name'][:50]:50} "
+            f"{r['min_gp']:>5} "
+            f"{r['max_gp']:>5} "
+            f"{r['average_gp']:>7.2f} "
+            f"{r['team_count']:>6}"
+            f"{flag}"
+        )
+
+    # -----------------------------------------------------
+    # UNEQUAL GP LEAGUES
+    # -----------------------------------------------------
+
+    unequal = [
+        x for x in successful
+        if not x["balanced"]
+    ]
+
+    if unequal:
+
+        print()
+        print(
+            "⚠️ LEAGUES WHERE TEAMS HAVE DIFFERENT GP:"
+        )
+
+        for r in unequal:
+
+            print(
+                f"   {r['name']} "
+                f"(serie_{r['serie_id']}): "
+                f"{r['min_gp']}–{r['max_gp']} GP"
+            )
 
 
 if __name__ == "__main__":
