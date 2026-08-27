@@ -1138,12 +1138,29 @@ def debug_apifootball_standings():
     if not api_key:
         return {"error": "API_FOOTBALL_KEY not set in environment"}
     try:
-        resp = requests.get(
-            "https://v3.football.api-sports.io/standings",
-            headers={"x-apisports-key": api_key},
-            params={"league": 362, "season": 2026},
-            timeout=15,
-        )
         return {"status_code": resp.status_code, "body": resp.json()}
     except Exception as e:
         return {"error": str(e)}
+
+
+# NEW — lets you test ANY AnnaBet serie ID directly, without it needing to
+# already be in ANNABET_SERIE_ID first. Use this to scout new leagues:
+# browse annabet.com yourself, find a league whose season looks far
+# enough along, grab the numeric ID from its URL
+# (annabet.com/en/soccerstats/serie_<ID>_...), then hit this route with
+# that ID to see its current max_gp instantly. Once a league clears
+# GP >= 10, add it properly to ANNABET_SERIE_ID here and LEAGUE_CODES in
+# blog.py with a real short code (e.g. "argentina", "mexico").
+@app.get("/debug_serie_gp")
+def debug_serie_gp(serie_id: int = Query(...)):
+    try:
+        team_data = fetch_stats_annabet(serie_id)
+        if not team_data:
+            return {"serie_id": serie_id, "team_count": 0, "max_gp": 0,
+                     "note": "No teams found — wrong ID, or AnnaBet's table structure didn't match."}
+        max_gp = max(d.get("gp", 0) for d in team_data.values())
+        return {"serie_id": serie_id, "team_count": len(team_data), "max_gp": max_gp,
+                 "team_names": list(team_data.keys())}
+    except Exception as e:
+        return {"serie_id": serie_id, "error": str(e)}
+
