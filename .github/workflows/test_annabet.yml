@@ -19,4 +19,4 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Run AnnaBet test
-        run: python test_annabet.py
+        run: python check_annabet_gp_test10.py
