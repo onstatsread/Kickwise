@@ -528,17 +528,28 @@ def _extract_fixture_h2h_and_hda(home, away):
 
 def _extract_annabet_ou25(h2h_url):
     """
-    AnnaBet H2H contains a bookmaker table labelled:
+    AnnaBet's H2H page reuses the same 'Total Goals Under-Over' table
+    markup in several places: each team's own historical stats, the
+    head-to-head history, AND the real live-market odds table. Those
+    look identical by keyword text alone (hence the earlier bug where
+    this sometimes grabbed a historical-stats table instead of real
+    market odds).
 
-        1x2 Betting Odds
+    The genuine market table is the one that links out to actual
+    bookmakers (e.g. href="/en/link/Suprabets/") — no historical/
+    stats table does that, so filtering on that link uniquely
+    isolates the correct table.
 
-    with the Total Goals Under-Over section.
-
-    For the 2.5-goal row the final bookmaker pair is the
-    'All Games' total-goals price. AnnaBet displays that pair
-    as Under-Over, so:
+    Within that table, each goal-line (1.5 / 2.5 / 3.5) has its own
+    <td class="hdr"> cell containing text like:
+        "2.5 goals avg 46%-54% 2.15-1.87"
+    The trailing "A-B" pair there is the bookmaker-average odds for
+    that line, displayed Under-Over, so:
         left  = Under 2.5
         right = Over 2.5
+    We extract it from that specific cell only (not the whole row)
+    to avoid accidentally matching an unrelated number pair from a
+    neighboring percentage cell.
     """
 
     if not h2h_url:
@@ -562,79 +573,53 @@ def _extract_annabet_ou25(h2h_url):
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Find the table containing the bookmaker O/U section.
+    # Only tables that link out to a real bookmaker are the live
+    # market table — historical/stats tables never do.
     candidate_tables = []
 
     for table in soup.find_all("table"):
         text = table.get_text(" ", strip=True).lower()
 
-        score = 0
+        if "total goals under-over" not in text:
+            continue
 
-        if "total goals under-over" in text:
-            score += 10
+        if table.find("a", href=re.compile(r"^/en/link/")):
+            candidate_tables.append(table)
 
-        if "2.5 goals" in text:
-            score += 5
+    for table in candidate_tables:
 
-        if "1.5 goals" in text:
-            score += 2
+        for cell in table.find_all("td", class_="hdr"):
 
-        if "3.5 goals" in text:
-            score += 2
-
-        if score:
-            candidate_tables.append((score, table))
-
-    candidate_tables.sort(
-        key=lambda x: x[0],
-        reverse=True
-    )
-
-    for _, table in candidate_tables:
-
-        for row in table.find_all("tr"):
-
-            row_text = row.get_text(" ", strip=True)
+            cell_text = cell.get_text(" ", strip=True)
 
             if not re.search(
                 r"\b2\.5\s+goals\b",
-                row_text,
+                cell_text,
                 re.I
             ):
                 continue
 
-            # Every odds pair is Under-Over.
             pairs = re.findall(
                 r"(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)",
-                row_text
+                cell_text
             )
-
-            valid = []
 
             for left, right in pairs:
                 under = _annabet_float(left)
                 over = _annabet_float(right)
 
                 if under is not None and over is not None:
-                    valid.append((under, over))
+                    result = {
+                        "over_odds": over,
+                        "under_odds": under,
+                    }
 
-            if not valid:
-                continue
+                    _ANNABET_ODDS_CACHE[cache_key] = (
+                        time.time(),
+                        result
+                    )
 
-            # The final pair is the All Games bookmaker pair.
-            under, over = valid[-1]
-
-            result = {
-                "over_odds": over,
-                "under_odds": under,
-            }
-
-            _ANNABET_ODDS_CACHE[cache_key] = (
-                time.time(),
-                result
-            )
-
-            return result
+                    return result
 
     return None
 
