@@ -332,6 +332,39 @@ def _annabet_float(value):
     return value
 
 
+def _add_implied_pct(odds_dict, *keys):
+    """
+    Adds normalized implied-probability *_pct fields to a dict of
+    decimal odds (e.g. home_odds/draw_odds/away_odds, or
+    over_odds/under_odds), so downstream code that expects
+    market_odds['home_pct'] / market_ou25['over_pct'] etc. keeps
+    working the same as it did with the old odds-API fallbacks.
+
+    Uses 1/odds normalized so the percentages sum to 100%, removing
+    the bookmaker's overround/margin rather than just reporting raw
+    implied probability (which would sum to >100%).
+    """
+    if not odds_dict:
+        return odds_dict
+
+    vals = [odds_dict.get(k) for k in keys]
+
+    if any(v is None or v <= 0 for v in vals):
+        return odds_dict
+
+    raw = [1 / v for v in vals]
+    total = sum(raw)
+
+    if total <= 0:
+        return odds_dict
+
+    for k, r in zip(keys, raw):
+        pct_key = k.replace("_odds", "_pct")
+        odds_dict[pct_key] = round(r / total * 100, 1)
+
+    return odds_dict
+
+
 def _norm_team(name):
     return " ".join(str(name).lower().split()).strip()
 
@@ -543,15 +576,19 @@ def get_annabet_market_odds(home, away):
     Returns:
         {
           "market_odds": {
-             "home_odds": ...,
-             "draw_odds": ...,
-             "away_odds": ...
+             "home_odds": ..., "draw_odds": ..., "away_odds": ...,
+             "home_pct": ..., "draw_pct": ..., "away_pct": ...
           },
           "market_ou25": {
-             "over_odds": ...,
-             "under_odds": ...
+             "over_odds": ..., "under_odds": ...,
+             "over_pct": ..., "under_pct": ...
           }
         }
+
+    The *_pct fields are normalized implied probabilities (bookmaker
+    margin removed) derived from the decimal odds — daily_predictions.py
+    (format_match_html / meets_blog2_standard) expects these keys to
+    exist on both dicts, same shape the old odds-API fallbacks provided.
     """
 
     result = {
@@ -564,14 +601,22 @@ def get_annabet_market_odds(home, away):
     if not fixture:
         return result
 
-    result["market_odds"] = {
-        "home_odds": fixture["home_odds"],
-        "draw_odds": fixture["draw_odds"],
-        "away_odds": fixture["away_odds"],
-    }
+    result["market_odds"] = _add_implied_pct(
+        {
+            "home_odds": fixture["home_odds"],
+            "draw_odds": fixture["draw_odds"],
+            "away_odds": fixture["away_odds"],
+        },
+        "home_odds", "draw_odds", "away_odds"
+    )
 
-    result["market_ou25"] = _extract_annabet_ou25(
+    market_ou25 = _extract_annabet_ou25(
         fixture.get("h2h_url")
+    )
+
+    result["market_ou25"] = _add_implied_pct(
+        market_ou25,
+        "over_odds", "under_odds"
     )
 
     return result
