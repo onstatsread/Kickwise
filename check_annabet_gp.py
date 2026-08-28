@@ -429,16 +429,10 @@ def main():
 
     print()
 
-    # Your original script started from index 40.
-    # Change to:
-    #
-    # test_leagues = ANNABET_LEAGUE_IDS
-    #
-    # when you want all leagues.
-
-    test_leagues = dict(
-        list(ANNABET_LEAGUE_IDS.items())[40:]
-    )
+    # FIXED — now checks ALL 162 leagues instead of skipping the first 40
+    # (England, Italy, Spain, Germany, France, Netherlands, Belgium,
+    # Portugal, Scotland, Russia, Albania, Algeria, Argentina).
+    test_leagues = ANNABET_LEAGUE_IDS
 
     results = []
 
