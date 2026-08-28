@@ -1919,6 +1919,57 @@ def debug_annabet_login():
     }
 
 
+@app.get("/debug_annabet_h2h_raw")
+def debug_annabet_h2h_raw(home: str = Query(...), away: str = Query(...)):
+    """
+    Temporary diagnostic — fetches the real H2H page for a fixture
+    using the (hopefully authenticated) ANNABET_SESSION, and reports
+    whether it looks logged-in or not, plus which bookmaker names
+    (if any) show up in the page. Does NOT expose cookie values.
+    REMOVE once the login/odds issue is resolved.
+    """
+    fixture = _extract_fixture_h2h_and_hda(home, away)
+
+    if not fixture or not fixture.get("h2h_url"):
+        return {"error": "fixture or h2h_url not found", "fixture": fixture}
+
+    h2h_url = fixture["h2h_url"]
+
+    try:
+        resp = ANNABET_SESSION.get(h2h_url, timeout=30)
+        resp.raise_for_status()
+        html = resp.text
+    except Exception as e:
+        return {"error": str(e), "h2h_url": h2h_url}
+
+    cookie_names = [c.name for c in ANNABET_SESSION.cookies]
+
+    markers = {
+        "contains_register_or_login_prompt": (
+            "register or log in" in html.lower()
+            or "please register" in html.lower()
+        ),
+        "contains_logout_link": "logout" in html.lower(),
+        "contains_username_anuel20": "anuel20" in html.lower(),
+        "contains_pinnacle": "pinnacle" in html.lower(),
+        "contains_veikkaus": "veikkaus" in html.lower(),
+        "contains_starting_odds_label": "starting odds" in html.lower(),
+    }
+
+    # Grab a small snippet around "Total Goals Under-Over" to eyeball
+    # what table the extractor is actually looking at.
+    idx = html.lower().find("total goals under-over")
+    snippet = html[max(0, idx - 200): idx + 800] if idx != -1 else None
+
+    return {
+        "h2h_url": h2h_url,
+        "session_cookie_names": cookie_names,
+        "html_length": len(html),
+        "markers": markers,
+        "snippet_near_total_goals_table": snippet,
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
