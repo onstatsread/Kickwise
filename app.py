@@ -8,7 +8,7 @@ Deploy to Render.com.
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time, calendar
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time, calendar, hashlib
 from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
@@ -65,6 +65,76 @@ ANNABET_HEADERS = {
 
 ANNABET_SESSION = requests.Session()
 ANNABET_SESSION.headers.update(ANNABET_HEADERS)
+
+# ============================================================
+# ANNABET AUTH
+#
+# The bookmaker "Betting Odds" table (needed for real market_ou25/
+# market_odds pricing) is only present in the HTML for logged-in
+# accounts — anonymous requests get a page missing that table
+# entirely, which is why unauthenticated scraping silently pulled
+# numbers from an unrelated section instead of erroring.
+#
+# AnnaBet's login is AJAX-based (see auth/assets/js/app/login.js +
+# common.js): it POSTs to auth/ASEngine/ASAjax.php with
+# action=checkLogin, plus username and a client-side SHA-512 hash
+# of the password (never the raw password). We replicate that
+# hashing here in Python and reuse ANNABET_SESSION afterward so
+# every fixture/stats/odds request that follows is authenticated
+# via the session cookie the login response sets.
+# ============================================================
+
+ANNABET_LOGIN_URL = "https://annabet.com/auth/ASEngine/ASAjax.php"
+ANNABET_USERNAME = os.environ.get("ANNABET_USERNAME", "")
+ANNABET_PASSWORD = os.environ.get("ANNABET_PASSWORD", "")
+
+_ANNABET_LOGGED_IN = False
+
+
+def annabet_login():
+    """Logs ANNABET_SESSION into AnnaBet so subsequent requests see
+    the authenticated (bookmaker-odds-included) version of pages.
+    Safe to call repeatedly — cheap no-op check via _ANNABET_LOGGED_IN,
+    call annabet_login(force=True)-style re-login only if needed later."""
+    global _ANNABET_LOGGED_IN
+
+    if not ANNABET_USERNAME or not ANNABET_PASSWORD:
+        print("AnnaBet login skipped — ANNABET_USERNAME/ANNABET_PASSWORD not set")
+        return False
+
+    password_hash = hashlib.sha512(ANNABET_PASSWORD.encode("utf-8")).hexdigest()
+
+    try:
+        resp = ANNABET_SESSION.post(
+            ANNABET_LOGIN_URL,
+            data={
+                "action": "checkLogin",
+                "username": ANNABET_USERNAME,
+                "password": password_hash,
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        result = resp.json()
+
+        # A successful login response includes a redirect target page;
+        # errors come back with a different shape (no "page" key).
+        if result.get("page"):
+            _ANNABET_LOGGED_IN = True
+            print("AnnaBet login succeeded")
+            return True
+
+        print(f"AnnaBet login failed — unexpected response: {result}")
+        return False
+
+    except Exception as e:
+        print(f"AnnaBet login failed: {e}")
+        return False
+
+
+# Attempt login once at startup so every request in this process is
+# authenticated from the first fixture/stats/odds call onward.
+annabet_login()
 
 ANNABET_TABLE_HEADER = [
     "#", "Team", "GP", "W", "T", "L", "GF", "GA", "Diff",
@@ -1833,6 +1903,19 @@ def debug_annabet_odds(
 def health():
     return {
         "status": "ok"
+    }
+
+
+@app.get("/debug_annabet_login")
+def debug_annabet_login():
+    """
+    Temporary testing endpoint — confirms whether the AnnaBet session
+    is currently authenticated, without exposing any cookie/session
+    values. REMOVE once confirmed working.
+    """
+    return {
+        "logged_in": _ANNABET_LOGGED_IN,
+        "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
     }
 
 
