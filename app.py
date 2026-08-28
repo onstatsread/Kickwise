@@ -231,12 +231,33 @@ def fetch_all_upcoming_annabet():
 
         day, month, hour, minute = dt_match.groups()
 
+        # Pull H/D/A odds from THIS SAME validated row only — this row
+        # already passed strict checks (date/time pattern, league link,
+        # h2h team link), unlike a blind whole-page text search, which
+        # was previously matching unrelated content elsewhere on the
+        # page (e.g. a hidden team-search index) and returning bogus
+        # numbers shared across unrelated fixtures.
+        odds_numbers = []
+        for cell in cells:
+            text = cell.get_text(" ", strip=True)
+            for raw in re.findall(r"\b\d+(?:\.\d+)\b", text):
+                n = _annabet_float(raw)
+                if n is not None:
+                    odds_numbers.append(n)
+
+        home_odds = draw_odds = away_odds = None
+        if len(odds_numbers) >= 3:
+            home_odds, draw_odds, away_odds = odds_numbers[-3:]
+
         by_league.setdefault(code, []).append({
             "date": f"{day}.{month}.",
             "time": f"{hour}:{minute}",
             "home": home.strip(),
             "away": away.strip(),
             "h2h_url": _absolute_annabet_url(team_link.get("href")),
+            "home_odds": home_odds,
+            "draw_odds": draw_odds,
+            "away_odds": away_odds,
         })
 
     _ANNABET_FIXTURES_CACHE["_all"] = (time.time(), by_league)
@@ -452,13 +473,19 @@ def _team_names_match(a, b):
 
 def _extract_fixture_h2h_and_hda(home, away):
     """
-    Finds the fixture on AnnaBet /upcoming/ and extracts:
-      - H/D/A odds
-      - H2H URL
+    Finds the fixture's H/D/A odds and H2H URL by looking it up in the
+    already-validated fixtures list from fetch_all_upcoming_annabet()
+    (same data /fixtures uses), rather than re-scanning the whole
+    /upcoming/ page with a loose substring search.
 
-    The H/D/A odds are read from the fixture row. We use the
-    last three sensible decimal odds in that row because AnnaBet's
-    upcoming fixture rows place the market odds after the fixture.
+    The earlier version scanned every <tr> on the page for one
+    containing both team names anywhere in its text — which could
+    (and did) match unrelated content elsewhere on the page, such as
+    a hidden team-search index, returning bogus odds shared across
+    completely unrelated fixtures. Reusing the fixtures list avoids
+    this because each entry there already passed strict checks
+    (a real date/time pattern, a league link, and an h2h.php team
+    link) before being accepted.
     """
 
     cached = _ANNABET_ODDS_CACHE.get(("fixture", _norm_team(home), _norm_team(away)))
@@ -467,61 +494,38 @@ def _extract_fixture_h2h_and_hda(home, away):
         return cached[1]
 
     try:
-        resp = ANNABET_SESSION.get(
-            ANNABET_UPCOMING_URL,
-            timeout=30
-        )
-        resp.raise_for_status()
+        by_league = fetch_all_upcoming_annabet()
     except Exception as e:
         print(f"AnnaBet upcoming odds fetch failed: {e}")
         return None
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    target_home = _norm_team(home)
+    target_away = _norm_team(away)
 
-    for row in soup.find_all("tr"):
-        row_text = row.get_text(" ", strip=True)
-        normalized = _norm_team(row_text)
+    for fixtures in by_league.values():
+        for fx in fixtures:
+            if _norm_team(fx["home"]) != target_home:
+                continue
+            if _norm_team(fx["away"]) != target_away:
+                continue
 
-        if _norm_team(home) not in normalized:
-            continue
+            if fx.get("home_odds") is None:
+                # Matched the right fixture, but this row didn't have
+                # parseable odds (e.g. not yet priced by bookmakers).
+                return None
 
-        if _norm_team(away) not in normalized:
-            continue
+            result = {
+                "home_odds": fx["home_odds"],
+                "draw_odds": fx["draw_odds"],
+                "away_odds": fx["away_odds"],
+                "h2h_url": fx["h2h_url"],
+            }
 
-        h2h_url = None
+            _ANNABET_ODDS_CACHE[
+                ("fixture", target_home, target_away)
+            ] = (time.time(), result)
 
-        for a in row.find_all("a", href=True):
-            if "h2h.php" in a["href"]:
-                h2h_url = _absolute_annabet_url(a["href"])
-                break
-
-        numbers = []
-
-        for cell in row.find_all("td"):
-            text = cell.get_text(" ", strip=True)
-
-            for raw in re.findall(r"\b\d+(?:\.\d+)\b", text):
-                n = _annabet_float(raw)
-                if n is not None:
-                    numbers.append(n)
-
-        if len(numbers) < 3:
-            continue
-
-        h, d, a = numbers[-3:]
-
-        result = {
-            "home_odds": h,
-            "draw_odds": d,
-            "away_odds": a,
-            "h2h_url": h2h_url,
-        }
-
-        _ANNABET_ODDS_CACHE[
-            ("fixture", _norm_team(home), _norm_team(away))
-        ] = (time.time(), result)
-
-        return result
+            return result
 
     return None
 
