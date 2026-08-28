@@ -169,6 +169,47 @@ TIME_RE = re.compile(r"\b([01]?\d|2[0-3]):([0-5]\d)\b")
 DAY_RE = re.compile(r"^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*")
 
 
+def _annabet_looks_logged_out(html):
+    """
+    Detects whether a fetched AnnaBet page is actually the anonymous
+    (logged-out) version — e.g. session cookie expired mid-run — even
+    though ANNABET_SESSION was successfully authenticated at startup.
+    Anonymous pages show a "please register / log in" prompt and
+    never show a logout link; authenticated pages never show the
+    former and always show the latter.
+    """
+    lower = html.lower()
+
+    return (
+        "please register" in lower
+        or "register or log in" in lower
+    ) and "logout" not in lower
+
+
+def annabet_get(url, **kwargs):
+    """
+    Wrapper around ANNABET_SESSION.get() that detects a mid-run
+    session expiry (AnnaBet's login cookie timing out) and
+    re-authenticates once before retrying — without this, a run
+    that starts logged-in could silently degrade back to anonymous
+    scraping partway through (missing bookmaker odds again) with no
+    error, exactly like the original problem this login was added
+    to fix.
+    """
+    global _ANNABET_LOGGED_IN
+
+    resp = ANNABET_SESSION.get(url, **kwargs)
+
+    if ANNABET_USERNAME and ANNABET_PASSWORD and _annabet_looks_logged_out(resp.text):
+        print("AnnaBet session appears expired — re-authenticating")
+        _ANNABET_LOGGED_IN = False
+
+        if annabet_login():
+            resp = ANNABET_SESSION.get(url, **kwargs)
+
+    return resp
+
+
 # ============================================================
 # ANNABET FIXTURES
 # ============================================================
@@ -178,7 +219,7 @@ def fetch_all_upcoming_annabet():
     if cached and time.time() - cached[0] < ANNABET_FIXTURES_CACHE_TTL:
         return cached[1]
 
-    resp = ANNABET_SESSION.get(ANNABET_UPCOMING_URL, timeout=30)
+    resp = annabet_get(ANNABET_UPCOMING_URL, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -566,7 +607,7 @@ def _extract_annabet_ou25(h2h_url):
         return cached[1]
 
     try:
-        resp = ANNABET_SESSION.get(
+        resp = annabet_get(
             h2h_url,
             timeout=30
         )
@@ -1856,38 +1897,6 @@ def fixtures_endpoint(
     }
 
 
-@app.get("/debug_annabet_odds")
-def debug_annabet_odds(
-    home: str = Query(...),
-    away: str = Query(...)
-):
-    """
-    Temporary testing endpoint.
-
-    Example:
-    /debug_annabet_odds?home=TPS&away=VPS
-    """
-
-    try:
-        result = get_annabet_market_odds(
-            home,
-            away
-        )
-
-        return {
-            "home": home,
-            "away": away,
-            "result": result
-        }
-
-    except Exception as e:
-        return {
-            "home": home,
-            "away": away,
-            "error": str(e)
-        }
-
-
 @app.get("/health")
 def health():
     return {
@@ -1898,121 +1907,12 @@ def health():
 @app.get("/debug_annabet_login")
 def debug_annabet_login():
     """
-    Temporary testing endpoint — confirms whether the AnnaBet session
-    is currently authenticated, without exposing any cookie/session
-    values. REMOVE once confirmed working.
+    Confirms whether the AnnaBet session is currently authenticated,
+    without exposing any cookie/session values.
     """
     return {
         "logged_in": _ANNABET_LOGGED_IN,
         "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
-    }
-
-
-@app.get("/debug_annabet_hda_raw")
-def debug_annabet_hda_raw(home: str = Query(...), away: str = Query(...)):
-    """
-    Temporary diagnostic — repeats the exact row-matching logic
-    _extract_fixture_h2h_and_hda() uses on the /upcoming/ page, but
-    returns the matched row's full text and every number it found,
-    so we can see WHY it picked the H/D/A odds it did (e.g. matched
-    the wrong row, or picked up unrelated numbers from the same row).
-    REMOVE once the duplicate-odds bug is resolved.
-    """
-    try:
-        resp = ANNABET_SESSION.get(ANNABET_UPCOMING_URL, timeout=30)
-        resp.raise_for_status()
-    except Exception as e:
-        return {"error": str(e)}
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-
-    matches_found = []
-
-    for row in soup.find_all("tr"):
-        row_text = row.get_text(" ", strip=True)
-        normalized = _norm_team(row_text)
-
-        if _norm_team(home) not in normalized:
-            continue
-        if _norm_team(away) not in normalized:
-            continue
-
-        numbers = []
-        for cell in row.find_all("td"):
-            text = cell.get_text(" ", strip=True)
-            for raw in re.findall(r"\b\d+(?:\.\d+)\b", text):
-                n = _annabet_float(raw)
-                if n is not None:
-                    numbers.append(n)
-
-        h2h_url = None
-        for a in row.find_all("a", href=True):
-            if "h2h.php" in a["href"]:
-                h2h_url = _absolute_annabet_url(a["href"])
-                break
-
-        matches_found.append({
-            "row_text": row_text,
-            "numbers_found": numbers,
-            "h2h_url": h2h_url,
-        })
-
-    return {
-        "home": home,
-        "away": away,
-        "matching_rows_count": len(matches_found),
-        "matches": matches_found,
-    }
-
-
-@app.get("/debug_annabet_h2h_raw")
-def debug_annabet_h2h_raw(home: str = Query(...), away: str = Query(...)):
-    """
-    Temporary diagnostic — fetches the real H2H page for a fixture
-    using the (hopefully authenticated) ANNABET_SESSION, and reports
-    whether it looks logged-in or not, plus which bookmaker names
-    (if any) show up in the page. Does NOT expose cookie values.
-    REMOVE once the login/odds issue is resolved.
-    """
-    fixture = _extract_fixture_h2h_and_hda(home, away)
-
-    if not fixture or not fixture.get("h2h_url"):
-        return {"error": "fixture or h2h_url not found", "fixture": fixture}
-
-    h2h_url = fixture["h2h_url"]
-
-    try:
-        resp = ANNABET_SESSION.get(h2h_url, timeout=30)
-        resp.raise_for_status()
-        html = resp.text
-    except Exception as e:
-        return {"error": str(e), "h2h_url": h2h_url}
-
-    cookie_names = [c.name for c in ANNABET_SESSION.cookies]
-
-    markers = {
-        "contains_register_or_login_prompt": (
-            "register or log in" in html.lower()
-            or "please register" in html.lower()
-        ),
-        "contains_logout_link": "logout" in html.lower(),
-        "contains_username_anuel20": "anuel20" in html.lower(),
-        "contains_pinnacle": "pinnacle" in html.lower(),
-        "contains_veikkaus": "veikkaus" in html.lower(),
-        "contains_starting_odds_label": "starting odds" in html.lower(),
-    }
-
-    # Grab a small snippet around "Total Goals Under-Over" to eyeball
-    # what table the extractor is actually looking at.
-    idx = html.lower().find("total goals under-over")
-    snippet = html[max(0, idx - 200): idx + 800] if idx != -1 else None
-
-    return {
-        "h2h_url": h2h_url,
-        "session_cookie_names": cookie_names,
-        "html_length": len(html),
-        "markers": markers,
-        "snippet_near_total_goals_table": snippet,
     }
 
 
