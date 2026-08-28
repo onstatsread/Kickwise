@@ -1904,6 +1904,63 @@ def debug_annabet_login():
     }
 
 
+@app.get("/debug_annabet_hda_raw")
+def debug_annabet_hda_raw(home: str = Query(...), away: str = Query(...)):
+    """
+    Temporary diagnostic — repeats the exact row-matching logic
+    _extract_fixture_h2h_and_hda() uses on the /upcoming/ page, but
+    returns the matched row's full text and every number it found,
+    so we can see WHY it picked the H/D/A odds it did (e.g. matched
+    the wrong row, or picked up unrelated numbers from the same row).
+    REMOVE once the duplicate-odds bug is resolved.
+    """
+    try:
+        resp = ANNABET_SESSION.get(ANNABET_UPCOMING_URL, timeout=30)
+        resp.raise_for_status()
+    except Exception as e:
+        return {"error": str(e)}
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    matches_found = []
+
+    for row in soup.find_all("tr"):
+        row_text = row.get_text(" ", strip=True)
+        normalized = _norm_team(row_text)
+
+        if _norm_team(home) not in normalized:
+            continue
+        if _norm_team(away) not in normalized:
+            continue
+
+        numbers = []
+        for cell in row.find_all("td"):
+            text = cell.get_text(" ", strip=True)
+            for raw in re.findall(r"\b\d+(?:\.\d+)\b", text):
+                n = _annabet_float(raw)
+                if n is not None:
+                    numbers.append(n)
+
+        h2h_url = None
+        for a in row.find_all("a", href=True):
+            if "h2h.php" in a["href"]:
+                h2h_url = _absolute_annabet_url(a["href"])
+                break
+
+        matches_found.append({
+            "row_text": row_text,
+            "numbers_found": numbers,
+            "h2h_url": h2h_url,
+        })
+
+    return {
+        "home": home,
+        "away": away,
+        "matching_rows_count": len(matches_found),
+        "matches": matches_found,
+    }
+
+
 @app.get("/debug_annabet_h2h_raw")
 def debug_annabet_h2h_raw(home: str = Query(...), away: str = Query(...)):
     """
