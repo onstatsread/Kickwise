@@ -1918,79 +1918,50 @@ def debug_annabet_login():
     }
 
 
-def _find_gp_column(headers):
-    """Locate the GP column by header name (GP / Games Played / etc)."""
-    normalized = [" ".join(h.split()).strip().lower() for h in headers]
-
-    for i, h in enumerate(normalized):
-        if h in ("gp", "games played", "games-played"):
-            return i
-
-    for i, h in enumerate(normalized):
-        if h in ("games", "played"):
-            return i
-
-    return None
-
-
 def _extract_team_gp_for_check(html):
     """
-    Same logic as the standalone check_annabet_gp.py script's
-    extract_team_gp(), reused here so the batch GP-check endpoint can
-    run through Render's already-authenticated, already-reliable
-    ANNABET_SESSION instead of GitHub Actions (whose shared runner IP
-    range appears to be blocked by AnnaBet's firewall entirely).
+    Extract team names and GP from the ONE genuine season-standings
+    table on the page — identified by an EXACT match against AnnaBet's
+    known 14-column header (same ANNABET_TABLE_HEADER constant used
+    by fetch_stats_annabet() elsewhere in this file).
+
+    An earlier version matched any table containing a column merely
+    named "GP" — but AnnaBet's page has several such tables (home-only
+    splits, away-only splits, prior-season history, last-N-games form,
+    etc.), so it concatenated rows from all of them together, producing
+    impossible results (400+ "teams", the same team appearing multiple
+    times with different GP values). Requiring the exact header and
+    using only the FIRST match (consistently the "All Games" standings
+    table) fixes this.
     """
     soup = BeautifulSoup(html, "html.parser")
-
-    all_teams = []
-    gp_column_found = None
 
     for table in soup.find_all("table"):
         rows = table.find_all("tr")
         if not rows:
             continue
 
-        header_row = None
-        gp_index = None
+        header_cells = [
+            c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])
+        ]
 
-        for row in rows[:5]:
-            ths = row.find_all(["th", "td"])
-            if not ths:
-                continue
-
-            row_headers = [
-                " ".join(x.get_text(" ", strip=True).split())
-                for x in ths
-            ]
-
-            idx = _find_gp_column(row_headers)
-
-            if idx is not None:
-                header_row = row
-                gp_index = idx
-                break
-
-        if header_row is None:
+        if header_cells != ANNABET_TABLE_HEADER:
             continue
 
-        gp_column_found = gp_index
-        header_index = rows.index(header_row)
+        # GP is always column index 2 in this exact header layout.
+        gp_column_found = 2
+        all_teams = []
 
-        for row in rows[header_index + 1:]:
-            cells = row.find_all("td")
-            if not cells:
-                continue
-
-            texts = [
+        for row in rows[1:]:
+            cells = [
                 " ".join(c.get_text(" ", strip=True).split())
-                for c in cells
+                for c in row.find_all("td")
             ]
 
-            if len(texts) <= gp_index:
+            if len(cells) <= gp_column_found:
                 continue
 
-            gp_text = texts[gp_index]
+            gp_text = cells[gp_column_found]
             if not gp_text.isdigit():
                 continue
 
@@ -1998,7 +1969,7 @@ def _extract_team_gp_for_check(html):
             if gp < 0 or gp > 100:
                 continue
 
-            team_name = texts[1] if len(texts) > 1 else texts[0]
+            team_name = cells[1] if len(cells) > 1 else cells[0]
 
             bad_names = {
                 "total", "average", "home", "away",
@@ -2009,7 +1980,11 @@ def _extract_team_gp_for_check(html):
 
             all_teams.append({"team": team_name, "gp": gp})
 
-    return all_teams, gp_column_found
+        # Only use the FIRST matching table (the "All Games" standings
+        # table) — later matches are the home-only/away-only splits.
+        return all_teams, gp_column_found
+
+    return [], None
 
 
 @app.get("/check_leagues_gp")
