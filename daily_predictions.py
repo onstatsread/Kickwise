@@ -515,23 +515,31 @@ def meets_blog2_standard(pred):
     return True
 
 
-# NEW — "Double chance" signal. Independent of the blog 2 standard above —
-# this is checked across ALL matches (not just blog2-qualifying ones) and
-# only ever sends a SEPARATE, second Telegram notification. It never posts
-# to either blog. A match qualifies only if:
-#   1. home_v < -40 OR away_v < -40 (whichever side, not both — if both
-#      qualify at once it's too ambiguous and the match is skipped)
-#   2. The qualifying side's |value| is bigger than |draw_v|
-# Returns "Home win or draw", "Away win or draw", or None (no signal).
 # NEW — "Double chance" side check. Independent of the blog 2 standard —
 # this is checked across ALL matches (not just blog2-qualifying ones).
 # Only detects WHICH side qualifies ("home"/"away"/None) — the final
 # label (handicap vs win-or-draw) is computed separately by
 # refine_double_chance_signal() below.
-#   1. home_v < -40 OR away_v < -40 (whichever side, not both — if both
+#   1. NEW — model odds guard: if ANY of home/draw/away MODEL odds
+#      (pred["odds"] / pred["oddsr"]) is above 24.00, the match is
+#      rejected outright, before conditions 2-3 are even checked.
+#      Extreme model odds like this signal an unreliable edge case
+#      rather than a genuine value opportunity. A missing model odd
+#      (None) does not fail this guard — it just means that odds
+#      source wasn't populated, not that it's extreme.
+#   2. home_v < -40 OR away_v < -40 (whichever side, not both — if both
 #      qualify at once it's too ambiguous and the match is skipped)
-#   2. The qualifying side's |value| is bigger than |draw_v|
+#   3. The qualifying side's |value| is bigger than |draw_v|
 def check_double_chance_signal(pred):
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    model_odds_to_check = [
+        model_odds.get("home_odds"),
+        model_odds.get("draw_odds"),
+        model_odds.get("away_odds"),
+    ]
+    if any(o is not None and o > 24.00 for o in model_odds_to_check):
+        return None
+
     value_pct = pred.get("value_pct") or {}
     home_v = value_pct.get("home")
     away_v = value_pct.get("away")
