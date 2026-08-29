@@ -15,6 +15,8 @@ from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 from concurrent.futures import ThreadPoolExecutor
 
+from annabet_leagues import ANNABET_LEAGUE_IDS
+
 # Existing fallbacks. AnnaBet is now the PRIMARY odds source.
 from odds import get_odds_for_card, get_ou25_for_card, router as odds_router
 from api_football import get_fallback_odds
@@ -1913,6 +1915,181 @@ def debug_annabet_login():
     return {
         "logged_in": _ANNABET_LOGGED_IN,
         "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
+    }
+
+
+def _find_gp_column(headers):
+    """Locate the GP column by header name (GP / Games Played / etc)."""
+    normalized = [" ".join(h.split()).strip().lower() for h in headers]
+
+    for i, h in enumerate(normalized):
+        if h in ("gp", "games played", "games-played"):
+            return i
+
+    for i, h in enumerate(normalized):
+        if h in ("games", "played"):
+            return i
+
+    return None
+
+
+def _extract_team_gp_for_check(html):
+    """
+    Same logic as the standalone check_annabet_gp.py script's
+    extract_team_gp(), reused here so the batch GP-check endpoint can
+    run through Render's already-authenticated, already-reliable
+    ANNABET_SESSION instead of GitHub Actions (whose shared runner IP
+    range appears to be blocked by AnnaBet's firewall entirely).
+    """
+    soup = BeautifulSoup(html, "html.parser")
+
+    all_teams = []
+    gp_column_found = None
+
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+        if not rows:
+            continue
+
+        header_row = None
+        gp_index = None
+
+        for row in rows[:5]:
+            ths = row.find_all(["th", "td"])
+            if not ths:
+                continue
+
+            row_headers = [
+                " ".join(x.get_text(" ", strip=True).split())
+                for x in ths
+            ]
+
+            idx = _find_gp_column(row_headers)
+
+            if idx is not None:
+                header_row = row
+                gp_index = idx
+                break
+
+        if header_row is None:
+            continue
+
+        gp_column_found = gp_index
+        header_index = rows.index(header_row)
+
+        for row in rows[header_index + 1:]:
+            cells = row.find_all("td")
+            if not cells:
+                continue
+
+            texts = [
+                " ".join(c.get_text(" ", strip=True).split())
+                for c in cells
+            ]
+
+            if len(texts) <= gp_index:
+                continue
+
+            gp_text = texts[gp_index]
+            if not gp_text.isdigit():
+                continue
+
+            gp = int(gp_text)
+            if gp < 0 or gp > 100:
+                continue
+
+            team_name = texts[1] if len(texts) > 1 else texts[0]
+
+            bad_names = {
+                "total", "average", "home", "away",
+                "all games", "team", "league average",
+            }
+            if team_name.lower() in bad_names or len(team_name) < 2:
+                continue
+
+            all_teams.append({"team": team_name, "gp": gp})
+
+    return all_teams, gp_column_found
+
+
+@app.get("/check_leagues_gp")
+def check_leagues_gp(
+    start: int = Query(0),
+    end: int = Query(20),
+    delay: float = Query(2.0),
+):
+    """
+    Temporary batch GP-checker — runs through Render's already
+    authenticated ANNABET_SESSION (proven reliable all day) instead
+    of GitHub Actions, whose shared runner IP range appears to be
+    fully blocked by AnnaBet's firewall (every request failed at the
+    TCP-connect level from the very first league, even on a fresh
+    workflow run).
+
+    Query params:
+        start — league index to start at (0-indexed, inclusive)
+        end   — league index to stop before (exclusive)
+        delay — seconds to pause between leagues (default 2.0;
+                Render's IP hasn't shown signs of being rate-limited,
+                so this can stay much shorter than the 20s used in
+                the GitHub Actions version)
+
+    Example: /check_leagues_gp?start=0&end=20
+    REMOVE once the 162-league GP audit is complete.
+    """
+    all_leagues = list(ANNABET_LEAGUE_IDS.items())
+    slice_leagues = all_leagues[start:end]
+
+    results = []
+
+    for name, serie_id in slice_leagues:
+        url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
+
+        try:
+            resp = annabet_get(url, timeout=20)
+            resp.raise_for_status()
+
+            teams, gp_col = _extract_team_gp_for_check(resp.text)
+
+            if not teams:
+                results.append({
+                    "name": name,
+                    "serie_id": serie_id,
+                    "status": "no_data",
+                })
+            else:
+                gps = [t["gp"] for t in teams]
+                results.append({
+                    "name": name,
+                    "serie_id": serie_id,
+                    "status": "ok",
+                    "team_count": len(teams),
+                    "min_gp": min(gps),
+                    "max_gp": max(gps),
+                    "average_gp": round(statistics.mean(gps), 2),
+                    "balanced": len(set(gps)) == 1,
+                })
+
+        except Exception as e:
+            results.append({
+                "name": name,
+                "serie_id": serie_id,
+                "status": "error",
+                "error": str(e),
+            })
+
+        time.sleep(delay)
+
+    qualifying = [
+        r["name"] for r in results
+        if r.get("status") == "ok" and r.get("max_gp", 0) >= 10
+    ]
+
+    return {
+        "range_checked": f"{start}-{end - 1}",
+        "total_leagues": len(all_leagues),
+        "results": results,
+        "qualifying_leagues_gp_10_plus": qualifying,
     }
 
 
