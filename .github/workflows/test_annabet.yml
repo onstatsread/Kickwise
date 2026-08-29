@@ -31,4 +31,4 @@ jobs:
         env:
           BATCH_START: ${{ github.event.inputs.batch_start }}
           BATCH_END: ${{ github.event.inputs.batch_end }}
-        run: python check_annabet_gp_test10.py
+        run: python check_annabet_gp.py
