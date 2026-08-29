@@ -76,50 +76,39 @@ def clean_text(text):
     return " ".join(text.split()).strip()
 
 
-def find_gp_column(headers):
-    """
-    Find the GP column from table headers.
+ANNABET_TABLE_HEADER = [
+    "#", "Team", "GP", "W", "T", "L", "GF", "GA", "Diff",
+    "Pts", "Pts/G", "W%", "ØGF", "ØGA"
+]
 
-    Accepts:
-        GP
-        Games Played
-        Games
-        P
-        Pl
 
-    GP is preferred because it is the most explicit.
-    """
-
-    normalized = []
-
-    for h in headers:
-        h = clean_text(h).lower()
-        normalized.append(h)
-
-    # Strongest match first
-    for i, h in enumerate(normalized):
-        if h in ("gp", "games played", "games-played"):
-            return i
-
-    # Possible alternatives
-    for i, h in enumerate(normalized):
-        if h in ("games", "played"):
-            return i
-
-    return None
+def _get_exact_header(table):
+    """Returns this table's header row cells, or None if it has no rows."""
+    rows = table.find_all("tr")
+    if not rows:
+        return None
+    return [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
 
 
 def extract_team_gp(html):
     """
-    Extract team names and their actual GP from tables.
+    Extract team names and GP from the ONE genuine season-standings
+    table on the page — identified by an EXACT match against AnnaBet's
+    known 14-column header (ANNABET_TABLE_HEADER), same as app.py's
+    fetch_stats_annabet() uses.
+
+    The earlier version of this function matched any table containing
+    a column merely named "GP" — but AnnaBet's page has several such
+    tables (home-only splits, away-only splits, prior-season history,
+    last-N-games form, etc.), so it was concatenating rows from all of
+    them together, producing impossible results (400+ "teams", the
+    same team appearing multiple times with different GP values).
+    Requiring the exact header and using only the FIRST match (which
+    is consistently the "All Games" standings table) fixes this.
 
     Returns:
-
     {
-        "teams": [
-            {"team": "...", "gp": 23},
-            ...
-        ],
+        "teams": [{"team": "...", "gp": 23}, ...],
         "table_found": True/False,
         "gp_column": index,
         "headers": [...]
@@ -128,130 +117,58 @@ def extract_team_gp(html):
 
     soup = BeautifulSoup(html, "html.parser")
 
-    all_teams = []
-    found_table = False
-    gp_column_found = None
-    selected_headers = []
-
     for table in soup.find_all("table"):
-
-        rows = table.find_all("tr")
-
-        if not rows:
+        if _get_exact_header(table) != ANNABET_TABLE_HEADER:
             continue
 
-        # -------------------------------------------------
-        # FIND HEADER ROW
-        # -------------------------------------------------
+        # Found the real standings table — GP is always column index 2
+        # in this exact header layout.
+        gp_column_found = 2
+        all_teams = []
 
-        header_row = None
-        headers = []
-
-        for row in rows[:5]:
-
-            ths = row.find_all(["th", "td"])
-
-            if not ths:
-                continue
-
-            row_headers = [
-                clean_text(x.get_text(" ", strip=True))
-                for x in ths
+        for row in table.find_all("tr")[1:]:
+            cells = [
+                clean_text(c.get_text(" ", strip=True))
+                for c in row.find_all("td")
             ]
 
-            gp_index = find_gp_column(row_headers)
-
-            if gp_index is not None:
-                header_row = row
-                headers = row_headers
-                gp_column_found = gp_index
-                selected_headers = headers
-                found_table = True
-                break
-
-        if header_row is None:
-            continue
-
-        # -------------------------------------------------
-        # EXTRACT DATA ROWS
-        # -------------------------------------------------
-
-        header_index = rows.index(header_row)
-
-        for row in rows[header_index + 1:]:
-
-            cells = row.find_all("td")
-
-            if not cells:
+            if len(cells) <= gp_column_found:
                 continue
 
-            texts = [
-                clean_text(cell.get_text(" ", strip=True))
-                for cell in cells
-            ]
-
-            # Need enough cells to reach GP column
-            if len(texts) <= gp_column_found:
-                continue
-
-            gp_text = texts[gp_column_found]
-
-            # GP must be an integer
+            gp_text = cells[gp_column_found]
             if not gp_text.isdigit():
                 continue
 
             gp = int(gp_text)
-
-            # Sanity check
             if gp < 0 or gp > 100:
                 continue
 
-            # -------------------------------------------------
-            # TEAM NAME
-            # -------------------------------------------------
+            team_name = cells[1] if len(cells) > 1 else cells[0]
 
-            # Usually team is column 1 because:
-            # column 0 = rank
-            # column 1 = team
-            #
-            # But be defensive.
-
-            team_name = ""
-
-            if len(texts) > 1:
-                team_name = texts[1]
-
-            if not team_name:
-                team_name = texts[0]
-
-            # Ignore obvious footer/summary rows
             bad_names = {
-                "total",
-                "average",
-                "home",
-                "away",
-                "all games",
-                "team",
-                "league average",
+                "total", "average", "home", "away",
+                "all games", "team", "league average",
             }
-
-            if team_name.lower() in bad_names:
+            if team_name.lower() in bad_names or len(team_name) < 2:
                 continue
 
-            # Ignore rows that are clearly not teams
-            if len(team_name) < 2:
-                continue
+            all_teams.append({"team": team_name, "gp": gp})
 
-            all_teams.append({
-                "team": team_name,
-                "gp": gp
-            })
+        # Only use the FIRST matching table — this is the "All Games"
+        # standings table; subsequent matches (if any) are the
+        # home-only/away-only split tables that follow it on the page.
+        return {
+            "teams": all_teams,
+            "table_found": True,
+            "gp_column": gp_column_found,
+            "headers": ANNABET_TABLE_HEADER,
+        }
 
     return {
-        "teams": all_teams,
-        "table_found": found_table,
-        "gp_column": gp_column_found,
-        "headers": selected_headers,
+        "teams": [],
+        "table_found": False,
+        "gp_column": None,
+        "headers": [],
     }
 
 
