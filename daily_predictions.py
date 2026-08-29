@@ -15,41 +15,22 @@ CLIENT_ID   = os.environ["GOOGLE_CLIENT_ID"]
 CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
 
-# NEW — second blog, different Google account, filtered "standard" subset
-# of matches only (not a different league list — same 34 leagues checked
-# once, filtered per-match for this blog). All four vars must be set for
-# blog 2 to run; if any are missing, blog 2 is silently skipped so this
-# doesn't break the main blog if not configured yet.
 BLOG_ID_2       = os.environ.get("BLOG_ID_2")
 CLIENT_ID_2     = os.environ.get("GOOGLE_CLIENT_ID_2")
 CLIENT_SECRET_2 = os.environ.get("GOOGLE_CLIENT_SECRET_2")
 REFRESH_TOKEN_2 = os.environ.get("GOOGLE_REFRESH_TOKEN_2")
 BLOG2_ENABLED = all([BLOG_ID_2, CLIENT_ID_2, CLIENT_SECRET_2, REFRESH_TOKEN_2])
 
-# NEW — WhatsApp notification via CallMeBot (free) when blog 2 posts
-# successfully. Requires a one-time opt-in: save +34 644 51 71 41 as a
-# contact, WhatsApp it "I allow callmebot to send me messages", then use
-# the API key it replies with. Silently skipped if not configured.
-# NEW — Telegram notification when blog 2 posts successfully. Switched
-# from CallMeBot (WhatsApp) after it never delivered the opt-in reply —
-# Telegram's official Bot API is free and far more reliable since it's
-# run by Telegram itself, not a third-party community service.
-# Requires a one-time setup: create a bot via @BotFather, message it
-# once, then get the token + chat ID. Silently skipped if not configured.
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID")
 TELEGRAM_ENABLED = all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID])
 
 
 TELEGRAM_MAX_LEN = 4096
-_TELEGRAM_SPLIT_BUFFER = 60  # room reserved for the "(part X/Y)" label added to each chunk
+_TELEGRAM_SPLIT_BUFFER = 60
 
 
 def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_BUFFER):
-    """Splits `message` into chunks under `max_len`, breaking on blank-line
-    boundaries (paragraph/card breaks) so a single match card is never cut
-    across two messages. Falls back to a hard character split only if one
-    paragraph on its own still exceeds max_len."""
     if len(message) <= max_len:
         return [message]
 
@@ -66,7 +47,6 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
             if len(p) <= max_len:
                 current = p
             else:
-                # a single paragraph itself exceeds the limit — hard split it
                 for i in range(0, len(p), max_len):
                     chunks.append(p[i:i + max_len])
                 current = ""
@@ -76,12 +56,6 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 
 
 def send_telegram_notification(message):
-    """Sends a message via Telegram Bot API. Fails silently (prints a
-    warning) — a notification failure should never crash the actual
-    blog-posting run. If `message` exceeds Telegram's 4096-character
-    limit, it's split into multiple messages along card/paragraph
-    boundaries (see _split_telegram_message) and sent as consecutive
-    messages labeled "(part X/Y)"."""
     if not TELEGRAM_ENABLED:
         return
 
@@ -98,19 +72,6 @@ def send_telegram_notification(message):
         except Exception as e:
             print(f"⚠️ Telegram notification failed (part {i}/{total}): {e}")
 
-# All league codes to check
-# Trimmed from ~114 to 41 leagues (Aug 2026) — dropped every league on an
-# Aug-May calendar since those seasons just started (0-2 games played,
-# model returns N/A regardless of league quality). Kept leagues on
-# Mar-Nov or Southern Hemisphere calendars, genuinely mid-season right
-# now. Revisit this list as European seasons progress through the year —
-# leagues dropped here aren't bad, just too early right now.
-#
-# Further trimmed from 41 to 33 (Aug 2026) — dropped the 6 Australia NPL
-# state leagues and Brazil Serie C after switching fully to AnnaBet as
-# the data source (no more ScraperAPI/SoccerStats fallback). AnnaBet
-# doesn't have a mapped equivalent for these 7 leagues, so they'd return
-# nothing now. Re-add if/when an AnnaBet mapping is found for them.
 LEAGUE_CODES = {
     "Belarus - Vysshaya Liga": "belarus",
     "Brazil - Serie A": "brazil",
@@ -149,9 +110,6 @@ LEAGUE_CODES = {
 }
 
 def get_access_token(client_id=None, client_secret=None, refresh_token=None):
-    """Parameterized so it works for either blog's Google account — defaults
-    to blog 1's credentials if called with no arguments (existing behavior
-    unchanged for the main blog)."""
     resp = requests.post("https://oauth2.googleapis.com/token", data={
         "client_id": client_id or CLIENT_ID,
         "client_secret": client_secret or CLIENT_SECRET,
@@ -162,12 +120,6 @@ def get_access_token(client_id=None, client_secret=None, refresh_token=None):
 
 def get_fixtures(league_code, date_str):
     try:
-        # timeout raised from 15 to 90 — /fixtures now calls ScraperAPI
-        # with render=true internally, which can take 30-60+ seconds to
-        # solve SoccerStats' Cloudflare challenge. The old 15s timeout was
-        # silently killing every single one of these calls (bare except
-        # below swallowed it with no log line), which is why every league
-        # came back with zero fixtures despite the backend working fine.
         r = requests.get(f"{BACKEND_URL}/fixtures",
                         params={"league": league_code, "date": date_str},
                         timeout=90)
@@ -178,19 +130,12 @@ def get_fixtures(league_code, date_str):
         return []
 
 def get_prediction(league_code, home, away, retries=2):
-    """
-    Calls /predict, retrying on failure before giving up. Returns None
-    only after all attempts fail — the caller logs this distinctly from
-    a genuine N/A prediction, so failed matches aren't silently confused
-    with matches that legitimately have no prediction.
-    """
     last_error = None
     for attempt in range(1, retries + 1):
         try:
             r = requests.get(f"{BACKEND_URL}/predict",
                             params={"league": league_code, "home": home, "away": away},
-                            timeout=180)  # raised from 120 — /predict now also does
-                                          # market odds + fallback lookups per call
+                            timeout=180)
             r.raise_for_status()
             return r.json()
         except Exception as e:
@@ -201,10 +146,6 @@ def get_prediction(league_code, home, away, retries=2):
     return None
 
 def build_pred2_text(pred):
-    """Builds the Prediction 2 string from a /predict response. Used by
-    format_match_html() to display Prediction 2 on the card. (No longer
-    used by the blog 2 filter — meets_blog2_standard() now checks odds,
-    O/U result, and Prediction 3 instead.)"""
     o73 = (pred.get("o73") or pred.get("o73r") or "").strip()
     d69n = (pred.get("d70") or "").lower()
     d70n = (pred.get("d70val") or "").lower()
@@ -261,7 +202,6 @@ def format_match_html(league_name, match, pred):
     home = match["home"]
     away = match["away"]
 
-    # Smart Prediction 1
     c120_match = lambda v: (v or "").lower().strip() == "match" or \
                            ("match" in (v or "").lower() and "not" not in (v or "").lower())
     d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
@@ -285,16 +225,10 @@ def format_match_html(league_name, match, pred):
             goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
             pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
 
-    # Smart Prediction 2 — built via shared helper build_pred2_text()
     pred2 = build_pred2_text(pred)
 
-    # NEW — Prediction 3, straight from the backend (/predict already
-    # computes this — cross-check of the O/U step5 signal against the
-    # H/D/A decision, or "Under" if the hidden 4-condition gate passed).
-    # No extra logic needed here, just display it.
     pred3 = pred.get("prediction_3", "")
 
-    # Odds
     odds = pred.get("odds") or pred.get("oddsr") or {}
     odds_html = ""
     if odds and odds.get("home_odds"):
@@ -307,7 +241,6 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
-    # Market odds (real bookmaker odds, if this league is covered)
     market_odds = pred.get("market_odds") or {}
     market_html = ""
     if market_odds and market_odds.get("home_odds"):
@@ -320,10 +253,6 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
-    # Value% — (market odd − model odd) / model odd × 100, plus decision.
-    # value_pct: home, draw, away, total, share_diff.
-    # value_signal: decision (Home / Away / Home 2-handicap / Away 2-handicap),
-    # under (flag from Total, unrelated to the H/A/D decision itself).
     value_pct = pred.get("value_pct") or {}
     value_signal = pred.get("value_signal") or {}
     value_html = ""
@@ -353,7 +282,6 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
-    # Over/Under 2.5 — model + market odds, and the same value/share formula
     ou25 = pred.get("ou25") or {}
     market_ou25 = pred.get("market_ou25") or {}
     ou25_html = ""
@@ -370,9 +298,6 @@ def format_match_html(league_name, match, pred):
           </td>
         </tr>"""
 
-    # O/U 2.5 value — NEW step 2-6 shape: over/under/total/over_share/
-    # under_share/abs_diff, plus step4/step5/step6 + final result
-    # ("under confirmed" / "under" / "over") from ou25_value_signal.
     ou25_value_pct = pred.get("ou25_value_pct") or {}
     ou25_value_signal = pred.get("ou25_value_signal") or {}
     ou25_value_html = ""
@@ -430,9 +355,6 @@ def format_match_html(league_name, match, pred):
     else:
         pred2_html = ""
 
-    # NEW — Prediction 3 block. Styled blue to match the frontend's
-    # Prediction 3 card. "handicap" outcomes get a slightly darker/flagged
-    # background, same visual language as Prediction 2's handicap/no cases.
     if pred3:
         if "handicap" in pred3.lower():
             pred3_bg    = "#12283a"
@@ -475,16 +397,6 @@ def format_match_html(league_name, match, pred):
   </table>
 </div>"""
 
-# NEW — blog 2 standard (replaces the earlier Prediction-2-based standard
-# AND the Prediction-3-gate standard — this is now the ONLY filter). A
-# match qualifies only if ALL 4 conditions are met:
-#   1. None of the model or market odds (Home/Draw/Away, both directions)
-#      are below 1.45 — filters out heavily lopsided/near-certain matches.
-#   2. ou25_value_signal['result'] is "under" or "under confirmed".
-#   3. prediction_3 contains "away" (covers "Away", "Away handicap",
-#      "Away 2-handicap", and the hidden-gate "Away/ under Ngoals" form).
-#   4. None of value_pct's home/draw/away is >= 98 or <= -98 — excludes
-#      matches with an extreme, likely-unreliable value blowout.
 def meets_blog2_standard(pred):
     model_odds = pred.get("odds") or pred.get("oddsr") or {}
     market_odds = pred.get("market_odds") or {}
@@ -515,31 +427,7 @@ def meets_blog2_standard(pred):
     return True
 
 
-# NEW — "Double chance" side check. Independent of the blog 2 standard —
-# this is checked across ALL matches (not just blog2-qualifying ones).
-# Only detects WHICH side qualifies ("home"/"away"/None) — the final
-# label (handicap vs win-or-draw) is computed separately by
-# refine_double_chance_signal() below.
-#   1. NEW — model odds guard: if ANY of home/draw/away MODEL odds
-#      (pred["odds"] / pred["oddsr"]) is above 24.00, the match is
-#      rejected outright, before conditions 2-3 are even checked.
-#      Extreme model odds like this signal an unreliable edge case
-#      rather than a genuine value opportunity. A missing model odd
-#      (None) does not fail this guard — it just means that odds
-#      source wasn't populated, not that it's extreme.
-#   2. home_v < -40 OR away_v < -40 (whichever side, not both — if both
-#      qualify at once it's too ambiguous and the match is skipped)
-#   3. The qualifying side's |value| is bigger than |draw_v|
 def check_double_chance_signal(pred):
-    model_odds = pred.get("odds") or pred.get("oddsr") or {}
-    model_odds_to_check = [
-        model_odds.get("home_odds"),
-        model_odds.get("draw_odds"),
-        model_odds.get("away_odds"),
-    ]
-    if any(o is not None and o > 24.00 for o in model_odds_to_check):
-        return None
-
     value_pct = pred.get("value_pct") or {}
     home_v = value_pct.get("home")
     away_v = value_pct.get("away")
@@ -551,7 +439,7 @@ def check_double_chance_signal(pred):
     away_qualifies = away_v < -40
 
     if home_qualifies and away_qualifies:
-        return None  # both sides flagged — too ambiguous, skip
+        return None
     if not home_qualifies and not away_qualifies:
         return None
 
@@ -561,14 +449,6 @@ def check_double_chance_signal(pred):
         return "away" if abs(away_v) > abs(draw_v) else None
 
 
-# NEW — refines the qualifying side into a final label. Formula:
-#   ratio = (|side_v| * 100) / ((selected_market_odd / opposite_market_odd) * 10)
-# where selected_market_odd is the market odd for the qualifying side
-# (home or away) and opposite_market_odd is the market odd for the
-# OTHER side (home vs away — not draw). Maps ratio to:
-#   ratio <= 2.4        -> "{Side} 3-handicap"
-#   2.4 < ratio <= 5     -> "{Side} 2-handicap"
-#   ratio > 5            -> "{Side} win or draw"
 def refine_double_chance_signal(pred, side):
     value_pct = pred.get("value_pct") or {}
     side_v = value_pct.get(side)
@@ -586,8 +466,6 @@ def refine_double_chance_signal(pred, side):
     if side_v is None or not selected_odd or not opposite_odd:
         return None
 
-    # side_v is already a percentage (computed via pct_diff's *100), so no
-    # extra *100 is needed here — just the raw abs value over the odds ratio.
     ratio = abs(side_v) / ((selected_odd / opposite_odd) * 10)
 
     if ratio <= 2.4:
@@ -596,6 +474,56 @@ def refine_double_chance_signal(pred, side):
         return f"{side_label} 2-handicap"
     else:
         return f"{side_label} win or draw"
+
+
+# NEW — "Double Chance Signal 2". Fully independent of every other filter
+# above (blog 2, double chance signal 1) — checked across ALL matches and
+# only ever produces its own, separate, third Telegram notification.
+# A match qualifies only if ALL of the following hold:
+#   1. The MODEL's Home odd and Away odd (not Draw) are both within
+#      1.5-4.00 inclusive — excludes very short-priced/near-certain or
+#      very long-shot outcomes on either side.
+#   2. home_v and away_v (value_pct) have opposite signs — one must be
+#      negative and the other positive; both-negative or both-positive
+#      does not qualify.
+#   3. Whichever side (home/away) is negative is checked against
+#      value_signal['decision']: if that side's name appears in the
+#      decision string, the decision itself is returned as the result.
+#      If not, no signal.
+def check_double_chance_signal_2(pred):
+    model_odds = pred.get("odds") or {}
+    home_odds = model_odds.get("home_odds")
+    away_odds = model_odds.get("away_odds")
+
+    if home_odds is None or away_odds is None:
+        return None
+
+    if not (1.5 <= home_odds <= 4.00):
+        return None
+    if not (1.5 <= away_odds <= 4.00):
+        return None
+
+    value_pct = pred.get("value_pct") or {}
+    home_v = value_pct.get("home")
+    away_v = value_pct.get("away")
+
+    if home_v is None or away_v is None:
+        return None
+
+    if home_v < 0 and away_v < 0:
+        return None
+    if home_v > 0 and away_v > 0:
+        return None
+    if home_v == 0 or away_v == 0:
+        return None
+
+    decision = (pred.get("value_signal") or {}).get("decision", "")
+    decision_lower = decision.lower()
+
+    if home_v < 0:
+        return decision if "home" in decision_lower else None
+    else:
+        return decision if "away" in decision_lower else None
 
 
 def post_to_blogger(access_token, blog_id, title, content):
@@ -608,14 +536,6 @@ def post_to_blogger(access_token, blog_id, title, content):
     return resp.status_code, resp.json()
 
 def main():
-    # Script runs at 23:00 UTC = midnight WAT (Nigeria, UTC+1) — right at
-    # the moment Nigeria's calendar day rolls over. date.today() on the
-    # GitHub Actions runner returns the UTC date, which at that instant is
-    # still the OLD day for Nigeria — the day that just ended, not the one
-    # starting. That caused fetch_fixtures() to query SoccerStats for the
-    # wrong day, so today's fixtures (like a 5pm match) were never fetched
-    # at all — not skipped, never requested in the first place.
-    # Fix: compute "today" from Nigeria's local time instead of raw UTC.
     today = (datetime.utcnow() + timedelta(hours=1)).date()
     date_str = f"{today.day} {today.strftime('%b')}"
     today_display = today.strftime("%A, %B %d %Y")
@@ -630,9 +550,8 @@ def main():
 </div>
 """
 
-    # Collect ALL matches from all leagues first
     all_matches = []
-    seen_matches = set()  # safety net — league code + normalized team names
+    seen_matches = set()
     for league_name, code in LEAGUE_CODES.items():
         fixtures = get_fixtures(code, date_str)
         if not fixtures:
@@ -650,7 +569,6 @@ def main():
                 "fix": fix
             })
 
-    # Sort all matches by time (TBD goes to end)
     def sort_key(m):
         t = m["fix"].get("time", "")
         if not t or t == "TBD":
@@ -658,15 +576,11 @@ def main():
         return t
     all_matches.sort(key=sort_key)
 
-    # Run predictions and build HTML — sorted by time, no league grouping
     total_matches = 0
     failed_matches = 0
     na_matches = 0
     current_time = None
 
-    # NEW — blog 2 gets its own separate HTML, built alongside blog 1's
-    # in the same loop (one set of predictions, two filtered outputs —
-    # no extra backend calls needed for blog 2).
     blog2_html = f"""
 <div style="background:#0A3D1F;color:#AAFF3C;padding:16px;border-radius:8px;font-family:Arial,sans-serif;text-align:center">
   <h2 style="margin:0;font-size:24px">⚽ Kickwise Standard Picks</h2>
@@ -676,20 +590,17 @@ def main():
 """
     blog2_matches = 0
     blog2_current_time = None
-    blog2_notify_cards = []  # NEW — per-match info for the Telegram notification card list
-    dc_notify_cards = []  # NEW — per-match info for the double-chance signal notification
+    blog2_notify_cards = []
+    dc_notify_cards = []
+    dc2_notify_cards = []  # NEW — per-match info for the double-chance signal 2 notification
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
 
         if pred is None:
-            # get_prediction() already logged the failure reason and retried —
-            # this match is dropped because the request genuinely failed,
-            # NOT because it's a real N/A. Counted separately below.
             failed_matches += 1
             continue
 
-        # Skip ONLY if all key predictions are genuinely N/A
         if all(
             (pred.get(k) or "N/A") in ("N/A", "", "None")
             for k in ["d70", "b120", "c120", "d64", "b46"]
@@ -699,7 +610,6 @@ def main():
             continue
         match_html = format_match_html(m["league_name"], m["fix"], pred)
         if match_html:
-            # Add time separator header when time changes
             match_time = m["fix"].get("time", "TBD")
             if match_time != current_time:
                 current_time = match_time
@@ -707,12 +617,6 @@ def main():
             all_html += match_html
             total_matches += 1
 
-            # NEW — check blog 2's standard on this same match, using the
-            # same already-fetched prediction (no extra backend call).
-            # This is now the ONLY blog 2 standard — the old Prediction-2
-            # and Prediction-3-gate standards were both retired in favor
-            # of this odds-floor + O/U-result + Prediction-3-contains-Away
-            # rule.
             if BLOG2_ENABLED and meets_blog2_standard(pred):
                 if match_time != blog2_current_time:
                     blog2_current_time = match_time
@@ -720,9 +624,6 @@ def main():
                 blog2_html += match_html
                 blog2_matches += 1
 
-                # NEW — build the card for the Telegram notification:
-                # time, league, teams, H/D/A decision, B46 output, O/U
-                # result, and Prediction 3 output.
                 value_signal = pred.get("value_signal") or {}
                 ou25_value_signal = pred.get("ou25_value_signal") or {}
                 b46_out = pred.get("b46") or pred.get("b46r") or "—"
@@ -735,9 +636,6 @@ def main():
                     f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}"
                 )
 
-            # NEW — "Double chance" signal check (independent of blog 2 —
-            # runs on every match, not just blog2-qualifying ones). Only
-            # ever produces a second, separate Telegram notification.
             dc_side = check_double_chance_signal(pred)
             if dc_side:
                 dc_signal = refine_double_chance_signal(pred, dc_side)
@@ -751,6 +649,23 @@ def main():
                         f"Draw {value_pct.get('draw')}% | "
                         f"Away {value_pct.get('away')}%"
                     )
+
+            # NEW — "Double Chance Signal 2" check. Fully independent of
+            # every filter above — runs on every match and only ever
+            # produces its own third, separate Telegram notification.
+            dc2_result = check_double_chance_signal_2(pred)
+            if dc2_result:
+                value_pct = pred.get("value_pct") or {}
+                model_odds = pred.get("odds") or {}
+                dc2_notify_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"🎯 Signal: {dc2_result}\n"
+                    f"💰 Model Odds: Home {model_odds.get('home_odds')} | "
+                    f"Away {model_odds.get('away_odds')}\n"
+                    f"📈 Value: Home {value_pct.get('home')}% | "
+                    f"Away {value_pct.get('away')}%"
+                )
 
     if total_matches == 0:
         print("No matches found today.")
@@ -772,7 +687,6 @@ def main():
     else:
         print(f"❌ Failed to post: {status} — {result}")
 
-    # NEW — post to blog 2, only if enabled and at least one match qualified
     if BLOG2_ENABLED:
         if blog2_matches == 0:
             print("\nℹ️ Blog 2: no matches met the standard today — skipping post.")
@@ -785,9 +699,6 @@ def main():
 
             if status_2 == 200:
                 print(f"✅ Blog 2 posted successfully! URL: {result_2.get('url','')}")
-                # NEW — card-list notification: one block per qualifying
-                # match (time, league, teams, decision, B46, O/U result,
-                # Prediction 3), followed by the blog 2 URL.
                 cards_text = "\n\n".join(blog2_notify_cards)
                 notify_message = (
                     f"⚽ Kickwise Standard Picks — {today_display}\n"
@@ -799,10 +710,6 @@ def main():
             else:
                 print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
-    # NEW — second, independent Telegram notification for the "double
-    # chance" signal. Doesn't post to either blog — runs regardless of
-    # BLOG2_ENABLED, and fires whenever at least one match anywhere in
-    # today's run matched the signal.
     if dc_notify_cards:
         dc_cards_text = "\n\n".join(dc_notify_cards)
         dc_message = (
@@ -813,6 +720,22 @@ def main():
         send_telegram_notification(dc_message)
     else:
         print("\nℹ️ Double chance signal: no matches flagged today.")
+
+    # NEW — third, fully independent Telegram notification for "Double
+    # Chance Signal 2". Doesn't post to either blog, and doesn't depend
+    # on blog 2 or the first double chance signal in any way — runs
+    # regardless of BLOG2_ENABLED, and fires whenever at least one match
+    # anywhere in today's run matched this signal's criteria.
+    if dc2_notify_cards:
+        dc2_cards_text = "\n\n".join(dc2_notify_cards)
+        dc2_message = (
+            f"🎯 Kickwise Double Chance Signal 2 — {today_display}\n"
+            f"{len(dc2_notify_cards)} match(es) flagged\n\n"
+            f"{dc2_cards_text}"
+        )
+        send_telegram_notification(dc2_message)
+    else:
+        print("\nℹ️ Double chance signal 2: no matches flagged today.")
 
 if __name__ == "__main__":
     main()
