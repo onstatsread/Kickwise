@@ -276,74 +276,32 @@ def check_league(name, serie_id, retries=2):
 # ---------------------------------------------------------
 
 def print_league_result(name, serie_id, result):
-
-    print()
-    print("=" * 70)
-    print(f"{name} (serie_{serie_id})")
-    print("=" * 70)
+    """
+    One compact line per league: name, serie_id, GP, team count.
+    (Previously printed a full per-team roster table for every league,
+    which made scanning 162 leagues' worth of output impractical.)
+    """
 
     if result["status"] != "ok":
 
         if result["status"] == "no_data":
-
-            print("❓ No usable GP table found.")
-            print(f"   DEBUG: {result.get('debug', 'n/a')}")
-
+            print(f"❓ {name:45} serie_{serie_id:<5} no GP table found")
         else:
-
             print(
-                f"❌ Failed: "
-                f"{result.get('error', 'unknown error')}"
+                f"❌ {name:45} serie_{serie_id:<5} "
+                f"failed: {result.get('error', 'unknown error')}"
             )
 
         return
 
-    teams = result["teams"]
+    flag = "" if result["balanced"] else " ⚠️ mixed GP"
 
     print(
-        f"Teams found : {result['team_count']}"
+        f"{'✅' if result['max_gp'] >= 10 else '  '} "
+        f"{name:45} serie_{serie_id:<5} "
+        f"GP {result['min_gp']}-{result['max_gp']} "
+        f"({result['team_count']} teams){flag}"
     )
-
-    print(
-        f"GP range    : "
-        f"{result['min_gp']} - {result['max_gp']}"
-    )
-
-    print(
-        f"Average GP  : "
-        f"{result['average_gp']}"
-    )
-
-    print(
-        f"GP values   : "
-        f"{result['unique_gp']}"
-    )
-
-    if result["balanced"]:
-
-        print(
-            f"✅ All teams have the same GP: "
-            f"{result['max_gp']}"
-        )
-
-    else:
-
-        print(
-            "⚠️ Teams have different GP values."
-        )
-
-    print()
-    print(
-        f"{'TEAM':45} {'GP':>5}"
-    )
-    print("-" * 52)
-
-    for team in teams:
-
-        print(
-            f"{team['team'][:45]:45} "
-            f"{team['gp']:>5}"
-        )
 
 
 # ---------------------------------------------------------
@@ -418,79 +376,22 @@ def main():
         time.sleep(20)
 
     # -----------------------------------------------------
-    # SUMMARY
+    # SUMMARY — just the leagues that qualify (GP >= 10),
+    # since each league already printed its own compact line above.
     # -----------------------------------------------------
 
-    print()
-    print()
-    print("=" * 80)
-    print("📊 FINAL SUMMARY")
-    print("=" * 80)
-
-    successful = [
+    qualifying = [
         x for x in results
-        if x["max_gp"] > 0
+        if x["max_gp"] >= 10
     ]
-
-    print(
-        f"\n✅ Successfully extracted GP: "
-        f"{len(successful)} leagues"
-    )
 
     print()
+    print("=" * 60)
+    print(f"📊 Qualifying leagues (GP >= 10): {len(qualifying)}")
+    print("=" * 60)
 
-    print(
-        f"{'LEAGUE':50} "
-        f"{'MIN':>5} "
-        f"{'MAX':>5} "
-        f"{'AVG':>7} "
-        f"{'TEAMS':>6}"
-    )
-
-    print("-" * 80)
-
-    for r in sorted(
-        successful,
-        key=lambda x: -x["max_gp"]
-    ):
-
-        flag = ""
-
-        if not r["balanced"]:
-            flag = " ⚠️"
-
-        print(
-            f"{r['name'][:50]:50} "
-            f"{r['min_gp']:>5} "
-            f"{r['max_gp']:>5} "
-            f"{r['average_gp']:>7.2f} "
-            f"{r['team_count']:>6}"
-            f"{flag}"
-        )
-
-    # -----------------------------------------------------
-    # UNEQUAL GP LEAGUES
-    # -----------------------------------------------------
-
-    unequal = [
-        x for x in successful
-        if not x["balanced"]
-    ]
-
-    if unequal:
-
-        print()
-        print(
-            "⚠️ LEAGUES WHERE TEAMS HAVE DIFFERENT GP:"
-        )
-
-        for r in unequal:
-
-            print(
-                f"   {r['name']} "
-                f"(serie_{r['serie_id']}): "
-                f"{r['min_gp']}–{r['max_gp']} GP"
-            )
+    for r in sorted(qualifying, key=lambda x: -x["max_gp"]):
+        print(f"   {r['name']:45} serie_{r['serie_id']:<5} GP {r['max_gp']}")
 
 
 if __name__ == "__main__":
