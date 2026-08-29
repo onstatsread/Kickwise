@@ -14,10 +14,28 @@ this version:
 5. Reports min/max/average GP.
 6. Shows every team's GP.
 7. Flags leagues where teams have different GP.
+
+BATCHING — added after a full 162-league run got connection-timeout
+blocked partway through (succeeded on ~10 leagues, then every request
+failed at the TCP-connect level, not even reaching an HTTP response —
+the signature of AnnaBet's firewall dropping the IP mid-run, not a
+normal rate-limit reply). GitHub Actions runners get a fresh IP on
+each new run, so the fix is to run smaller batches as SEPARATE
+workflow runs instead of one long 162-league run that eventually
+gets blocked on whichever IP it started with.
+
+Control which slice runs via environment variables:
+    BATCH_START=0    (0-indexed, inclusive) — which league to start at
+    BATCH_END=20     (exclusive) — which league to stop before
+
+Example: leagues 0–19 in one run, 20–39 in the next run, etc.
+If unset, BATCH_START defaults to 0 and BATCH_END defaults to the
+full league count (i.e. runs everything, old behavior).
 """
 
 import requests
 import time
+import os
 import statistics
 from bs4 import BeautifulSoup
 
@@ -417,9 +435,20 @@ def print_league_result(name, serie_id, result):
 
 def main():
 
+    all_leagues = list(ANNABET_LEAGUE_IDS.items())
+
+    # BATCH_START/BATCH_END let you run a slice of the full league list
+    # as its own GitHub Actions invocation (fresh IP each run), instead
+    # of one long run that gets connection-blocked partway through.
+    batch_start = int(os.environ.get("BATCH_START", "0"))
+    batch_end = int(os.environ.get("BATCH_END", str(len(all_leagues))))
+
+    test_leagues = dict(all_leagues[batch_start:batch_end])
+
     print(
-        f"🔍 Checking ACTUAL team GP across "
-        f"{len(ANNABET_LEAGUE_IDS)} leagues on AnnaBet..."
+        f"🔍 Checking ACTUAL team GP for leagues "
+        f"{batch_start}–{batch_end - 1} "
+        f"({len(test_leagues)} of {len(all_leagues)} total) on AnnaBet..."
     )
 
     print(
@@ -428,11 +457,6 @@ def main():
     )
 
     print()
-
-    # FIXED — now checks ALL 162 leagues instead of skipping the first 40
-    # (England, Italy, Spain, Germany, France, Netherlands, Belgium,
-    # Portugal, Scotland, Russia, Albania, Algeria, Argentina).
-    test_leagues = ANNABET_LEAGUE_IDS
 
     results = []
 
