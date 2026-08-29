@@ -2,6 +2,15 @@ name: Test AnnaBet Accessibility
 
 on:
   workflow_dispatch:
+    inputs:
+      batch_start:
+        description: 'League index to start at (0-indexed, inclusive)'
+        required: false
+        default: '0'
+      batch_end:
+        description: 'League index to stop before (exclusive) — leave blank for "all remaining"'
+        required: false
+        default: '20'
 
 jobs:
   test_annabet:
@@ -19,4 +28,7 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Run AnnaBet test
+        env:
+          BATCH_START: ${{ github.event.inputs.batch_start }}
+          BATCH_END: ${{ github.event.inputs.batch_end }}
         run: python check_annabet_gp.py
