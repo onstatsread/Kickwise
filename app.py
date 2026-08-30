@@ -153,6 +153,18 @@ ANNABET_SERIE_ID = {
     "paraguay": 347, "peru": 321, "southkorea": 249, "southkorea2": 543,
     "sweden": 32, "sweden2": 33, "uruguay": 439, "usa": 43, "usa2": 362,
     "venezuela": 314,
+
+    # Added from the 162-league GP >= 10 audit (Aug 2026) — see
+    # daily_predictions.py's LEAGUE_CODES for the matching entries and
+    # the audit-batch comment with full context.
+    "englandsouthern": 263, "germany": 8, "belgium": 697,
+    "algeria": 257, "australia": 148, "australiabrisbane": 465,
+    "chile2": 669, "bolivia": 400, "greece2": 769, "estonia2": 647,
+    "iceland3": 688, "greece3": 258, "indiail": 276, "indiaisl": 676,
+    "jamaica": 628, "iranazadegan": 513, "kenya": 663, "jordan": 445,
+    "morocco": 330, "singapore": 213, "newzealand": 454, "syria": 300,
+    "thailand": 356, "vietnam": 426, "taiwan": 763,
+    "turkmenistan": 764, "tajikistan": 761,
 }
 
 _ANNABET_ID_TO_CODE = {v: k for k, v in ANNABET_SERIE_ID.items()}
