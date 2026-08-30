@@ -2105,6 +2105,105 @@ def league_gp(
     }
 
 
+@app.get("/debug_upcoming_parse")
+def debug_upcoming_parse(league: str = Query(None)):
+    """
+    Temporary diagnostic — forces a fresh fetch of AnnaBet's /upcoming/
+    page (bypassing the 30-min fixtures cache) and reports exactly what
+    our own row-parsing logic extracted: how many leagues were found in
+    total, how many fixture rows for the requested league specifically,
+    and — if zero — the raw count of <tr> elements on the page overall,
+    to distinguish "parser found nothing anywhere" (a real bug) from
+    "parser works, this league genuinely has zero rows right now."
+    REMOVE once the Brazil fixtures issue is resolved.
+    """
+    try:
+        resp = annabet_get(ANNABET_UPCOMING_URL, timeout=30)
+        resp.raise_for_status()
+    except Exception as e:
+        return {"error": str(e)}
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    total_tr_on_page = len(soup.find_all("tr"))
+
+    # Re-run the exact same parsing logic as fetch_all_upcoming_annabet(),
+    # but without touching the cache, so this is a genuinely fresh read.
+    by_league = {}
+    rows_with_datetime = 0
+    rows_with_league_link = 0
+    rows_with_team_link = 0
+
+    for row in soup.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 3:
+            continue
+
+        row_text = cells[0].get_text(" ", strip=True)
+        dt_match = _ANNABET_DATETIME_RE.search(row_text)
+        if not dt_match:
+            continue
+        rows_with_datetime += 1
+
+        league_link = None
+        for cell in cells:
+            a = cell.find("a", href=_ANNABET_SERIE_LINK_RE)
+            if a:
+                league_link = a
+                break
+        if not league_link:
+            continue
+        rows_with_league_link += 1
+
+        serie_match = _ANNABET_SERIE_LINK_RE.search(league_link["href"])
+        if not serie_match:
+            continue
+        serie_id = int(serie_match.group(1))
+        code = _ANNABET_ID_TO_CODE.get(serie_id)
+
+        team_link = None
+        for cell in cells:
+            a = cell.find("a", href=re.compile(r"h2h\.php"))
+            if a:
+                team_link = a
+                break
+        if not team_link:
+            continue
+        rows_with_team_link += 1
+
+        team_text = team_link.get_text(" ", strip=True)
+        if " - " not in team_text:
+            continue
+
+        home, away = team_text.split(" - ", 1)
+        day, month, hour, minute = dt_match.groups()
+
+        entry = {
+            "date": f"{day}.{month}.",
+            "time": f"{hour}:{minute}",
+            "home": home.strip(),
+            "away": away.strip(),
+            "serie_id": serie_id,
+            "mapped_code": code,
+        }
+
+        by_league.setdefault(code or f"UNMAPPED_{serie_id}", []).append(entry)
+
+    result = {
+        "total_tr_on_page": total_tr_on_page,
+        "rows_with_datetime_pattern": rows_with_datetime,
+        "rows_with_league_link": rows_with_league_link,
+        "rows_with_team_link": rows_with_team_link,
+        "total_leagues_found": len(by_league),
+        "all_league_codes_found": sorted(by_league.keys()),
+    }
+
+    if league:
+        result["requested_league"] = league
+        result["matches_for_requested_league"] = by_league.get(league, [])
+
+    return result
+
+
 @app.get("/debug")
 def debug(
     league: str = Query(...),
