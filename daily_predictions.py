@@ -107,6 +107,43 @@ LEAGUE_CODES = {
     "USA - MLS": "usa",
     "USA - USL Championship": "usa2",
     "Venezuela - Liga FUTVE": "venezuela",
+
+    # Added from the 162-league GP >= 10 audit (Aug 2026) — checked via
+    # check_annabet_gp.py in batches of ~10-30 leagues after an earlier
+    # extraction bug (matching any table with a "GP" column instead of
+    # the exact standings-table header) was fixed. 27 of the 54 leagues
+    # that qualified were already covered above under a different
+    # AnnaBet display name/tier; these are the genuinely new ones.
+    # Argentina - Primera Division did NOT qualify this round (season
+    # just started) — deliberately left out until it naturally qualifies
+    # in a future re-check, per the same GP >= 10 standard.
+    "England - Southern Football League": "englandsouthern",
+    "Germany - Bundesliga": "germany",
+    "Belgium - First Amateur Division": "belgium",
+    "Algeria - Ligue 1": "algeria",
+    "Australia - A-League": "australia",
+    "Australia - Brisbane Premier League": "australiabrisbane",
+    "Chile - Primera B": "chile2",
+    "Bolivia - LFPB": "bolivia",
+    "Greece - Super League 2": "greece2",
+    "Estonia - Esiliiga": "estonia2",
+    "Iceland - Division 2": "iceland3",
+    "Greece - Football League": "greece3",
+    "India - I-League": "indiail",
+    "India - Super League": "indiaisl",
+    "Jamaica - National Premier League": "jamaica",
+    "Iran - Azadegan League": "iranazadegan",
+    "Kenya - Premier League": "kenya",
+    "Jordan - League": "jordan",
+    "Morocco - Botola": "morocco",
+    "Singapore - S.League": "singapore",
+    "New Zealand - Championship": "newzealand",
+    "Syria - Premier League": "syria",
+    "Thailand - League 1": "thailand",
+    "Vietnam - V.League 1": "vietnam",
+    "Taiwan - Premier League": "taiwan",
+    "Turkmenistan - Higher League": "turkmenistan",
+    "Tajikistan - Higher League": "tajikistan",
 }
 
 def get_access_token(client_id=None, client_secret=None, refresh_token=None):
