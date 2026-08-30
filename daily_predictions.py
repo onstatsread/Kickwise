@@ -465,6 +465,19 @@ def meets_blog2_standard(pred):
 
 
 def check_double_chance_signal(pred):
+    # NEW condition — the model's H/D/A odds must all be no bigger than
+    # 15 for the match to qualify at all, checked before the value-pct
+    # conditions below.
+    model_odds = pred.get("odds") or {}
+    home_odds = model_odds.get("home_odds")
+    draw_odds = model_odds.get("draw_odds")
+    away_odds = model_odds.get("away_odds")
+
+    if home_odds is None or draw_odds is None or away_odds is None:
+        return None
+    if home_odds > 15 or draw_odds > 15 or away_odds > 15:
+        return None
+
     value_pct = pred.get("value_pct") or {}
     home_v = value_pct.get("home")
     away_v = value_pct.get("away")
