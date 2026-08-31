@@ -182,6 +182,37 @@ def get_prediction(league_code, home, away, retries=2):
     print(f"    ❌ Failed to get prediction for {home} vs {away} after {retries} attempts: {last_error}")
     return None
 
+def build_pred1_text(pred):
+    """Builds the Prediction 1 string from a /predict response. Extracted
+    out of format_match_html() (which still calls this) so the new
+    Double Chance Signal 3 filter can also check Prediction 1's text
+    without duplicating this logic."""
+    c120_match = lambda v: (v or "").lower().strip() == "match" or \
+                           ("match" in (v or "").lower() and "not" not in (v or "").lower())
+    d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
+    d64_one  = "one"  in (pred.get("d64","") + pred.get("d64r","")).lower()
+    b120_combined = (pred.get("b120","") + " " + pred.get("b120r","")).lower()
+    b120_double = "double" in b120_combined
+    b120_under  = "under"  in b120_combined
+    c120_ok = c120_match(pred.get("c120")) or c120_match(pred.get("c120r"))
+    d70_main = pred.get("d70") if c120_match(pred.get("c120")) else (pred.get("d70r") or pred.get("d70",""))
+
+    pred1 = ""
+    if c120_ok:
+        labels = []
+        if b120_double: labels.append("double" if d64_both else ("2-handicap" if d64_one else None))
+        if b120_under:  labels.append("under"  if d64_both else ("under extend" if d64_one else None))
+        labels = list(set(filter(None, labels)))
+        if labels:
+            b46_match = re.search(r'(\d+\s*goals)', (pred.get("b46","") + " " + pred.get("b46r","")).lower())
+            b46_goals = b46_match.group(1).replace(" ","") if b46_match else ""
+            aa15_ok = any((pred.get(k,"") or "").lower() in ("yes","yes1","both") for k in ["aa15","aa15r"])
+            goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
+            pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
+
+    return pred1
+
+
 def build_pred2_text(pred):
     o73 = (pred.get("o73") or pred.get("o73r") or "").strip()
     d69n = (pred.get("d70") or "").lower()
@@ -239,28 +270,7 @@ def format_match_html(league_name, match, pred):
     home = match["home"]
     away = match["away"]
 
-    c120_match = lambda v: (v or "").lower().strip() == "match" or \
-                           ("match" in (v or "").lower() and "not" not in (v or "").lower())
-    d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
-    d64_one  = "one"  in (pred.get("d64","") + pred.get("d64r","")).lower()
-    b120_combined = (pred.get("b120","") + " " + pred.get("b120r","")).lower()
-    b120_double = "double" in b120_combined
-    b120_under  = "under"  in b120_combined
-    c120_ok = c120_match(pred.get("c120")) or c120_match(pred.get("c120r"))
-    d70_main = pred.get("d70") if c120_match(pred.get("c120")) else (pred.get("d70r") or pred.get("d70",""))
-
-    pred1 = ""
-    if c120_ok:
-        labels = []
-        if b120_double: labels.append("double" if d64_both else ("2-handicap" if d64_one else None))
-        if b120_under:  labels.append("under"  if d64_both else ("under extend" if d64_one else None))
-        labels = list(set(filter(None, labels)))
-        if labels:
-            b46_match = re.search(r'(\d+\s*goals)', (pred.get("b46","") + " " + pred.get("b46r","")).lower())
-            b46_goals = b46_match.group(1).replace(" ","") if b46_match else ""
-            aa15_ok = any((pred.get(k,"") or "").lower() in ("yes","yes1","both") for k in ["aa15","aa15r"])
-            goals_suffix = f" / {b46_goals}" if (aa15_ok and b46_goals) else ""
-            pred1 = f"{d70_main} / {' + '.join(labels)}{goals_suffix}"
+    pred1 = build_pred1_text(pred)
 
     pred2 = build_pred2_text(pred)
 
@@ -576,6 +586,75 @@ def check_double_chance_signal_2(pred):
         return decision if "away" in decision_lower else None
 
 
+# NEW — "Double Chance Signal 3". Fully independent of every filter
+# above (blog 2, double chance signal 1, double chance signal 2) —
+# checked across ALL matches and only ever produces its own, separate,
+# fourth Telegram notification.
+#
+# Logic:
+#   Step 4 (gate, checked first): model H/D/A odds must ALL be <= 15,
+#   or the match is disqualified immediately.
+#
+#   Step 2: value_signal['decision'] is checked for "home" or "away" —
+#   whichever appears becomes the candidate side. If neither appears,
+#   no signal.
+#
+#   Steps 1 & 3 (confirmation): the candidate side's name must appear
+#   in AT LEAST ONE of Prediction 1, Prediction 2, or Prediction 3
+#   (any one match is enough — they don't all need to agree).
+#
+#   Final label: compare the candidate side's model odd against the
+#   OPPOSITE side's model odd (home vs away, never draw):
+#     selected odd < opposite odd  -> just the side name ("Home"/"Away")
+#     selected odd > opposite odd  -> "{side} 2-handicap"
+def check_double_chance_signal_3(pred):
+    # Step 4 gate — must pass before anything else is checked.
+    model_odds = pred.get("odds") or {}
+    home_odds = model_odds.get("home_odds")
+    draw_odds = model_odds.get("draw_odds")
+    away_odds = model_odds.get("away_odds")
+
+    if home_odds is None or draw_odds is None or away_odds is None:
+        return None
+    if home_odds > 15 or draw_odds > 15 or away_odds > 15:
+        return None
+
+    # Step 2 — candidate side from the H/D/A decision.
+    decision = (pred.get("value_signal") or {}).get("decision", "")
+    decision_lower = decision.lower()
+
+    if "home" in decision_lower:
+        side = "home"
+    elif "away" in decision_lower:
+        side = "away"
+    else:
+        return None
+
+    # Steps 1 & 3 — confirm the side appears in Prediction 1, 2, or 3.
+    pred1_text = build_pred1_text(pred).lower()
+    pred2_text = build_pred2_text(pred).lower()
+    pred3_text = (pred.get("prediction_3") or "").lower()
+
+    confirmed = (
+        side in pred1_text
+        or side in pred2_text
+        or side in pred3_text
+    )
+    if not confirmed:
+        return None
+
+    # Final label — compare the selected side's model odd against the
+    # opposite side's (home vs away only, draw not involved here).
+    selected_odd = home_odds if side == "home" else away_odds
+    opposite_odd = away_odds if side == "home" else home_odds
+    side_label = side.capitalize()
+
+    if selected_odd < opposite_odd:
+        return side_label
+    else:
+        return f"{side_label} 2-handicap"
+
+
 def post_to_blogger(access_token, blog_id, title, content):
     resp = requests.post(
         f"https://www.googleapis.com/blogger/v3/blogs/{blog_id}/posts/",
@@ -643,6 +722,7 @@ def main():
     blog2_notify_cards = []
     dc_notify_cards = []
     dc2_notify_cards = []  # NEW — per-match info for the double-chance signal 2 notification
+    dc3_notify_cards = []  # NEW — per-match info for the double-chance signal 3 notification
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -717,6 +797,23 @@ def main():
                     f"Away {value_pct.get('away')}%"
                 )
 
+            # NEW — "Double Chance Signal 3" check. Fully independent of
+            # every filter above — runs on every match and only ever
+            # produces its own fourth, separate Telegram notification.
+            dc3_result = check_double_chance_signal_3(pred)
+            if dc3_result:
+                model_odds = pred.get("odds") or {}
+                value_signal = pred.get("value_signal") or {}
+                dc3_notify_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"🎯 Signal: {dc3_result}\n"
+                    f"⚡ H/D/A Decision: {value_signal.get('decision') or '—'}\n"
+                    f"💰 Model Odds: Home {model_odds.get('home_odds')} | "
+                    f"Draw {model_odds.get('draw_odds')} | "
+                    f"Away {model_odds.get('away_odds')}"
+                )
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -786,6 +883,22 @@ def main():
         send_telegram_notification(dc2_message)
     else:
         print("\nℹ️ Double chance signal 2: no matches flagged today.")
+
+    # NEW — fourth, fully independent Telegram notification for "Double
+    # Chance Signal 3". Doesn't post to either blog, and doesn't depend
+    # on blog 2 or either earlier double chance signal in any way — runs
+    # regardless of BLOG2_ENABLED, and fires whenever at least one match
+    # anywhere in today's run matched this signal's criteria.
+    if dc3_notify_cards:
+        dc3_cards_text = "\n\n".join(dc3_notify_cards)
+        dc3_message = (
+            f"🎯 Kickwise Double Chance Signal 3 — {today_display}\n"
+            f"{len(dc3_notify_cards)} match(es) flagged\n\n"
+            f"{dc3_cards_text}"
+        )
+        send_telegram_notification(dc3_message)
+    else:
+        print("\nℹ️ Double chance signal 3: no matches flagged today.")
 
 if __name__ == "__main__":
     main()
