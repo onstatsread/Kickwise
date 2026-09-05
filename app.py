@@ -22,6 +22,12 @@ from odds import get_odds_for_card, get_ou25_for_card, router as odds_router
 from api_football import get_fallback_odds
 from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
 
+# NEW — Oddsbook fixtures+odds fetcher, used ONLY by the /predict-oddsbook-test
+# endpoint for side-by-side comparison. Does not touch the existing AnnaBet
+# fixtures/predict flow at all.
+from oddsbook_odds import get_fixtures_for_day, get_oddsbook_market_odds
+from datetime import datetime as _datetime
+
 
 app = FastAPI(title="Kickwise API")
 
@@ -68,24 +74,6 @@ ANNABET_HEADERS = {
 ANNABET_SESSION = requests.Session()
 ANNABET_SESSION.headers.update(ANNABET_HEADERS)
 
-# ============================================================
-# ANNABET AUTH
-#
-# The bookmaker "Betting Odds" table (needed for real market_ou25/
-# market_odds pricing) is only present in the HTML for logged-in
-# accounts — anonymous requests get a page missing that table
-# entirely, which is why unauthenticated scraping silently pulled
-# numbers from an unrelated section instead of erroring.
-#
-# AnnaBet's login is AJAX-based (see auth/assets/js/app/login.js +
-# common.js): it POSTs to auth/ASEngine/ASAjax.php with
-# action=checkLogin, plus username and a client-side SHA-512 hash
-# of the password (never the raw password). We replicate that
-# hashing here in Python and reuse ANNABET_SESSION afterward so
-# every fixture/stats/odds request that follows is authenticated
-# via the session cookie the login response sets.
-# ============================================================
-
 ANNABET_LOGIN_URL = "https://annabet.com/auth/ASEngine/ASAjax.php"
 ANNABET_USERNAME = os.environ.get("ANNABET_USERNAME", "")
 ANNABET_PASSWORD = os.environ.get("ANNABET_PASSWORD", "")
@@ -94,10 +82,6 @@ _ANNABET_LOGGED_IN = False
 
 
 def annabet_login():
-    """Logs ANNABET_SESSION into AnnaBet so subsequent requests see
-    the authenticated (bookmaker-odds-included) version of pages.
-    Safe to call repeatedly — cheap no-op check via _ANNABET_LOGGED_IN,
-    call annabet_login(force=True)-style re-login only if needed later."""
     global _ANNABET_LOGGED_IN
 
     if not ANNABET_USERNAME or not ANNABET_PASSWORD:
@@ -119,8 +103,6 @@ def annabet_login():
         resp.raise_for_status()
         result = resp.json()
 
-        # A successful login response includes a redirect target page;
-        # errors come back with a different shape (no "page" key).
         if result.get("page"):
             _ANNABET_LOGGED_IN = True
             print("AnnaBet login succeeded")
@@ -134,8 +116,6 @@ def annabet_login():
         return False
 
 
-# Attempt login once at startup so every request in this process is
-# authenticated from the first fixture/stats/odds call onward.
 annabet_login()
 
 ANNABET_TABLE_HEADER = [
@@ -153,10 +133,6 @@ ANNABET_SERIE_ID = {
     "paraguay": 347, "peru": 321, "southkorea": 249, "southkorea2": 543,
     "sweden": 32, "sweden2": 33, "uruguay": 439, "usa": 43, "usa2": 362,
     "venezuela": 314,
-
-    # Added from the 162-league GP >= 10 audit (Aug 2026) — see
-    # daily_predictions.py's LEAGUE_CODES for the matching entries and
-    # the audit-batch comment with full context.
     "englandsouthern": 263, "germany": 8, "belgium": 697,
     "algeria": 257, "australia": 148, "australiabrisbane": 465,
     "chile2": 669, "bolivia": 400, "greece2": 769, "estonia2": 647,
@@ -184,16 +160,7 @@ DAY_RE = re.compile(r"^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b\s*")
 
 
 def _annabet_looks_logged_out(html):
-    """
-    Detects whether a fetched AnnaBet page is actually the anonymous
-    (logged-out) version — e.g. session cookie expired mid-run — even
-    though ANNABET_SESSION was successfully authenticated at startup.
-    Anonymous pages show a "please register / log in" prompt and
-    never show a logout link; authenticated pages never show the
-    former and always show the latter.
-    """
     lower = html.lower()
-
     return (
         "please register" in lower
         or "register or log in" in lower
@@ -201,15 +168,6 @@ def _annabet_looks_logged_out(html):
 
 
 def annabet_get(url, **kwargs):
-    """
-    Wrapper around ANNABET_SESSION.get() that detects a mid-run
-    session expiry (AnnaBet's login cookie timing out) and
-    re-authenticates once before retrying — without this, a run
-    that starts logged-in could silently degrade back to anonymous
-    scraping partway through (missing bookmaker odds again) with no
-    error, exactly like the original problem this login was added
-    to fix.
-    """
     global _ANNABET_LOGGED_IN
 
     resp = ANNABET_SESSION.get(url, **kwargs)
@@ -223,10 +181,6 @@ def annabet_get(url, **kwargs):
 
     return resp
 
-
-# ============================================================
-# ANNABET FIXTURES
-# ============================================================
 
 def fetch_all_upcoming_annabet():
     cached = _ANNABET_FIXTURES_CACHE.get("_all")
@@ -286,12 +240,6 @@ def fetch_all_upcoming_annabet():
 
         day, month, hour, minute = dt_match.groups()
 
-        # Pull H/D/A odds from THIS SAME validated row only — this row
-        # already passed strict checks (date/time pattern, league link,
-        # h2h team link), unlike a blind whole-page text search, which
-        # was previously matching unrelated content elsewhere on the
-        # page (e.g. a hidden team-search index) and returning bogus
-        # numbers shared across unrelated fixtures.
         odds_numbers = []
         for cell in cells:
             text = cell.get_text(" ", strip=True)
@@ -344,10 +292,6 @@ def fetch_fixtures_annabet(code, day, month):
         if m["date"] == target
     ]
 
-
-# ============================================================
-# ANNABET TEAM STATS
-# ============================================================
 
 def _annabet_get_header(table):
     rows = table.find_all("tr")
@@ -454,10 +398,6 @@ def fetch_stats(code):
     return {}
 
 
-# ============================================================
-# ANNABET MARKET ODDS
-# ============================================================
-
 def _annabet_float(value):
     if value is None:
         return None
@@ -479,17 +419,6 @@ def _annabet_float(value):
 
 
 def _add_implied_pct(odds_dict, *keys):
-    """
-    Adds normalized implied-probability *_pct fields to a dict of
-    decimal odds (e.g. home_odds/draw_odds/away_odds, or
-    over_odds/under_odds), so downstream code that expects
-    market_odds['home_pct'] / market_ou25['over_pct'] etc. keeps
-    working the same as it did with the old odds-API fallbacks.
-
-    Uses 1/odds normalized so the percentages sum to 100%, removing
-    the bookmaker's overround/margin rather than just reporting raw
-    implied probability (which would sum to >100%).
-    """
     if not odds_dict:
         return odds_dict
 
@@ -527,22 +456,6 @@ def _team_names_match(a, b):
 
 
 def _extract_fixture_h2h_and_hda(home, away):
-    """
-    Finds the fixture's H/D/A odds and H2H URL by looking it up in the
-    already-validated fixtures list from fetch_all_upcoming_annabet()
-    (same data /fixtures uses), rather than re-scanning the whole
-    /upcoming/ page with a loose substring search.
-
-    The earlier version scanned every <tr> on the page for one
-    containing both team names anywhere in its text — which could
-    (and did) match unrelated content elsewhere on the page, such as
-    a hidden team-search index, returning bogus odds shared across
-    completely unrelated fixtures. Reusing the fixtures list avoids
-    this because each entry there already passed strict checks
-    (a real date/time pattern, a league link, and an h2h.php team
-    link) before being accepted.
-    """
-
     cached = _ANNABET_ODDS_CACHE.get(("fixture", _norm_team(home), _norm_team(away)))
 
     if cached and time.time() - cached[0] < ANNABET_ODDS_CACHE_TTL:
@@ -565,8 +478,6 @@ def _extract_fixture_h2h_and_hda(home, away):
                 continue
 
             if fx.get("home_odds") is None:
-                # Matched the right fixture, but this row didn't have
-                # parseable odds (e.g. not yet priced by bookmakers).
                 return None
 
             result = {
@@ -586,31 +497,6 @@ def _extract_fixture_h2h_and_hda(home, away):
 
 
 def _extract_annabet_ou25(h2h_url):
-    """
-    AnnaBet's H2H page reuses the same 'Total Goals Under-Over' table
-    markup in several places: each team's own historical stats, the
-    head-to-head history, AND the real live-market odds table. Those
-    look identical by keyword text alone (hence the earlier bug where
-    this sometimes grabbed a historical-stats table instead of real
-    market odds).
-
-    The genuine market table is the one that links out to actual
-    bookmakers (e.g. href="/en/link/Suprabets/") — no historical/
-    stats table does that, so filtering on that link uniquely
-    isolates the correct table.
-
-    Within that table, each goal-line (1.5 / 2.5 / 3.5) has its own
-    <td class="hdr"> cell containing text like:
-        "2.5 goals avg 46%-54% 2.15-1.87"
-    The trailing "A-B" pair there is the bookmaker-average odds for
-    that line, displayed Under-Over, so:
-        left  = Under 2.5
-        right = Over 2.5
-    We extract it from that specific cell only (not the whole row)
-    to avoid accidentally matching an unrelated number pair from a
-    neighboring percentage cell.
-    """
-
     if not h2h_url:
         return None
 
@@ -632,8 +518,6 @@ def _extract_annabet_ou25(h2h_url):
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Only tables that link out to a real bookmaker are the live
-    # market table — historical/stats tables never do.
     candidate_tables = []
 
     for table in soup.find_all("table"):
@@ -684,27 +568,6 @@ def _extract_annabet_ou25(h2h_url):
 
 
 def get_annabet_market_odds(home, away):
-    """
-    Primary AnnaBet market source.
-
-    Returns:
-        {
-          "market_odds": {
-             "home_odds": ..., "draw_odds": ..., "away_odds": ...,
-             "home_pct": ..., "draw_pct": ..., "away_pct": ...
-          },
-          "market_ou25": {
-             "over_odds": ..., "under_odds": ...,
-             "over_pct": ..., "under_pct": ...
-          }
-        }
-
-    The *_pct fields are normalized implied probabilities (bookmaker
-    margin removed) derived from the decimal odds — daily_predictions.py
-    (format_match_html / meets_blog2_standard) expects these keys to
-    exist on both dicts, same shape the old odds-API fallbacks provided.
-    """
-
     result = {
         "market_odds": None,
         "market_ou25": None,
@@ -735,10 +598,6 @@ def get_annabet_market_odds(home, away):
 
     return result
 
-
-# ============================================================
-# MODEL ODDS
-# ============================================================
 
 def calc_win_draw_away(lambda_home, lambda_away, max_goals=10):
     try:
@@ -856,10 +715,6 @@ def calc_over_under_25(lambda_home, lambda_away, max_goals=10):
     }
 
 
-# ============================================================
-# TEAM RESOLUTION / FIXTURES
-# ============================================================
-
 def resolve_team(name, team_data):
     if name in team_data:
         return name
@@ -931,10 +786,6 @@ def fetch_fixtures(code, date_str=None):
 
     return []
 
-
-# ============================================================
-# MODEL
-# ============================================================
 
 def run_model(home, away, team_data):
 
@@ -1216,10 +1067,6 @@ def run_model(home, away, team_data):
         )
 
 
-# ============================================================
-# PREDICT
-# ============================================================
-
 @app.get("/predict")
 async def predict(
     league: str = Query(...),
@@ -1271,21 +1118,8 @@ async def predict(
         f"{time.time() - t0:.1f}s"
     )
 
-    # ========================================================
-    # MARKET ODDS
-    #
-    # PRIMARY: AnnaBet
-    # FALLBACK 1: The Odds API
-    # FALLBACK 2: Odds-API.io
-    # FALLBACK 3: API-Football
-    # ========================================================
-
     market_odds = None
     market_ou25 = None
-
-    # --------------------------------------------------------
-    # PRIMARY: ANNABET
-    # --------------------------------------------------------
 
     try:
         annabet = get_annabet_market_odds(
@@ -1314,19 +1148,10 @@ async def predict(
             f"for {home} - {away}: {e}"
         )
 
-    # --------------------------------------------------------
-    # FALLBACK 1: THE ODDS API
-    # --------------------------------------------------------
-
     if not market_odds or not market_ou25:
         try:
-            # The existing odds.py module needs a sport key.
-            # Keep your old mapping in odds.py / existing setup.
-            # If unavailable, these calls simply fail safely.
             sport_key = None
 
-            # Optional environment mapping:
-            # ODDS_SPORT_KEY_<league>=soccer_xxx
             env_key = (
                 "ODDS_SPORT_KEY_"
                 + league.upper()
@@ -1357,10 +1182,6 @@ async def predict(
                 f"The Odds API fallback failed: {e}"
             )
 
-    # --------------------------------------------------------
-    # FALLBACK 2: ODDS-API.IO
-    # --------------------------------------------------------
-
     if not market_odds:
         try:
             market_odds = (
@@ -1387,10 +1208,6 @@ async def predict(
                 f"Odds-API.io OU25 fallback failed: {e}"
             )
 
-    # --------------------------------------------------------
-    # FALLBACK 3: API-FOOTBALL
-    # --------------------------------------------------------
-
     if not market_odds:
         try:
             market_odds = await get_fallback_odds(
@@ -1401,10 +1218,6 @@ async def predict(
             print(
                 f"API-Football fallback failed: {e}"
             )
-
-    # ========================================================
-    # H/D/A VALUE + DECISION
-    # ========================================================
 
     value_pct = None
     value_signal = None
@@ -1550,10 +1363,6 @@ async def predict(
             "decision": decision,
             "under": under_flag
         }
-
-    # ========================================================
-    # O/U 2.5 VALUE
-    # ========================================================
 
     ou25_value_pct = None
     ou25_value_signal = None
@@ -1727,10 +1536,6 @@ async def predict(
                 "step6": step6,
             }
 
-            # ------------------------------------------------
-            # Prediction 3
-            # ------------------------------------------------
-
             if step4:
 
                 hda_decision = (
@@ -1759,10 +1564,6 @@ async def predict(
                         if "away" in hda_decision
                         else "Away handicap"
                     )
-
-            # ------------------------------------------------
-            # Hidden Prediction 3 gate
-            # ------------------------------------------------
 
             hda_total = (
                 value_pct or {}
@@ -1826,10 +1627,6 @@ async def predict(
                     else suffix.capitalize()
                 )
 
-    # ========================================================
-    # RESPONSE
-    # ========================================================
-
     return {
         "home": h,
         "away": a,
@@ -1846,7 +1643,6 @@ async def predict(
         "odds": r1.get("odds"),
         "ou25": r1.get("ou25"),
 
-        # PRIMARY AnnaBet market prices / fallback prices.
         "market_ou25": market_ou25,
         "market_odds": market_odds,
 
@@ -1885,8 +1681,96 @@ async def predict(
 
 
 # ============================================================
-# ENDPOINTS
+# NEW — TEST ENDPOINT: Oddsbook fixtures+odds, AnnaBet stats/model
+#
+# Uses the SAME fetch_stats()/run_model() as the live /predict above
+# (untouched) but sources fixtures + market odds from Oddsbook instead
+# of AnnaBet, for side-by-side comparison. league_code is an AnnaBet
+# short code (e.g. "brazil") since that's still what fetch_stats()
+# needs — team names get resolved the same way either source names them.
 # ============================================================
+
+@app.get("/predict-oddsbook-test")
+async def predict_oddsbook_test(
+    league: str = Query(..., description="AnnaBet short code, e.g. 'brazil' — used for fetch_stats() only"),
+    home: str = Query(...),
+    away: str = Query(...),
+):
+    t0 = time.time()
+
+    team_data = fetch_stats(league)
+
+    resolved_h = resolve_team(home, team_data)
+    resolved_a = resolve_team(away, team_data)
+
+    h = resolved_h or home
+    a = resolved_a or away
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f1 = executor.submit(run_model, h, a, team_data)
+        f2 = executor.submit(run_model, a, h, team_data)
+        r1 = f1.result()
+        r2 = f2.result()
+
+    print(f"[oddsbook-test] run_model({home} - {away}) took {time.time() - t0:.1f}s")
+
+    # Oddsbook market odds — replaces get_annabet_market_odds() entirely
+    # for this test endpoint. Uses today's date by default; pass
+    # ?date=YYYY-MM-DD if testing a future fixture.
+    market_odds = None
+    market_ou25 = None  # Oddsbook O/U 2.5 still unconfirmed — see oddsbook_odds.py
+
+    try:
+        oddsbook_result = get_oddsbook_market_odds(home, away)
+        market_odds = oddsbook_result.get("market_odds")
+        market_ou25 = oddsbook_result.get("market_ou25")
+        print(f"[oddsbook-test] Oddsbook market odds {home} - {away}: HDA={market_odds}")
+    except Exception as e:
+        print(f"[oddsbook-test] Oddsbook market odds failed for {home} - {away}: {e}")
+
+    model_odds = r1.get("odds")
+    value_pct = None
+    value_signal = None
+
+    if model_odds and market_odds:
+        def pct_diff(market_o, model_o):
+            if not model_o or not market_o:
+                return None
+            return round(((market_o - model_o) / model_o) * 100, 1)
+
+        home_v = pct_diff(market_odds.get("home_odds"), model_odds.get("home_odds"))
+        draw_v = pct_diff(market_odds.get("draw_odds"), model_odds.get("draw_odds"))
+        away_v = pct_diff(market_odds.get("away_odds"), model_odds.get("away_odds"))
+
+        value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
+
+        decision = ""
+        if home_v is not None and away_v is not None:
+            if home_v < 0 and away_v < 0:
+                decision = "Home 2-handicap" if home_v < away_v else "Away 2-handicap"
+            elif home_v < 0:
+                decision = "Home 2-handicap"
+            elif away_v < 0:
+                decision = "Away 2-handicap"
+
+        value_signal = {"decision": decision}
+
+    return {
+        "source": "oddsbook (fixtures/odds) + annabet (stats/model)",
+        "home": h,
+        "away": a,
+        "d70": r1["d70"],
+        "b120": r1["b120"],
+        "c120": r1["c120"],
+        "odds": r1.get("odds"),
+        "ou25": r1.get("ou25"),
+        "market_odds": market_odds,
+        "market_ou25": market_ou25,
+        "value_pct": value_pct,
+        "value_signal": value_signal,
+        "prediction_3": "",
+    }
+
 
 @app.get("/fixtures")
 def fixtures_endpoint(
@@ -1911,386 +1795,24 @@ def fixtures_endpoint(
     }
 
 
+# ============================================================
+# NEW — TEST ENDPOINT: raw Oddsbook fixtures for a day, any league,
+# no AnnaBet involved. Useful to browse what's available before
+# picking a match to run through /predict-oddsbook-test.
+# ============================================================
+
+@app.get("/fixtures-oddsbook-test")
+def fixtures_oddsbook_test(date_str: str = Query(None, alias="date")):
+    target = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
+    by_league = get_fixtures_for_day(target)
+    return {"date": str(target), "league_count": len(by_league), "leagues": by_league}
+
+
 @app.get("/health")
 def health():
     return {
         "status": "ok"
     }
-
-
-@app.get("/debug_annabet_login")
-def debug_annabet_login():
-    """
-    Confirms whether the AnnaBet session is currently authenticated,
-    without exposing any cookie/session values.
-    """
-    return {
-        "logged_in": _ANNABET_LOGGED_IN,
-        "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
-    }
-
-
-def _extract_team_gp_for_check(html):
-    """
-    Extract team names and GP from the ONE genuine season-standings
-    table on the page — identified by an EXACT match against AnnaBet's
-    known 14-column header (same ANNABET_TABLE_HEADER constant used
-    by fetch_stats_annabet() elsewhere in this file).
-
-    An earlier version matched any table containing a column merely
-    named "GP" — but AnnaBet's page has several such tables (home-only
-    splits, away-only splits, prior-season history, last-N-games form,
-    etc.), so it concatenated rows from all of them together, producing
-    impossible results (400+ "teams", the same team appearing multiple
-    times with different GP values). Requiring the exact header and
-    using only the FIRST match (consistently the "All Games" standings
-    table) fixes this.
-    """
-    soup = BeautifulSoup(html, "html.parser")
-
-    for table in soup.find_all("table"):
-        rows = table.find_all("tr")
-        if not rows:
-            continue
-
-        header_cells = [
-            c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])
-        ]
-
-        if header_cells != ANNABET_TABLE_HEADER:
-            continue
-
-        # GP is always column index 2 in this exact header layout.
-        gp_column_found = 2
-        all_teams = []
-
-        for row in rows[1:]:
-            cells = [
-                " ".join(c.get_text(" ", strip=True).split())
-                for c in row.find_all("td")
-            ]
-
-            if len(cells) <= gp_column_found:
-                continue
-
-            gp_text = cells[gp_column_found]
-            if not gp_text.isdigit():
-                continue
-
-            gp = int(gp_text)
-            if gp < 0 or gp > 100:
-                continue
-
-            team_name = cells[1] if len(cells) > 1 else cells[0]
-
-            bad_names = {
-                "total", "average", "home", "away",
-                "all games", "team", "league average",
-            }
-            if team_name.lower() in bad_names or len(team_name) < 2:
-                continue
-
-            all_teams.append({"team": team_name, "gp": gp})
-
-        # Only use the FIRST matching table (the "All Games" standings
-        # table) — later matches are the home-only/away-only splits.
-        return all_teams, gp_column_found
-
-    return [], None
-
-
-@app.get("/check_leagues_gp")
-def check_leagues_gp(
-    start: int = Query(0),
-    end: int = Query(20),
-    delay: float = Query(2.0),
-):
-    """
-    Temporary batch GP-checker — runs through Render's already
-    authenticated ANNABET_SESSION (proven reliable all day) instead
-    of GitHub Actions, whose shared runner IP range appears to be
-    fully blocked by AnnaBet's firewall (every request failed at the
-    TCP-connect level from the very first league, even on a fresh
-    workflow run).
-
-    Query params:
-        start — league index to start at (0-indexed, inclusive)
-        end   — league index to stop before (exclusive)
-        delay — seconds to pause between leagues (default 2.0;
-                Render's IP hasn't shown signs of being rate-limited,
-                so this can stay much shorter than the 20s used in
-                the GitHub Actions version)
-
-    Example: /check_leagues_gp?start=0&end=20
-    REMOVE once the 162-league GP audit is complete.
-    """
-    all_leagues = list(ANNABET_LEAGUE_IDS.items())
-    slice_leagues = all_leagues[start:end]
-
-    results = []
-
-    for name, serie_id in slice_leagues:
-        url = f"https://annabet.com/en/soccerstats/serie_{serie_id}_x.html"
-
-        try:
-            resp = annabet_get(url, timeout=20)
-            resp.raise_for_status()
-
-            teams, gp_col = _extract_team_gp_for_check(resp.text)
-
-            if not teams:
-                results.append({
-                    "name": name,
-                    "serie_id": serie_id,
-                    "status": "no_data",
-                })
-            else:
-                gps = [t["gp"] for t in teams]
-                results.append({
-                    "name": name,
-                    "serie_id": serie_id,
-                    "status": "ok",
-                    "team_count": len(teams),
-                    "min_gp": min(gps),
-                    "max_gp": max(gps),
-                    "average_gp": round(statistics.mean(gps), 2),
-                    "balanced": len(set(gps)) == 1,
-                })
-
-        except Exception as e:
-            results.append({
-                "name": name,
-                "serie_id": serie_id,
-                "status": "error",
-                "error": str(e),
-            })
-
-        time.sleep(delay)
-
-    qualifying = [
-        r["name"] for r in results
-        if r.get("status") == "ok" and r.get("max_gp", 0) >= 10
-    ]
-
-    return {
-        "range_checked": f"{start}-{end - 1}",
-        "total_leagues": len(all_leagues),
-        "results": results,
-        "qualifying_leagues_gp_10_plus": qualifying,
-    }
-
-
-@app.get("/league_gp")
-def league_gp(
-    league: str = Query(...)
-):
-    team_data = fetch_stats(league)
-
-    if not team_data:
-        return {
-            "league": league,
-            "team_count": 0,
-            "max_gp": 0
-        }
-
-    max_gp = max(
-        d.get("gp", 0)
-        for d in team_data.values()
-    )
-
-    return {
-        "league": league,
-        "team_count": len(team_data),
-        "max_gp": max_gp
-    }
-
-
-@app.get("/debug_upcoming_parse")
-def debug_upcoming_parse(league: str = Query(None)):
-    """
-    Temporary diagnostic — forces a fresh fetch of AnnaBet's /upcoming/
-    page (bypassing the 30-min fixtures cache) and reports exactly what
-    our own row-parsing logic extracted: how many leagues were found in
-    total, how many fixture rows for the requested league specifically,
-    and — if zero — the raw count of <tr> elements on the page overall,
-    to distinguish "parser found nothing anywhere" (a real bug) from
-    "parser works, this league genuinely has zero rows right now."
-    REMOVE once the Brazil fixtures issue is resolved.
-    """
-    try:
-        resp = annabet_get(ANNABET_UPCOMING_URL, timeout=30)
-        resp.raise_for_status()
-    except Exception as e:
-        return {"error": str(e)}
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    total_tr_on_page = len(soup.find_all("tr"))
-
-    # Re-run the exact same parsing logic as fetch_all_upcoming_annabet(),
-    # but without touching the cache, so this is a genuinely fresh read.
-    by_league = {}
-    rows_with_datetime = 0
-    rows_with_league_link = 0
-    rows_with_team_link = 0
-
-    for row in soup.find_all("tr"):
-        cells = row.find_all("td")
-        if len(cells) < 3:
-            continue
-
-        row_text = cells[0].get_text(" ", strip=True)
-        dt_match = _ANNABET_DATETIME_RE.search(row_text)
-        if not dt_match:
-            continue
-        rows_with_datetime += 1
-
-        league_link = None
-        for cell in cells:
-            a = cell.find("a", href=_ANNABET_SERIE_LINK_RE)
-            if a:
-                league_link = a
-                break
-        if not league_link:
-            continue
-        rows_with_league_link += 1
-
-        serie_match = _ANNABET_SERIE_LINK_RE.search(league_link["href"])
-        if not serie_match:
-            continue
-        serie_id = int(serie_match.group(1))
-        code = _ANNABET_ID_TO_CODE.get(serie_id)
-
-        team_link = None
-        for cell in cells:
-            a = cell.find("a", href=re.compile(r"h2h\.php"))
-            if a:
-                team_link = a
-                break
-        if not team_link:
-            continue
-        rows_with_team_link += 1
-
-        team_text = team_link.get_text(" ", strip=True)
-        if " - " not in team_text:
-            continue
-
-        home, away = team_text.split(" - ", 1)
-        day, month, hour, minute = dt_match.groups()
-
-        entry = {
-            "date": f"{day}.{month}.",
-            "time": f"{hour}:{minute}",
-            "home": home.strip(),
-            "away": away.strip(),
-            "serie_id": serie_id,
-            "mapped_code": code,
-        }
-
-        by_league.setdefault(code or f"UNMAPPED_{serie_id}", []).append(entry)
-
-    result = {
-        "total_tr_on_page": total_tr_on_page,
-        "rows_with_datetime_pattern": rows_with_datetime,
-        "rows_with_league_link": rows_with_league_link,
-        "rows_with_team_link": rows_with_team_link,
-        "total_leagues_found": len(by_league),
-        "all_league_codes_found": sorted(by_league.keys()),
-    }
-
-    if league:
-        result["requested_league"] = league
-        result["matches_for_requested_league"] = by_league.get(league, [])
-
-    return result
-
-
-@app.get("/debug")
-def debug(
-    league: str = Query(...),
-    date: str = Query(None)
-):
-    debug_info = {}
-
-    try:
-        resp = ANNABET_SESSION.get(
-            f"https://annabet.com/en/soccerstats/serie_"
-            f"{ANNABET_SERIE_ID.get(league, '')}_x.html",
-            timeout=20
-        )
-
-        debug_info["annabet_status"] = resp.status_code
-        debug_info["annabet_length"] = len(resp.text)
-        debug_info["annabet_snippet"] = resp.text[:500]
-
-    except Exception as e:
-        debug_info["annabet_error"] = str(e)
-
-    team_data = fetch_stats(league)
-    fixtures = fetch_fixtures(
-        league,
-        date
-    )
-
-    resolved = [
-        {
-            "home": resolve_team(
-                f["home"],
-                team_data
-            ),
-            "away": resolve_team(
-                f["away"],
-                team_data
-            ),
-            "raw_home": f["home"],
-            "raw_away": f["away"],
-            "h2h_url": f.get("h2h_url"),
-        }
-        for f in fixtures
-    ]
-
-    return {
-        "debug_info": debug_info,
-        "team_count": len(team_data),
-        "team_names": list(team_data.keys()),
-        "fixtures": fixtures,
-        "resolved": resolved
-    }
-
-
-@app.get("/debug_serie_gp")
-def debug_serie_gp(
-    serie_id: int = Query(...)
-):
-    try:
-        team_data = fetch_stats_annabet(
-            serie_id
-        )
-
-        if not team_data:
-            return {
-                "serie_id": serie_id,
-                "team_count": 0,
-                "max_gp": 0,
-                "note": (
-                    "No teams found — wrong ID, "
-                    "or AnnaBet's table structure changed."
-                )
-            }
-
-        max_gp = max(
-            d.get("gp", 0)
-            for d in team_data.values()
-        )
-
-        return {
-            "serie_id": serie_id,
-            "team_count": len(team_data),
-            "max_gp": max_gp,
-            "team_names": list(team_data.keys())
-        }
-
-    except Exception as e:
-        return {
-            "serie_id": serie_id,
-            "error": str(e)
-        }
