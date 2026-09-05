@@ -1695,8 +1695,14 @@ async def predict_oddsbook_test(
     league: str = Query(..., description="AnnaBet short code, e.g. 'brazil' — used for fetch_stats() only"),
     home: str = Query(...),
     away: str = Query(...),
+    date_str: str = Query(None, alias="date", description="YYYY-MM-DD, defaults to today"),
 ):
     t0 = time.time()
+
+    target_date = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
 
     team_data = fetch_stats(league)
 
@@ -1721,7 +1727,7 @@ async def predict_oddsbook_test(
     market_ou25 = None  # Oddsbook O/U 2.5 still unconfirmed — see oddsbook_odds.py
 
     try:
-        oddsbook_result = get_oddsbook_market_odds(home, away)
+        oddsbook_result = get_oddsbook_market_odds(home, away, target_date)
         market_odds = oddsbook_result.get("market_odds")
         market_ou25 = oddsbook_result.get("market_ou25")
         print(f"[oddsbook-test] Oddsbook market odds {home} - {away}: HDA={market_odds}")
@@ -1757,6 +1763,7 @@ async def predict_oddsbook_test(
 
     return {
         "source": "oddsbook (fixtures/odds) + annabet (stats/model)",
+        "date_checked": str(target_date),
         "home": h,
         "away": a,
         "d70": r1["d70"],
