@@ -1823,3 +1823,93 @@ def health():
     return {
         "status": "ok"
     }
+
+
+@app.get("/debug_annabet_login")
+def debug_annabet_login():
+    """
+    Confirms whether the AnnaBet session is currently authenticated,
+    without exposing any cookie/session values.
+    """
+    return {
+        "logged_in": _ANNABET_LOGGED_IN,
+        "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
+    }
+
+
+@app.get("/league_gp")
+def league_gp(
+    league: str = Query(...)
+):
+    team_data = fetch_stats(league)
+
+    if not team_data:
+        return {
+            "league": league,
+            "team_count": 0,
+            "max_gp": 0
+        }
+
+    max_gp = max(
+        d.get("gp", 0)
+        for d in team_data.values()
+    )
+
+    return {
+        "league": league,
+        "team_count": len(team_data),
+        "max_gp": max_gp
+    }
+
+
+@app.get("/debug")
+def debug(
+    league: str = Query(...),
+    date: str = Query(None)
+):
+    debug_info = {}
+
+    try:
+        resp = ANNABET_SESSION.get(
+            f"https://annabet.com/en/soccerstats/serie_"
+            f"{ANNABET_SERIE_ID.get(league, '')}_x.html",
+            timeout=20
+        )
+
+        debug_info["annabet_status"] = resp.status_code
+        debug_info["annabet_length"] = len(resp.text)
+        debug_info["annabet_snippet"] = resp.text[:500]
+
+    except Exception as e:
+        debug_info["annabet_error"] = str(e)
+
+    team_data = fetch_stats(league)
+    fixtures = fetch_fixtures(
+        league,
+        date
+    )
+
+    resolved = [
+        {
+            "home": resolve_team(
+                f["home"],
+                team_data
+            ),
+            "away": resolve_team(
+                f["away"],
+                team_data
+            ),
+            "raw_home": f["home"],
+            "raw_away": f["away"],
+            "h2h_url": f.get("h2h_url"),
+        }
+        for f in fixtures
+    ]
+
+    return {
+        "debug_info": debug_info,
+        "team_count": len(team_data),
+        "team_names": list(team_data.keys()),
+        "fixtures": fixtures,
+        "resolved": resolved
+    }
