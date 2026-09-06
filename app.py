@@ -26,6 +26,7 @@ from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
 # endpoint for side-by-side comparison. Does not touch the existing AnnaBet
 # fixtures/predict flow at all.
 from oddsbook_odds import get_fixtures_for_day, get_oddsbook_market_odds
+from goalapi_fetcher import fetch_team_stats, fetch_fixtures_for_day
 from datetime import datetime as _datetime
 
 
@@ -1776,6 +1777,120 @@ async def predict_oddsbook_test(
         "value_pct": value_pct,
         "value_signal": value_signal,
         "prediction_3": "",
+    }
+
+
+@app.get("/fixtures-goalapi-test")
+def fixtures_goalapi_test(date_str: str = Query(None, alias="date")):
+    """
+    Browse GOAL API's fixtures for a day, across all leagues, no
+    AnnaBet or Oddsbook involved. Use this to find a league_id + team
+    names to plug into /predict-goalapi-test below.
+    """
+    target = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
+    fixtures = fetch_fixtures_for_day(str(target))
+    return {"date": str(target), "fixture_count": len(fixtures), "fixtures": fixtures}
+
+
+@app.get("/predict-goalapi-test")
+async def predict_goalapi_test(
+    league_id: str = Query(..., description="GOAL API league id (from /fixtures-goalapi-test), NOT an AnnaBet short code"),
+    home: str = Query(...),
+    away: str = Query(...),
+    date_str: str = Query(None, alias="date", description="YYYY-MM-DD, defaults to today, used for the Oddsbook odds lookup"),
+):
+    """
+    Full three-source hybrid test:
+      - Team stats (combined + home/away splits): GOAL API, ONE call
+      - Fixtures: GOAL API (not used directly here, see /fixtures-
+        goalapi-test to find matches first)
+      - Market odds: Oddsbook (Playwright) — GOAL API odds require a
+        paid plan, confirmed 2026-09-06
+
+    Uses the SAME run_model() as the live /predict endpoint — only
+    the data sources feeding it differ.
+    """
+    t0 = time.time()
+
+    target_date = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
+
+    team_data = fetch_team_stats(league_id)
+
+    print(f"[goalapi-test] fetch_team_stats({league_id}) took {time.time() - t0:.1f}s, {len(team_data)} teams")
+
+    resolved_h = resolve_team(home, team_data)
+    resolved_a = resolve_team(away, team_data)
+
+    h = resolved_h or home
+    a = resolved_a or away
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f1 = executor.submit(run_model, h, a, team_data)
+        f2 = executor.submit(run_model, a, h, team_data)
+        r1 = f1.result()
+        r2 = f2.result()
+
+    print(f"[goalapi-test] run_model({home} - {away}) took {time.time() - t0:.1f}s")
+
+    market_odds = None
+    market_ou25 = None
+
+    try:
+        oddsbook_result = get_oddsbook_market_odds(home, away, target_date)
+        market_odds = oddsbook_result.get("market_odds")
+        market_ou25 = oddsbook_result.get("market_ou25")
+        print(f"[goalapi-test] Oddsbook market odds {home} - {away}: HDA={market_odds}")
+    except Exception as e:
+        print(f"[goalapi-test] Oddsbook market odds failed for {home} - {away}: {e}")
+
+    model_odds = r1.get("odds")
+    value_pct = None
+    value_signal = None
+
+    if model_odds and market_odds:
+        def pct_diff(market_o, model_o):
+            if not model_o or not market_o:
+                return None
+            return round(((market_o - model_o) / model_o) * 100, 1)
+
+        home_v = pct_diff(market_odds.get("home_odds"), model_odds.get("home_odds"))
+        draw_v = pct_diff(market_odds.get("draw_odds"), model_odds.get("draw_odds"))
+        away_v = pct_diff(market_odds.get("away_odds"), model_odds.get("away_odds"))
+
+        value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
+
+        decision = ""
+        if home_v is not None and away_v is not None:
+            if home_v < 0 and away_v < 0:
+                decision = "Home 2-handicap" if home_v < away_v else "Away 2-handicap"
+            elif home_v < 0:
+                decision = "Home 2-handicap"
+            elif away_v < 0:
+                decision = "Away 2-handicap"
+
+        value_signal = {"decision": decision}
+
+    return {
+        "source": "goalapi (stats) + oddsbook (odds)",
+        "date_checked": str(target_date),
+        "team_count_in_league": len(team_data),
+        "home": h,
+        "away": a,
+        "d70": r1["d70"],
+        "b120": r1["b120"],
+        "c120": r1["c120"],
+        "odds": r1.get("odds"),
+        "ou25": r1.get("ou25"),
+        "market_odds": market_odds,
+        "market_ou25": market_ou25,
+        "value_pct": value_pct,
+        "value_signal": value_signal,
     }
 
 
