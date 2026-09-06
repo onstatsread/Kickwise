@@ -187,12 +187,14 @@ def fetch_fixtures_for_day(date_str):
     Returns a list of fixtures:
         [{"id": ..., "league_id": ..., "league_name": ...,
           "home": ..., "away": ..., "kickoff": ...,
-          "home_score": ..., "away_score": ...}, ...]
+          "status": ..., "home_score": ..., "away_score": ...}, ...]
 
-    NOTE: field names below (homeTeam.name, awayTeam.name, homeScore,
-    awayScore) are based on the SDK's documented example, NOT yet
-    confirmed against a real /fixtures/date/:date response — verify
-    and adjust field paths if they differ once tested.
+    CONFIRMED (2026-09-06) real field names — flat top-level fields,
+    NOT the nested homeTeam/awayTeam objects. Those nested objects
+    sometimes carry a DIFFERENT (globally-shared?) team name than the
+    match-specific homeTeamName/awayTeamName fields (e.g. one fixture
+    showed homeTeam.name="Firpo" vs homeTeamName="Luis Angel Firpo") —
+    using the flat fields avoids that mismatch.
     """
     cache_key = date_str
     cached = _FIXTURES_CACHE.get(cache_key)
@@ -211,20 +213,16 @@ def fetch_fixtures_for_day(date_str):
     fixtures = []
 
     for row in rows:
-        home_team = row.get("homeTeam") or {}
-        away_team = row.get("awayTeam") or {}
-        league = row.get("league") or {}
-
         fixtures.append({
             "id": row.get("id"),
-            "league_id": league.get("id") or row.get("leagueId"),
-            "league_name": league.get("name"),
-            "home": home_team.get("name"),
-            "away": away_team.get("name"),
-            "kickoff": row.get("kickoffUtc") or row.get("matchDate"),
-            "status": row.get("status"),
-            "home_score": row.get("homeScore"),
-            "away_score": row.get("awayScore"),
+            "league_id": row.get("leagueId"),
+            "league_name": row.get("leagueName"),
+            "home": row.get("homeTeamName"),
+            "away": row.get("awayTeamName"),
+            "kickoff": row.get("kickoffUtc"),
+            "status": row.get("matchStatus"),
+            "home_score": row.get("homeTeamScore"),
+            "away_score": row.get("awayTeamScore"),
         })
 
     _FIXTURES_CACHE[cache_key] = (time.time(), fixtures)
@@ -237,43 +235,13 @@ def fetch_fixtures_for_day(date_str):
 
 def fetch_market_odds(fixture_id):
     """
-    Returns the SAME shape as annabet_odds.get_annabet_market_odds():
+    CONFIRMED (2026-09-06): odds require a PAID GOAL API plan — free
+    tier returns 403 "Feature not available in your plan" (capability:
+    canAccessOdds) for /fixtures/:id/odds.
 
-        {
-            "market_odds": {"home_odds":..., "draw_odds":..., "away_odds":...},
-            "market_ou25": {"over_odds":..., "under_odds":...}
-        }
-
-    NOTE: field names/structure NOT yet confirmed against a real
-    /fixtures/:id/odds response (docs mention nested market objects
-    keyed by line, e.g. overUnder["o+2.5"], but exact 1X2 field names
-    need verification). This is a best-effort placeholder — test
-    against a real response and adjust before relying on it.
+    Use oddsbook_odds.get_oddsbook_market_odds(home, away) instead for
+    odds on the free tier — confirmed working via Playwright earlier
+    in this project. This function is kept as a stub in case the plan
+    is upgraded later, but should not be called on the free tier.
     """
-    result = {"market_odds": None, "market_ou25": None}
-
-    data = _get(f"/fixtures/{fixture_id}/odds")
-
-    if not data or not data.get("data"):
-        return result
-
-    payload = data["data"]
-
-    # Best-effort guesses at structure — VERIFY against real response.
-    match_result = payload.get("matchResult") or payload.get("1x2") or {}
-    if match_result:
-        result["market_odds"] = {
-            "home_odds": _to_float(match_result.get("home"), None),
-            "draw_odds": _to_float(match_result.get("draw"), None),
-            "away_odds": _to_float(match_result.get("away"), None),
-        }
-
-    over_under = payload.get("overUnder") or {}
-    ou25 = over_under.get("o+2.5") or over_under.get("2.5") or {}
-    if ou25:
-        result["market_ou25"] = {
-            "over_odds": _to_float(ou25.get("over"), None),
-            "under_odds": _to_float(ou25.get("under"), None),
-        }
-
-    return result
+    return {"market_odds": None, "market_ou25": None}
