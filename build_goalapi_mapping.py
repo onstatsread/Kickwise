@@ -221,7 +221,14 @@ def main():
     print(f"FLAGGED FOR MANUAL REVIEW (confidence < 0.6): {len(flagged_for_review)}")
     print("=" * 60)
     for target, info in flagged_for_review:
-        print(f"  {target!r} -> {info['goalapi_name']} ({info['goalapi_country']}) [{info['match_confidence']}]")
+        print(f"\n{target!r} — current best guess: {info['goalapi_name']} ({info['goalapi_country']}) [{info['match_confidence']}]")
+        country_part = target.split(" - ", 1)[0]
+        all_country_leagues = [
+            l for l in lookup if country_matches(country_part, l["country"])
+        ]
+        print(f"  ALL {len(all_country_leagues)} leagues found for {country_part!r}:")
+        for l in all_country_leagues:
+            print(f"    id={l['id']}  name={l['name']!r}")
 
     print("\n\nFull mapping as Python dict (VERIFY flagged entries before using):\n")
     print("GOALAPI_LEAGUE_IDS = {")
