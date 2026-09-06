@@ -59,14 +59,28 @@ def main():
         print(f"Retrying in 5s (attempt {attempt}/3)...")
         time.sleep(5)
 
-    print("\n\n### 2. Leagues list (first page) — with retry ###")
+    print("\n\n### 2. Leagues list — searching for real domestic leagues ###")
     leagues = None
     for attempt in range(1, 4):
-        leagues = get("/leagues", params={"limit": 20, "offset": 0})
+        leagues = get("/leagues", params={"limit": 100, "offset": 0})
         if leagues is not None:
             break
         print(f"Retrying in 5s (attempt {attempt}/3)...")
         time.sleep(5)
+
+    target_names = ["Premier League", "Ligue 1", "Serie A", "Bundesliga", "La Liga"]
+    found_leagues = []
+
+    if leagues and leagues.get("data"):
+        for entry in leagues["data"]:
+            name = entry.get("name", "")
+            if any(t.lower() in name.lower() for t in target_names):
+                found_leagues.append(entry)
+                print(f"Found candidate: {entry.get('id')} — {name} ({entry.get('country')})")
+
+    if not found_leagues and leagues and leagues.get("data"):
+        print("No target-name matches in first 100 — using first entry as fallback.")
+        found_leagues = leagues["data"][:1]
 
     # If we got any fixtures, grab one real fixture ID and check its odds shape.
     if fixtures and fixtures.get("data"):
@@ -77,20 +91,28 @@ def main():
                 print(f"\n\n### 3. Odds for sample fixture id={sample_id} ###")
                 get(f"/fixtures/{sample_id}/odds")
 
-    # If we got any leagues, grab one real league ID and check standings shape.
-    if leagues and leagues.get("data"):
-        league_list = leagues["data"]
-        if isinstance(league_list, list) and league_list:
-            sample_league_id = league_list[0].get("id")
-            if sample_league_id:
-                print(f"\n\n### 4. Standings (combined) for league id={sample_league_id} ###")
-                get(f"/standings/{sample_league_id}")
+    # If we got any leagues, grab a REAL domestic league (not a random
+    # first entry, which was Copa America — no home/away splits for
+    # international group-stage football) and check standings shape.
+    if found_leagues:
+        for candidate in found_leagues[:2]:
+            sample_league_id = candidate.get("id")
+            print(f"\n\n### 4. Standings (combined) for {candidate.get('name')} id={sample_league_id} ###")
+            standings = get(f"/standings/{sample_league_id}")
 
-                print(f"\n\n### 5. Standings (home) for league id={sample_league_id} ###")
-                get(f"/standings/{sample_league_id}/home")
+            # Check if home/away fields are populated inline for this league.
+            if standings and standings.get("data"):
+                rows = standings["data"]
+                if isinstance(rows, list) and rows:
+                    first_row = rows[0]
+                    has_home_away = first_row.get("homeLeagueGF") is not None
+                    print(f"\n>>> Inline home/away fields populated: {has_home_away}")
 
-                print(f"\n\n### 6. Standings (away) for league id={sample_league_id} ###")
-                get(f"/standings/{sample_league_id}/away")
+            print(f"\n\n### 5. Standings (home) for {candidate.get('name')} id={sample_league_id} ###")
+            get(f"/standings/{sample_league_id}/home")
+
+            print(f"\n\n### 6. Standings (away) for {candidate.get('name')} id={sample_league_id} ###")
+            get(f"/standings/{sample_league_id}/away")
 
     print("\n\nDone.")
 
