@@ -1,0 +1,24 @@
+name: Build GOAL API League Mapping
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_mapping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run mapping builder
+        env:
+          GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+        run: python build_goalapi_mapping.py
