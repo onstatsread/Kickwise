@@ -5,6 +5,7 @@ GitHub Actions with GOAL_API_KEY as a repo secret (never hardcode it).
 """
 
 import os
+import time
 import json
 from datetime import date
 import requests
@@ -39,13 +40,33 @@ def get(path, params=None):
 
 
 def main():
+    print("### 0. API status (no auth needed) ###")
+    try:
+        resp = requests.get(f"{BASE_URL}/status", timeout=15)
+        print(f"Status: {resp.status_code}")
+        print(resp.text[:1000])
+    except Exception as e:
+        print(f"Status check failed: {e}")
+
     today = date.today().strftime("%Y-%m-%d")
 
-    print("### 1. Today's fixtures (all leagues) ###")
-    fixtures = get(f"/fixtures/date/{today}")
+    print("\n\n### 1. Today's fixtures (all leagues) — with retry ###")
+    fixtures = None
+    for attempt in range(1, 4):
+        fixtures = get(f"/fixtures/date/{today}")
+        if fixtures is not None:
+            break
+        print(f"Retrying in 5s (attempt {attempt}/3)...")
+        time.sleep(5)
 
-    print("\n\n### 2. Leagues list (first page) ###")
-    leagues = get("/leagues", params={"limit": 20, "offset": 0})
+    print("\n\n### 2. Leagues list (first page) — with retry ###")
+    leagues = None
+    for attempt in range(1, 4):
+        leagues = get("/leagues", params={"limit": 20, "offset": 0})
+        if leagues is not None:
+            break
+        print(f"Retrying in 5s (attempt {attempt}/3)...")
+        time.sleep(5)
 
     # If we got any fixtures, grab one real fixture ID and check its odds shape.
     if fixtures and fixtures.get("data"):
