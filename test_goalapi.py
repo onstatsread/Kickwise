@@ -52,12 +52,20 @@ def main():
 
     print("\n\n### 1. Today's fixtures (all leagues) — with retry ###")
     fixtures = None
-    for attempt in range(1, 4):
+    for attempt in range(1, 5):
         fixtures = get(f"/fixtures/date/{today}")
         if fixtures is not None:
+            print(f">>> Fixtures fetch SUCCEEDED on attempt {attempt}")
             break
-        print(f"Retrying in 5s (attempt {attempt}/3)...")
-        time.sleep(5)
+        print(f"Retrying in 6s (attempt {attempt}/4)...")
+        time.sleep(6)
+
+    if fixtures is None:
+        print(">>> Fixtures fetch FAILED after all retries")
+    elif fixtures.get("data"):
+        print(f"\n>>> FULL first fixture object:")
+        print(json.dumps(fixtures["data"][0], indent=2))
+        print(f"\n>>> Total fixtures today: {len(fixtures['data'])}")
 
     print("\n\n### 2. Leagues list — searching for real domestic leagues ###")
     leagues = None
@@ -88,8 +96,19 @@ def main():
         if isinstance(fixture_list, list) and fixture_list:
             sample_id = fixture_list[0].get("id") or fixture_list[0].get("matchId")
             if sample_id:
-                print(f"\n\n### 3. Odds for sample fixture id={sample_id} ###")
-                get(f"/fixtures/{sample_id}/odds")
+                print(f"\n\n### 3. Odds for sample fixture id={sample_id} — with retry ###")
+                odds = None
+                for attempt in range(1, 4):
+                    odds = get(f"/fixtures/{sample_id}/odds")
+                    if odds is not None:
+                        print(f">>> Odds fetch SUCCEEDED on attempt {attempt}")
+                        break
+                    print(f"Retrying in 5s (attempt {attempt}/3)...")
+                    time.sleep(5)
+
+                if odds and odds.get("data"):
+                    print(f"\n>>> FULL odds response:")
+                    print(json.dumps(odds["data"], indent=2))
 
     # If we got any leagues, grab a REAL domestic league (not a random
     # first entry, which was Copa America — no home/away splits for
