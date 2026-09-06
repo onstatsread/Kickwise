@@ -107,16 +107,6 @@ LEAGUE_CODES = {
     "USA - MLS": "usa",
     "USA - USL Championship": "usa2",
     "Venezuela - Liga FUTVE": "venezuela",
-
-    # Added from the 162-league GP >= 10 audit (Aug 2026) — checked via
-    # check_annabet_gp.py in batches of ~10-30 leagues after an earlier
-    # extraction bug (matching any table with a "GP" column instead of
-    # the exact standings-table header) was fixed. 27 of the 54 leagues
-    # that qualified were already covered above under a different
-    # AnnaBet display name/tier; these are the genuinely new ones.
-    # Argentina - Primera Division did NOT qualify this round (season
-    # just started) — deliberately left out until it naturally qualifies
-    # in a future re-check, per the same GP >= 10 standard.
     "England - Southern Football League": "englandsouthern",
     "Germany - Bundesliga": "germany",
     "Belgium - First Amateur Division": "belgium",
@@ -183,10 +173,6 @@ def get_prediction(league_code, home, away, retries=2):
     return None
 
 def build_pred1_text(pred):
-    """Builds the Prediction 1 string from a /predict response. Extracted
-    out of format_match_html() (which still calls this) so the new
-    Double Chance Signal 3 filter can also check Prediction 1's text
-    without duplicating this logic."""
     c120_match = lambda v: (v or "").lower().strip() == "match" or \
                            ("match" in (v or "").lower() and "not" not in (v or "").lower())
     d64_both = "both" in (pred.get("d64","") + pred.get("d64r","")).lower()
@@ -474,6 +460,55 @@ def meets_blog2_standard(pred):
     return True
 
 
+# ============================================================
+# NEW — shared extra gate applied to ALL THREE existing Double
+# Chance signals (1, 2, 3), on top of each signal's own existing
+# logic. Rules, as specified:
+#   1. If either home_v or away_v (value_pct) is greater than 65,
+#      the match is disqualified.
+#   2. Requires home_v and away_v to have opposite signs, with
+#      neither equal to 0 (one strictly positive, one strictly
+#      negative) — this is what makes "the positive one divided by
+#      the negative one" meaningful in the first place.
+#   3. Ratio = positive_value / abs(negative_value). If that ratio is
+#      greater than 1.7, disqualified; otherwise the match qualifies
+#      (passes this filter).
+# ============================================================
+def passes_double_chance_extra_filter(value_pct):
+    if not value_pct:
+        return False
+
+    home_v = value_pct.get("home")
+    away_v = value_pct.get("away")
+
+    if home_v is None or away_v is None:
+        return False
+
+    # Rule 1
+    if home_v > 65 or away_v > 65:
+        return False
+
+    # Rule 2 — one strictly positive, one strictly negative, neither zero.
+    if home_v == 0 or away_v == 0:
+        return False
+    if (home_v > 0) == (away_v > 0):
+        return False
+
+    positive_val = home_v if home_v > 0 else away_v
+    negative_val = home_v if home_v < 0 else away_v
+
+    ratio = positive_val / abs(negative_val)
+
+    if ratio <= 0:
+        return False
+
+    # Rule 3
+    if ratio > 1.7:
+        return False
+
+    return True
+
+
 def check_double_chance_signal(pred):
     # NEW condition — the model's H/D/A odds must all be no bigger than
     # 15 for the match to qualify at all, checked before the value-pct
@@ -536,20 +571,6 @@ def refine_double_chance_signal(pred, side):
         return f"{side_label} win or draw"
 
 
-# NEW — "Double Chance Signal 2". Fully independent of every other filter
-# above (blog 2, double chance signal 1) — checked across ALL matches and
-# only ever produces its own, separate, third Telegram notification.
-# A match qualifies only if ALL of the following hold:
-#   1. The MODEL's Home odd and Away odd (not Draw) are both within
-#      1.5-4.00 inclusive — excludes very short-priced/near-certain or
-#      very long-shot outcomes on either side.
-#   2. home_v and away_v (value_pct) have opposite signs — one must be
-#      negative and the other positive; both-negative or both-positive
-#      does not qualify.
-#   3. Whichever side (home/away) is negative is checked against
-#      value_signal['decision']: if that side's name appears in the
-#      decision string, the decision itself is returned as the result.
-#      If not, no signal.
 def check_double_chance_signal_2(pred):
     model_odds = pred.get("odds") or {}
     home_odds = model_odds.get("home_odds")
@@ -586,27 +607,6 @@ def check_double_chance_signal_2(pred):
         return decision if "away" in decision_lower else None
 
 
-# NEW — "Double Chance Signal 3". Fully independent of every filter
-# above (blog 2, double chance signal 1, double chance signal 2) —
-# checked across ALL matches and only ever produces its own, separate,
-# fourth Telegram notification.
-#
-# Logic:
-#   Step 4 (gate, checked first): model H/D/A odds must ALL be <= 15,
-#   or the match is disqualified immediately.
-#
-#   Step 2: value_signal['decision'] is checked for "home" or "away" —
-#   whichever appears becomes the candidate side. If neither appears,
-#   no signal.
-#
-#   Steps 1 & 3 (confirmation): the candidate side's name must appear
-#   in AT LEAST ONE of Prediction 1, Prediction 2, or Prediction 3
-#   (any one match is enough — they don't all need to agree).
-#
-#   Final label: compare the candidate side's model odd against the
-#   OPPOSITE side's model odd (home vs away, never draw):
-#     selected odd < opposite odd  -> just the side name ("Home"/"Away")
-#     selected odd > opposite odd  -> "{side} 2-handicap"
 def check_double_chance_signal_3(pred):
     # Step 4 gate — must pass before anything else is checked.
     model_odds = pred.get("odds") or {}
@@ -721,8 +721,8 @@ def main():
     blog2_current_time = None
     blog2_notify_cards = []
     dc_notify_cards = []
-    dc2_notify_cards = []  # NEW — per-match info for the double-chance signal 2 notification
-    dc3_notify_cards = []  # NEW — per-match info for the double-chance signal 3 notification
+    dc2_notify_cards = []  # per-match info for the double-chance signal 2 notification
+    dc3_notify_cards = []  # per-match info for the double-chance signal 3 notification
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -766,11 +766,12 @@ def main():
                     f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}"
                 )
 
+            value_pct = pred.get("value_pct") or {}
+
             dc_side = check_double_chance_signal(pred)
             if dc_side:
                 dc_signal = refine_double_chance_signal(pred, dc_side)
-                if dc_signal:
-                    value_pct = pred.get("value_pct") or {}
+                if dc_signal and passes_double_chance_extra_filter(value_pct):
                     dc_notify_cards.append(
                         f"🕐 {match_time} | {m['league_name']}\n"
                         f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
@@ -780,12 +781,8 @@ def main():
                         f"Away {value_pct.get('away')}%"
                     )
 
-            # NEW — "Double Chance Signal 2" check. Fully independent of
-            # every filter above — runs on every match and only ever
-            # produces its own third, separate Telegram notification.
             dc2_result = check_double_chance_signal_2(pred)
-            if dc2_result:
-                value_pct = pred.get("value_pct") or {}
+            if dc2_result and passes_double_chance_extra_filter(value_pct):
                 model_odds = pred.get("odds") or {}
                 dc2_notify_cards.append(
                     f"🕐 {match_time} | {m['league_name']}\n"
@@ -797,11 +794,8 @@ def main():
                     f"Away {value_pct.get('away')}%"
                 )
 
-            # NEW — "Double Chance Signal 3" check. Fully independent of
-            # every filter above — runs on every match and only ever
-            # produces its own fourth, separate Telegram notification.
             dc3_result = check_double_chance_signal_3(pred)
-            if dc3_result:
+            if dc3_result and passes_double_chance_extra_filter(value_pct):
                 model_odds = pred.get("odds") or {}
                 value_signal = pred.get("value_signal") or {}
                 dc3_notify_cards.append(
@@ -868,11 +862,6 @@ def main():
     else:
         print("\nℹ️ Double chance signal: no matches flagged today.")
 
-    # NEW — third, fully independent Telegram notification for "Double
-    # Chance Signal 2". Doesn't post to either blog, and doesn't depend
-    # on blog 2 or the first double chance signal in any way — runs
-    # regardless of BLOG2_ENABLED, and fires whenever at least one match
-    # anywhere in today's run matched this signal's criteria.
     if dc2_notify_cards:
         dc2_cards_text = "\n\n".join(dc2_notify_cards)
         dc2_message = (
@@ -884,11 +873,6 @@ def main():
     else:
         print("\nℹ️ Double chance signal 2: no matches flagged today.")
 
-    # NEW — fourth, fully independent Telegram notification for "Double
-    # Chance Signal 3". Doesn't post to either blog, and doesn't depend
-    # on blog 2 or either earlier double chance signal in any way — runs
-    # regardless of BLOG2_ENABLED, and fires whenever at least one match
-    # anywhere in today's run matched this signal's criteria.
     if dc3_notify_cards:
         dc3_cards_text = "\n\n".join(dc3_notify_cards)
         dc3_message = (
