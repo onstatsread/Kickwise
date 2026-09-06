@@ -89,6 +89,43 @@ def normalize(name):
     return " ".join(name.lower().replace(".", "").split())
 
 
+# Words that indicate a DIFFERENT competition type than a normal
+# top-tier or clearly-named domestic league — a candidate containing
+# one of these is rejected UNLESS the target name also contains it
+# (e.g. target "China - League One" legitimately contains "League",
+# but "Chile - Liga de Primera" should never match "Primera B").
+DISQUALIFYING_WORDS = [
+    "cup", "reserve", "youth", "friendly", "supercup", "super cup",
+    "women", "u21", "u20", "u19", "u23", "academy", "trophy",
+]
+
+# Country name normalization overrides — GOAL API uses different
+# country naming than Kickwise's LEAGUE_CODES in some cases.
+COUNTRY_ALIASES = {
+    "ireland": "republic of ireland",
+    "south korea": "korea republic",
+    "taiwan": "chinese taipei",
+    "china": "china pr",
+}
+
+
+def country_matches(target_country, candidate_country):
+    t = normalize(target_country)
+    c = normalize(candidate_country)
+    t_alias = COUNTRY_ALIASES.get(t, t)
+    return t == c or t_alias == c or t in c or c in t
+
+
+def has_disqualifying_word(candidate_name, target_league_name):
+    cand_norm = normalize(candidate_name)
+    target_norm = normalize(target_league_name)
+
+    for word in DISQUALIFYING_WORDS:
+        if word in cand_norm and word not in target_norm:
+            return True
+    return False
+
+
 def main():
     print("Fetching full GOAL API leagues list...")
     all_leagues = fetch_all_leagues()
@@ -98,64 +135,81 @@ def main():
         print("No leagues fetched — aborting.")
         return
 
-    # Build a lookup: normalized "country name" -> list of (id, full_name, country)
     lookup = []
     for lg in all_leagues:
         name = lg.get("name", "")
         country = (lg.get("country") or {}).get("name") or lg.get("countryName", "")
-        lookup.append({
-            "id": lg.get("id"),
-            "name": name,
-            "country": country,
-            "combined": f"{country} {name}",
-        })
+        lookup.append({"id": lg.get("id"), "name": name, "country": country})
 
     mapping = {}
     unmatched = []
+    flagged_for_review = []
 
     for target in TARGET_LEAGUES:
-        # target format: "Country - League"
         if " - " not in target:
             unmatched.append(target)
             continue
 
         country_part, league_part = target.split(" - ", 1)
-        target_norm = normalize(f"{country_part} {league_part}")
 
-        # Try exact-ish match first: country appears AND league name is
-        # a close match.
-        candidates = [
-            l for l in lookup
-            if normalize(country_part) in normalize(l["country"])
-            or normalize(country_part) in normalize(l["name"])
+        # HARD requirement: country must match. This alone eliminates
+        # the Turkmenistan-Youth-League-style cross-country errors.
+        country_candidates = [
+            l for l in lookup if country_matches(country_part, l["country"])
         ]
 
-        if not candidates:
-            candidates = lookup  # fall back to searching everything
+        if not country_candidates:
+            unmatched.append(f"{target}  (NO COUNTRY MATCH for {country_part!r})")
+            continue
 
-        best = difflib.get_close_matches(
-            target_norm,
-            [normalize(c["combined"]) for c in candidates],
-            n=1,
-            cutoff=0.5,
-        )
+        # Reject candidates with disqualifying words (cup/reserve/
+        # youth/wrong-tier suffixes) unless the target itself implies
+        # that tier/type.
+        clean_candidates = [
+            l for l in country_candidates
+            if not has_disqualifying_word(l["name"], league_part)
+        ]
 
-        if best:
-            idx = [normalize(c["combined"]) for c in candidates].index(best[0])
-            match = candidates[idx]
-            mapping[target] = {
-                "goalapi_id": match["id"],
-                "goalapi_name": match["name"],
-                "goalapi_country": match["country"],
-            }
-        else:
-            unmatched.append(target)
+        if not clean_candidates:
+            unmatched.append(f"{target}  (only cup/reserve/youth matches found in {country_part})")
+            continue
+
+        # Rank remaining candidates by name similarity to the league
+        # part only (not combined with country, which was already
+        # filtered on above).
+        league_norm = normalize(league_part)
+        scored = []
+        for l in clean_candidates:
+            ratio = difflib.SequenceMatcher(
+                None, league_norm, normalize(l["name"])
+            ).ratio()
+            scored.append((ratio, l))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        best_ratio, best_match = scored[0]
+
+        entry = {
+            "goalapi_id": best_match["id"],
+            "goalapi_name": best_match["name"],
+            "goalapi_country": best_match["country"],
+            "match_confidence": round(best_ratio, 2),
+        }
+
+        mapping[target] = entry
+
+        # Flag anything below a reasonable confidence for manual review
+        # rather than trusting it silently.
+        if best_ratio < 0.6:
+            flagged_for_review.append((target, entry))
 
     print(f"\n{'=' * 60}")
     print(f"MATCHED: {len(mapping)} / {len(TARGET_LEAGUES)}")
     print("=" * 60)
     for target, info in mapping.items():
-        print(f"  {target!r:45s} -> {info['goalapi_id']} ({info['goalapi_country']} / {info['goalapi_name']})")
+        flag = "  ⚠️ LOW CONFIDENCE — VERIFY" if info["match_confidence"] < 0.6 else ""
+        print(f"  {target!r:45s} -> {info['goalapi_id']} "
+              f"({info['goalapi_country']} / {info['goalapi_name']}) "
+              f"[{info['match_confidence']}]{flag}")
 
     print(f"\n{'=' * 60}")
     print(f"UNMATCHED: {len(unmatched)}")
@@ -163,10 +217,17 @@ def main():
     for target in unmatched:
         print(f"  {target}")
 
-    print("\n\nFull mapping as Python dict (paste into a module):\n")
+    print(f"\n{'=' * 60}")
+    print(f"FLAGGED FOR MANUAL REVIEW (confidence < 0.6): {len(flagged_for_review)}")
+    print("=" * 60)
+    for target, info in flagged_for_review:
+        print(f"  {target!r} -> {info['goalapi_name']} ({info['goalapi_country']}) [{info['match_confidence']}]")
+
+    print("\n\nFull mapping as Python dict (VERIFY flagged entries before using):\n")
     print("GOALAPI_LEAGUE_IDS = {")
     for target, info in mapping.items():
-        print(f'    {target!r}: {info["goalapi_id"]!r},')
+        comment = f"  # ⚠️ VERIFY: {info['goalapi_name']}" if info["match_confidence"] < 0.6 else ""
+        print(f'    {target!r}: {info["goalapi_id"]!r},{comment}')
     print("}")
 
 
