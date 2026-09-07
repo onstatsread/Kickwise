@@ -26,11 +26,18 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent=USER_AGENT)
-        page = context.new_page()
 
         for i, name in enumerate(ODDSBOOK_LEAGUES, start=1):
             url = oddsbook_league_url(name)
+
+            # Fresh context PER CHECK — reusing one context across many
+            # rapid navigations gets flagged as bot-like by Cloudflare
+            # after the first request (confirmed 2026-09-07: request #1
+            # got a clean 404, every request after that in the same
+            # session got challenged). A fresh context per check avoids
+            # this at the cost of more overhead.
+            context = browser.new_context(user_agent=USER_AGENT)
+            page = context.new_page()
 
             try:
                 resp = page.goto(url, timeout=20000, wait_until="domcontentloaded")
@@ -51,7 +58,8 @@ def main():
                 broken.append((name, url, "exception", str(e)))
                 print(f"[{i}/{len(ODDSBOOK_LEAGUES)}] ERROR {name!r} -> {url} -> {e}")
 
-            time.sleep(1.5)  # gentle pacing to avoid Cloudflare rate-suspicion
+            context.close()
+            time.sleep(2)  # gentle pacing between fresh sessions
 
         browser.close()
 
