@@ -97,16 +97,17 @@ def main():
         distinct_markets = set(b.get("data-market") for b in market_buttons)
         print(f"\nDistinct data-market values found: {distinct_markets}")
 
-        # Dump context around every "2.5" occurrence to see the real
-        # markup — text is present but not tagged as a market yet.
-        print(f"\n--- Context around '2.5' occurrences in raw HTML ---")
+        # Dump context around every "Over/Under" occurrence specifically
+        # — the earlier "2.5" search only hit irrelevant SVG icon path
+        # coordinate data, not the actual market.
+        print(f"\n--- Context around 'Over/Under' occurrences in raw HTML ---")
         idx = 0
         count = 0
         while count < 5:
-            idx = match_html.find("2.5", idx)
+            idx = match_html.find("Over/Under", idx)
             if idx == -1:
                 break
-            context_str = match_html[max(0, idx - 300):idx + 300]
+            context_str = match_html[max(0, idx - 500):idx + 1500]
             print(f"\n>>> Occurrence {count + 1} at index {idx}:\n{context_str}\n")
             idx += 1
             count += 1
