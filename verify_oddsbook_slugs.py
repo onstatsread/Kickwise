@@ -1,17 +1,13 @@
 """
-Verifies all 61 Oddsbook league slugs in oddsbook_leagues.py against
-live data — using Playwright (bundled Chromium is enough, confirmed
-working for Oddsbook's regular pages earlier today; only the hidden
-standings BFF API needed the stronger real-Chrome-channel treatment).
-
-Plain `requests` gets Cloudflare-blocked on Oddsbook (confirmed
-earlier), so this REPLACES oddsbook_leagues.py's original
-verify_all_slugs() (which used requests) for this one-off check.
+Round 2 — corrected slug guesses for the 24 leagues that 404'd in
+round 1, based on GOAL API's already manually-verified league names
+(goalapi_leagues.py) — both platforms likely use similar English
+branding for these leagues.
 """
 
 import time
 from playwright.sync_api import sync_playwright
-from oddsbook_leagues import ODDSBOOK_LEAGUES, oddsbook_league_url
+from oddsbook_leagues import oddsbook_league_url
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -19,23 +15,45 @@ USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
+# (Kickwise name, country_slug, corrected league_slug guess)
+ROUND_2_CANDIDATES = [
+    ("Belarus - Vysshaya Liga", "belarus", "premier-league"),
+    ("Canada - Premier League", "canada", "canadian-premier-league"),
+    ("Chile - Liga de Primera", "chile", "primera-division"),
+    ("Faroe Islands - Premier League", "faroe-islands", "meistaradeildin"),
+    ("Iceland - Besta deild", "iceland", "besta-deild-karla"),
+    ("Norway - 1st Division", "norway", "1-division"),
+    ("Paraguay - Primera Div.", "paraguay", "division-profesional"),
+    ("Peru - Liga 1", "peru", "primera-division"),
+    ("Uruguay - Liga AUF", "uruguay", "primera-division"),
+    ("USA - MLS", "usa", "major-league-soccer"),
+    ("Venezuela - Liga FUTVE", "venezuela", "primera-division"),
+    ("England - Southern Football League", "england", "southern-league"),
+    ("Bolivia - LFPB", "bolivia", "primera-division"),
+    ("Estonia - Esiliiga", "estonia", "esiliiga-a"),
+    ("Iceland - Division 2", "iceland", "2-deild"),
+    ("India - Super League", "india", "indian-super-league"),
+    ("Jamaica - National Premier League", "jamaica", "premier-league"),
+    ("Kenya - Premier League", "kenya", "fkf-premier-league"),
+    ("Morocco - Botola", "morocco", "botola-pro"),
+    ("Singapore - S.League", "singapore", "premier-league"),
+    ("Thailand - League 1", "thailand", "thai-league-1"),
+    ("Vietnam - V.League 1", "vietnam", "v-league-1"),
+    ("Turkmenistan - Higher League", "turkmenistan", "yokary-liga"),
+    ("Tajikistan - Higher League", "tajikistan", "vysshaya-liga"),
+]
+
 
 def main():
     ok = []
-    broken = []
+    still_broken = []
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        for i, name in enumerate(ODDSBOOK_LEAGUES, start=1):
-            url = oddsbook_league_url(name)
+        for i, (name, country_slug, league_slug) in enumerate(ROUND_2_CANDIDATES, start=1):
+            url = f"https://oddsbook.com/football/{country_slug}/{league_slug}/"
 
-            # Fresh context PER CHECK — reusing one context across many
-            # rapid navigations gets flagged as bot-like by Cloudflare
-            # after the first request (confirmed 2026-09-07: request #1
-            # got a clean 404, every request after that in the same
-            # session got challenged). A fresh context per check avoids
-            # this at the cost of more overhead.
             context = browser.new_context(user_agent=USER_AGENT)
             page = context.new_page()
 
@@ -48,31 +66,32 @@ def main():
                 is_404 = status == 404 or "404" in title
 
                 if status == 200 and not is_challenge and not is_404:
-                    ok.append((name, url))
-                    print(f"[{i}/{len(ODDSBOOK_LEAGUES)}] OK   {name!r} -> {url} (title: {title!r})")
+                    ok.append((name, country_slug, league_slug, title))
+                    print(f"[{i}/{len(ROUND_2_CANDIDATES)}] OK   {name!r} -> {url} (title: {title!r})")
                 else:
-                    broken.append((name, url, status, title))
-                    print(f"[{i}/{len(ODDSBOOK_LEAGUES)}] FAIL {name!r} -> {url} (status={status}, title={title!r})")
+                    still_broken.append((name, country_slug, league_slug, status, title))
+                    print(f"[{i}/{len(ROUND_2_CANDIDATES)}] FAIL {name!r} -> {url} (status={status}, title={title!r})")
 
             except Exception as e:
-                broken.append((name, url, "exception", str(e)))
-                print(f"[{i}/{len(ODDSBOOK_LEAGUES)}] ERROR {name!r} -> {url} -> {e}")
+                still_broken.append((name, country_slug, league_slug, "exception", str(e)))
+                print(f"[{i}/{len(ROUND_2_CANDIDATES)}] ERROR {name!r} -> {url} -> {e}")
 
             context.close()
-            time.sleep(2)  # gentle pacing between fresh sessions
+            time.sleep(2)
 
         browser.close()
 
     print(f"\n{'=' * 60}")
-    print(f"OK: {len(ok)} / {len(ODDSBOOK_LEAGUES)}")
+    print(f"NOW OK: {len(ok)} / {len(ROUND_2_CANDIDATES)}")
     print("=" * 60)
+    for name, country_slug, league_slug, title in ok:
+        print(f'    {name!r}: ("{country_slug}", "{league_slug}"),  # {title}')
 
     print(f"\n{'=' * 60}")
-    print(f"BROKEN: {len(broken)}")
+    print(f"STILL BROKEN: {len(still_broken)}")
     print("=" * 60)
-    for name, url, status, title in broken:
-        print(f"  {name!r}: {url}")
-        print(f"    status={status}, title={title!r}")
+    for name, country_slug, league_slug, status, title in still_broken:
+        print(f"  {name!r} -> {country_slug}/{league_slug} (status={status}, title={title!r})")
 
 
 if __name__ == "__main__":
