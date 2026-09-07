@@ -16,31 +16,12 @@ USER_AGENT = (
 )
 
 # (Kickwise name, country_slug, corrected league_slug guess)
-ROUND_2_CANDIDATES = [
-    ("Belarus - Vysshaya Liga", "belarus", "premier-league"),
-    ("Canada - Premier League", "canada", "canadian-premier-league"),
-    ("Chile - Liga de Primera", "chile", "primera-division"),
-    ("Faroe Islands - Premier League", "faroe-islands", "meistaradeildin"),
-    ("Iceland - Besta deild", "iceland", "besta-deild-karla"),
-    ("Norway - 1st Division", "norway", "1-division"),
-    ("Paraguay - Primera Div.", "paraguay", "division-profesional"),
-    ("Peru - Liga 1", "peru", "primera-division"),
-    ("Uruguay - Liga AUF", "uruguay", "primera-division"),
-    ("USA - MLS", "usa", "major-league-soccer"),
-    ("Venezuela - Liga FUTVE", "venezuela", "primera-division"),
-    ("England - Southern Football League", "england", "southern-league"),
-    ("Bolivia - LFPB", "bolivia", "primera-division"),
-    ("Estonia - Esiliiga", "estonia", "esiliiga-a"),
-    ("Iceland - Division 2", "iceland", "2-deild"),
-    ("India - Super League", "india", "indian-super-league"),
-    ("Jamaica - National Premier League", "jamaica", "premier-league"),
-    ("Kenya - Premier League", "kenya", "fkf-premier-league"),
-    ("Morocco - Botola", "morocco", "botola-pro"),
-    ("Singapore - S.League", "singapore", "premier-league"),
-    ("Thailand - League 1", "thailand", "thai-league-1"),
-    ("Vietnam - V.League 1", "vietnam", "v-league-1"),
-    ("Turkmenistan - Higher League", "turkmenistan", "yokary-liga"),
-    ("Tajikistan - Higher League", "tajikistan", "vysshaya-liga"),
+ROUND_3_CANDIDATES = [
+    ("Iceland - Besta deild", "iceland", "urvalsdeild"),
+    ("Iceland - Besta deild (alt)", "iceland", "besta-deild-menn"),
+    ("Paraguay - Primera Div.", "paraguay", "primera-division"),
+    ("Uruguay - Liga AUF", "uruguay", "division-profesional"),
+    ("Turkmenistan - Higher League", "turkmenistan", "higher-league"),
 ]
 
 
@@ -51,7 +32,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        for i, (name, country_slug, league_slug) in enumerate(ROUND_2_CANDIDATES, start=1):
+        for i, (name, country_slug, league_slug) in enumerate(ROUND_3_CANDIDATES, start=1):
             url = f"https://oddsbook.com/football/{country_slug}/{league_slug}/"
 
             context = browser.new_context(user_agent=USER_AGENT)
@@ -67,14 +48,14 @@ def main():
 
                 if status == 200 and not is_challenge and not is_404:
                     ok.append((name, country_slug, league_slug, title))
-                    print(f"[{i}/{len(ROUND_2_CANDIDATES)}] OK   {name!r} -> {url} (title: {title!r})")
+                    print(f"[{i}/{len(ROUND_3_CANDIDATES)}] OK   {name!r} -> {url} (title: {title!r})")
                 else:
                     still_broken.append((name, country_slug, league_slug, status, title))
-                    print(f"[{i}/{len(ROUND_2_CANDIDATES)}] FAIL {name!r} -> {url} (status={status}, title={title!r})")
+                    print(f"[{i}/{len(ROUND_3_CANDIDATES)}] FAIL {name!r} -> {url} (status={status}, title={title!r})")
 
             except Exception as e:
                 still_broken.append((name, country_slug, league_slug, "exception", str(e)))
-                print(f"[{i}/{len(ROUND_2_CANDIDATES)}] ERROR {name!r} -> {url} -> {e}")
+                print(f"[{i}/{len(ROUND_3_CANDIDATES)}] ERROR {name!r} -> {url} -> {e}")
 
             context.close()
             time.sleep(2)
@@ -82,7 +63,7 @@ def main():
         browser.close()
 
     print(f"\n{'=' * 60}")
-    print(f"NOW OK: {len(ok)} / {len(ROUND_2_CANDIDATES)}")
+    print(f"NOW OK: {len(ok)} / {len(ROUND_3_CANDIDATES)}")
     print("=" * 60)
     for name, country_slug, league_slug, title in ok:
         print(f'    {name!r}: ("{country_slug}", "{league_slug}"),  # {title}')
