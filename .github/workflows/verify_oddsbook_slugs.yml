@@ -1,0 +1,25 @@
+name: Verify Oddsbook Slugs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify_slugs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Run slug verification
+        run: python verify_oddsbook_slugs.py
