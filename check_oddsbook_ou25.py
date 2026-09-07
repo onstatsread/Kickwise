@@ -97,6 +97,43 @@ def main():
         distinct_markets = set(b.get("data-market") for b in market_buttons)
         print(f"\nDistinct data-market values found: {distinct_markets}")
 
+        # Dump context around every "2.5" occurrence to see the real
+        # markup — text is present but not tagged as a market yet.
+        print(f"\n--- Context around '2.5' occurrences in raw HTML ---")
+        idx = 0
+        count = 0
+        while count < 5:
+            idx = match_html.find("2.5", idx)
+            if idx == -1:
+                break
+            context_str = match_html[max(0, idx - 300):idx + 300]
+            print(f"\n>>> Occurrence {count + 1} at index {idx}:\n{context_str}\n")
+            idx += 1
+            count += 1
+
+        # Look for tab-like buttons within the Betting Odds section —
+        # same "ep-tab" pattern found earlier on league pages — since
+        # O/U is likely a separate market tab, not yet clicked.
+        betting_odds_section = None
+        for el in match_soup.find_all(attrs={"aria-label": "Betting Odds"}):
+            betting_odds_section = el
+            break
+
+        if betting_odds_section:
+            print(f"\n--- Betting Odds section HTML (first 4000 chars) ---")
+            print(str(betting_odds_section)[:4000])
+
+        # Try clicking any market-tab buttons found within that section.
+        try:
+            market_tabs = page2.locator("[aria-label='Betting Odds'] button")
+            tab_count = market_tabs.count()
+            print(f"\nFound {tab_count} buttons within Betting Odds section")
+            for i in range(min(tab_count, 10)):
+                tab_text = market_tabs.nth(i).inner_text().strip()
+                print(f"  Button {i}: {tab_text!r}")
+        except Exception as e:
+            print(f"Could not enumerate Betting Odds buttons: {e}")
+
         browser.close()
 
 
