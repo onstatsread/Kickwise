@@ -77,6 +77,18 @@ def _norm_team(name):
     return " ".join(str(name or "").lower().split()).strip()
 
 
+def _team_names_match(a, b):
+    """Same fuzzy-matching approach as oddstorm_odds.py — exact match
+    first, falling back to substring containment for cross-provider
+    naming differences (e.g. "Vila Nova" vs "Vila Nova FC")."""
+    a, b = _norm_team(a), _norm_team(b)
+    if a == b:
+        return True
+    if len(a) >= 4 and len(b) >= 4 and (a in b or b in a):
+        return True
+    return False
+
+
 def _float(value):
     if value is None:
         return None
@@ -367,14 +379,11 @@ def get_oddsbook_market_odds(home, away, target_date=None):
 
     by_league = get_fixtures_for_day(target_date)
 
-    target_home = _norm_team(home)
-    target_away = _norm_team(away)
-
     for league_data in by_league.values():
         for m in league_data["matches"]:
-            if _norm_team(m["home"]) != target_home:
+            if not _team_names_match(m["home"], home):
                 continue
-            if _norm_team(m["away"]) != target_away:
+            if not _team_names_match(m["away"], away):
                 continue
 
             if m.get("home_odds") is None:
