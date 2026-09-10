@@ -1941,7 +1941,7 @@ async def predict_combined_test(
 
     print(f"[combined-test] run_model({home} - {away}) took {time.time() - t0:.1f}s")
 
-    odds_result = get_combined_market_odds(league, home, away, target_date)
+    odds_result = get_combined_market_odds(league, h, a, target_date)
     market_odds = odds_result.get("market_odds")
     market_ou25 = odds_result.get("market_ou25")
     odds_source = odds_result.get("source")
