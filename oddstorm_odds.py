@@ -55,6 +55,22 @@ def _norm_team(name):
     return " ".join(str(name or "").lower().split()).strip()
 
 
+def _team_names_match(a, b):
+    """
+    Exact match first; falls back to substring containment (same
+    technique app.py's resolve_team() uses for AnnaBet/GOAL API stats)
+    since different odds providers abbreviate team names differently
+    — e.g. GOAL API's "Vila Nova" vs a provider's "Vila Nova FC".
+    Requires at least 4 chars to avoid short-name false positives.
+    """
+    a, b = _norm_team(a), _norm_team(b)
+    if a == b:
+        return True
+    if len(a) >= 4 and len(b) >= 4 and (a in b or b in a):
+        return True
+    return False
+
+
 def _to_float(value):
     try:
         f = float(value)
@@ -273,13 +289,10 @@ def get_market_odds(home, away):
 
     by_league = get_all_matches()
 
-    target_home = _norm_team(home)
-    target_away = _norm_team(away)
-
     for m in _iter_all_matches(by_league):
-        if _norm_team(m["home"]) != target_home:
+        if not _team_names_match(m["home"], home):
             continue
-        if _norm_team(m["away"]) != target_away:
+        if not _team_names_match(m["away"], away):
             continue
 
         if m.get("home_odds") is not None:
