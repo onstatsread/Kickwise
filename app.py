@@ -2032,6 +2032,291 @@ def fixtures_oddsbook_test(date_str: str = Query(None, alias="date")):
     return {"date": str(target), "league_count": len(by_league), "leagues": by_league}
 
 
+@app.get("/fixtures-v2")
+def fixtures_v2(date_str: str = Query(None, alias="date")):
+    """
+    Production fixtures endpoint for the new GOAL-API-based pipeline.
+
+    Unlike the legacy /fixtures (one AnnaBet call PER LEAGUE), this
+    makes exactly ONE call to GOAL API's whole-day fixtures endpoint,
+    then filters down to just the 61 leagues in GOALAPI_LEAGUE_IDS.
+
+    Returns:
+        {
+            "date": "2026-09-11",
+            "leagues": {
+                "Brazil - Serie B": [
+                    {"home": "Sport Recife", "away": "Ponte Preta",
+                     "time": "00:30", "status": "SCHEDULED",
+                     "kickoff": "...", "fixture_id": "..."},
+                    ...
+                ],
+                ...
+            }
+        }
+
+    daily_predictions_v2.py calls this ONCE per day instead of once
+    PER LEAGUE — a major reduction in both AnnaBet-style API calls
+    and total run time.
+    """
+    target = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
+    date_s = str(target)
+
+    all_fixtures = fetch_fixtures_for_day(date_s)
+
+    # Reverse-lookup: GOAL API league_id -> Kickwise "Country - League" name
+    id_to_kickwise_name = {v: k for k, v in GOALAPI_LEAGUE_IDS.items()}
+
+    by_league = {}
+
+    for fx in all_fixtures:
+        league_id = fx.get("league_id")
+        kickwise_name = id_to_kickwise_name.get(league_id)
+
+        if not kickwise_name:
+            continue  # not one of our 61 active leagues
+
+        by_league.setdefault(kickwise_name, []).append({
+            "home": fx.get("home"),
+            "away": fx.get("away"),
+            "time": fx.get("kickoff"),
+            "status": fx.get("status"),
+            "fixture_id": fx.get("id"),
+        })
+
+    return {"date": date_s, "leagues": by_league}
+
+
+@app.get("/predict-v2")
+async def predict_v2(
+    league: str = Query(..., description="Kickwise 'Country - League' name, e.g. 'Brazil - Serie B'"),
+    home: str = Query(...),
+    away: str = Query(...),
+    date_str: str = Query(None, alias="date"),
+):
+    """
+    Production predict endpoint for the new GOAL-API-based pipeline.
+    Returns the SAME field shape as the legacy /predict endpoint
+    (d70, b120, c120, odds, market_odds, value_pct, value_signal,
+    ou25, market_ou25, ou25_value_pct, ou25_value_signal,
+    prediction_3, plus the *r "reverse" fields) so daily_predictions.py
+    can switch endpoints without changing any of its formatting or
+    signal-detection logic.
+
+    Data sources: GOAL API for stats (combined + home/away splits in
+    one call), OddStorm-primary/Oddsbook-fallback for market odds.
+    """
+    t0 = time.time()
+
+    target_date = (
+        _datetime.strptime(date_str, "%Y-%m-%d").date()
+        if date_str else date.today()
+    )
+
+    league_id = GOALAPI_LEAGUE_IDS.get(league)
+    if not league_id:
+        return {
+            "error": f"No GOAL API league_id mapped for {league!r}.",
+            "d70": "N/A", "b120": "N/A", "c120": "N/A",
+            "odds": None, "ou25": None,
+        }
+
+    team_data = fetch_team_stats(league_id)
+
+    resolved_h = resolve_team(home, team_data)
+    resolved_a = resolve_team(away, team_data)
+
+    h = resolved_h or home
+    a = resolved_a or away
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f1 = executor.submit(run_model, h, a, team_data)
+        f2 = executor.submit(run_model, a, h, team_data)
+        r1 = f1.result()
+        r2 = f2.result()
+
+    print(f"[v2] run_model({home} - {away}) took {time.time() - t0:.1f}s")
+
+    odds_result = get_combined_market_odds(league, h, a, target_date)
+    market_odds = odds_result.get("market_odds")
+    market_ou25 = odds_result.get("market_ou25")
+
+    print(f"[v2] odds source={odds_result.get('source')} HDA={market_odds} OU25={market_ou25}")
+
+    # ========================================================
+    # H/D/A VALUE + DECISION — identical logic to legacy /predict
+    # ========================================================
+
+    value_pct = None
+    value_signal = None
+    model_odds = r1.get("odds")
+
+    if model_odds and market_odds:
+        def pct_diff(market_o, model_o):
+            if not model_o or not market_o:
+                return None
+            return round(((market_o - model_o) / model_o) * 100, 1)
+
+        home_v = pct_diff(market_odds.get("home_odds"), model_odds.get("home_odds"))
+        draw_v = pct_diff(market_odds.get("draw_odds"), model_odds.get("draw_odds"))
+        away_v = pct_diff(market_odds.get("away_odds"), model_odds.get("away_odds"))
+
+        value_pct = {"home": home_v, "draw": draw_v, "away": away_v}
+
+        decision = ""
+        under_flag = ""
+
+        if home_v is not None and away_v is not None:
+            total_v = round(sum(x for x in [home_v, draw_v, away_v] if x is not None), 1)
+            value_pct["total"] = total_v
+
+            abs_sum = abs(home_v) + abs(draw_v or 0) + abs(away_v)
+            signal = ""
+
+            if abs_sum > 0:
+                home_share = abs(home_v) / abs_sum * 100
+                away_share = abs(away_v) / abs_sum * 100
+                share_diff = home_share - away_share
+                value_pct["share_diff"] = round(share_diff, 1)
+
+                if share_diff > 0:
+                    signal = "Away"
+                elif share_diff < 0:
+                    signal = "Home"
+
+            if signal == "Away" and away_v < 0:
+                decision = "Away"
+            elif signal == "Home" and home_v < 0:
+                decision = "Home"
+            else:
+                if home_v < 0 and away_v < 0:
+                    decision = "Home 2-handicap" if home_v < away_v else "Away 2-handicap"
+                elif home_v < 0:
+                    decision = "Home 2-handicap"
+                elif away_v < 0:
+                    decision = "Away 2-handicap"
+
+            same_sign = (home_v < 0 and away_v < 0) or (home_v > 0 and away_v > 0)
+            under_flag = "" if same_sign else ("under" if -30 <= total_v <= 0 else "")
+
+        value_signal = {"decision": decision, "under": under_flag}
+
+    # ========================================================
+    # O/U 2.5 VALUE — identical logic to legacy /predict
+    # ========================================================
+
+    ou25_value_pct = None
+    ou25_value_signal = None
+    prediction_3 = ""
+    prediction_3_gate = False
+
+    model_ou25 = r1.get("ou25")
+
+    if model_ou25 and market_ou25:
+        def pct_diff_ou(market_o, model_o):
+            if not model_o or not market_o:
+                return None
+            return round(((market_o - model_o) / model_o) * 100, 1)
+
+        over_v = pct_diff_ou(market_ou25.get("over_odds"), model_ou25.get("over_odds"))
+        under_v = pct_diff_ou(market_ou25.get("under_odds"), model_ou25.get("under_odds"))
+
+        if over_v is not None or under_v is not None:
+            ou_total_v = round(sum(x for x in [over_v, under_v] if x is not None), 1)
+            ou_abs_sum = abs(over_v or 0) + abs(under_v or 0)
+            ou_abs_diff = abs(over_v or 0) - abs(under_v or 0)
+
+            def ou_share(v):
+                if v is None or ou_abs_sum == 0:
+                    return None
+                return round(abs(v) / ou_abs_sum * 100, 1)
+
+            over_share_v = ou_share(over_v)
+            under_share_v = ou_share(under_v)
+            share_diff_v = round((over_share_v or 0) - (under_share_v or 0), 1)
+
+            ou25_value_pct = {
+                "over": over_v, "under": under_v, "total": ou_total_v,
+                "over_share": over_share_v, "under_share": under_share_v,
+                "abs_diff": round(ou_abs_diff, 1), "share_diff": share_diff_v,
+            }
+
+            step4 = "over" if ou_abs_diff > 0 else ("under" if ou_abs_diff < 0 else "")
+            step5 = ""
+            cv, dv = over_v or 0, under_v or 0
+
+            if step4 == "under" and dv < 0 and cv > 0:
+                step5 = "under"
+            elif step4 == "over" and cv < 0 and dv > 0:
+                step5 = "over"
+            elif cv < 0 and dv < 0:
+                step5 = "over+" if cv < dv else "under+"
+            elif cv < 0:
+                step5 = "over+"
+            elif dv < 0:
+                step5 = "under+"
+
+            same_sign = (cv < 0 and dv < 0) or (cv > 0 and dv > 0)
+            step6 = "" if same_sign else ("under" if -30 <= ou_total_v <= 0 else "")
+
+            if step4 == "under" and step6 == "under":
+                ou_result_signal = "under confirmed"
+            elif step4 != "under" and step6 == "under":
+                ou_result_signal = "under"
+            else:
+                ou_result_signal = "over"
+
+            ou25_value_signal = {
+                "result": ou_result_signal, "step4": step4,
+                "step5": step5, "step6": step6,
+            }
+
+            if step4:
+                hda_decision = (value_signal or {}).get("decision", "").lower()
+                if step5 in ("over+", "over"):
+                    prediction_3 = "Home" if "home" in hda_decision else "Home handicap"
+                elif step5 in ("under+", "under"):
+                    prediction_3 = "Away" if "away" in hda_decision else "Away handicap"
+
+            hda_total = (value_pct or {}).get("total")
+            hda_under = (value_signal or {}).get("under", "")
+
+            if (ou_total_v is not None and -20 <= ou_total_v <= 0
+                    and ou_result_signal in ("under", "under confirmed")
+                    and hda_total is not None and -20 <= hda_total <= 0
+                    and hda_under == "under"):
+
+                prediction_3_gate = True
+                decision_base = (value_signal or {}).get("decision", "")
+                b46_combined = ((r1.get("b46") or "") + " " + (r2.get("b46") or "")).lower()
+                b46_match = re.search(r"(\d+\s*goals)", b46_combined)
+                b46_goals = b46_match.group(1).replace(" ", "") if b46_match else ""
+                suffix = f"under {b46_goals}" if b46_goals else "under"
+                prediction_3 = f"{decision_base}/ {suffix}" if decision_base else suffix.capitalize()
+
+    return {
+        "home": h, "away": a,
+        "d70": r1["d70"], "b120": r1["b120"], "c120": r1["c120"],
+        "b46": r1["b46"], "d64": r1["d64"], "b118": r1["b118"],
+        "aa15": r1["aa15"], "b54": r1["b54"],
+        "odds": r1.get("odds"), "ou25": r1.get("ou25"),
+        "market_ou25": market_ou25, "market_odds": market_odds,
+        "ou25_value_pct": ou25_value_pct, "ou25_value_signal": ou25_value_signal,
+        "prediction_3": prediction_3, "prediction_3_gate": prediction_3_gate,
+        "value_pct": value_pct, "value_signal": value_signal,
+        "b119": r1["b119"], "d119": r1["d119"], "d70val": r1["d70val"],
+        "o73": r1["o73"], "o74": r1["o74"],
+        "d70r": r2["d70"], "b120r": r2["b120"], "c120r": r2["c120"],
+        "b46r": r2["b46"], "d64r": r2["d64"], "b118r": r2["b118"],
+        "aa15r": r2["aa15"], "b54r": r2["b54"], "oddsr": r2.get("odds"),
+        "b119r": r2["b119"], "d119r": r2["d119"], "d70valr": r2["d70val"],
+        "o73r": r2["o73"], "o74r": r2["o74"],
+    }
+
+
 @app.get("/health")
 def health():
     return {
