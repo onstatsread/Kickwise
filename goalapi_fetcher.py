@@ -151,6 +151,17 @@ def fetch_team_stats(league_id):
         gf = _to_int(row.get("overallLeagueGF"))
         ga = _to_int(row.get("overallLeagueGA"))
 
+        # Skip teams with 0 games played — run_model() (in app.py)
+        # divides by each team's gp when computing its home-advantage
+        # ratio, which crashes with ZeroDivisionError for a team with
+        # no matches yet. AnnaBet's standings never surfaced this
+        # (its table only lists teams that have actually played), but
+        # GOAL API's /standings can include newly-added or not-yet-
+        # started teams. Confirmed real trigger: Algeria - Ligue 1,
+        # 2026-09-11.
+        if gp == 0:
+            continue
+
         hgp = _to_int(row.get("homeLeaguePlayed"))
         hgf_total = _to_int(row.get("homeLeagueGF"))
         hga_total = _to_int(row.get("homeLeagueGA"))
