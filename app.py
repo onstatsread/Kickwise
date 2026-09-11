@@ -44,6 +44,30 @@ app.add_middleware(
 app.include_router(odds_router)
 
 
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    """
+    TEMPORARY debugging aid — returns the real exception + traceback
+    as JSON instead of a generic 500, so errors in the new v2
+    endpoints (GOAL API / OddStorm / Oddsbook integration) can be
+    diagnosed without needing direct Render log access.
+    """
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "traceback": traceback.format_exc(),
+            "path": str(request.url),
+        },
+    )
+
+
 # ============================================================
 # CONSTANTS / SESSIONS
 # ============================================================
