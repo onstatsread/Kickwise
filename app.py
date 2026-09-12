@@ -1820,7 +1820,64 @@ def fixtures_goalapi_test(date_str: str = Query(None, alias="date")):
     fixtures = fetch_fixtures_for_day(str(target))
     return {"date": str(target), "fixture_count": len(fixtures), "fixtures": fixtures}
 
+@app.get("/debug-finland-leagues")
+def debug_finland_leagues():
+    import requests as _requests
 
+    goal_api_key = os.environ.get("GOAL_API_KEY", "")
+    if not goal_api_key:
+        return {"error": "GOAL_API_KEY not set in this environment"}
+
+    session = _requests.Session()
+    session.headers.update({"Authorization": f"Bearer {goal_api_key}"})
+
+    def get_all_pages(path, params=None):
+        params = dict(params or {})
+        params.setdefault("limit", 100)
+        offset = 0
+        results = []
+
+        while True:
+            params["offset"] = offset
+            resp = session.get(f"https://api.goal-api.com/v1{path}", params=params, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+
+            rows = data.get("data") or []
+            if not isinstance(rows, list):
+                break
+            results.extend(rows)
+
+            pagination = data.get("pagination") or {}
+            if not pagination.get("hasMore"):
+                break
+            offset += params["limit"]
+
+        return results
+
+    try:
+        leagues = get_all_pages("/leagues", params={"country": "Finland"})
+
+        if not leagues:
+            # ?country= filter may not be a real supported param —
+            # fall back to fetching everything and filtering ourselves.
+            all_leagues = get_all_pages("/leagues")
+            leagues = [
+                lg for lg in all_leagues
+                if "finland" in str(lg.get("country") or lg.get("countryName") or "").lower()
+            ]
+
+        return {
+            "count": len(leagues),
+            "leagues": [
+                {"id": lg.get("id"), "name": lg.get("name"), "raw": lg}
+                for lg in leagues
+            ],
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+        
 @app.get("/predict-goalapi-test")
 async def predict_goalapi_test(
     league_id: str = Query(..., description="GOAL API league id (from /fixtures-goalapi-test), NOT an AnnaBet short code"),
