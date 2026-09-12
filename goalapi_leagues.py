@@ -50,9 +50,21 @@ or needed verification):
   candidate found, and "Higher League" translated to Russian) — kept
   as-is
 
-USAGE NOTE: England - Southern Football League has NO entry below —
-callers must handle a missing key gracefully (fall back to another
-source, or skip that league) rather than assuming all 61 are present.
+USAGE NOTE: callers must handle a missing key gracefully (fall back
+to another source, or skip that league) rather than assuming all 61
+are present. As of this version, TWO leagues are intentionally
+unmapped rather than force a wrong match:
+
+- England - Southern Football League: no matching competition exists
+  in GOAL API's database at all (see note above).
+- Finland - Ykkosliiga: FIX (2026-09-12) — previously this shared
+  Veikkausliiga's league_id (cmr77dxae00tlrx06ay98mhmc) as a known
+  placeholder, which meant fetch_team_stats() silently returned
+  Veikkausliiga's standings table for every Ykkösliiga match: wrong
+  teams, wrong stats, wrong prediction, with no error raised anywhere
+  in the pipeline. Removed rather than left wrong. Run
+  find_finland_league_id.py with a real GOAL_API_KEY to get the
+  correct, distinct id, then add it back here.
 """
 
 GOALAPI_LEAGUE_IDS = {
@@ -68,7 +80,13 @@ GOALAPI_LEAGUE_IDS = {
     "Estonia - Meistriliiga": "cmr77dx1r00porx06tvpfwl68",
     "Faroe Islands - Premier League": "cmr77dwh200kbrx0601n7krq8",
     "Finland - Veikkausliiga": "cmr77dxae00tlrx06ay98mhmc",
-    "Finland - Ykkosliiga": "cmr77dxae00tlrx06ay98mhmc",  # NOTE: same id as Veikkausliiga — GOAL API may not carry Ykkösliiga separately; verify before use
+    # "Finland - Ykkosliiga": REMOVED 2026-09-12 — was incorrectly
+    # sharing Veikkausliiga's id above. Run find_finland_league_id.py
+    # with a real API key to get the correct id, then restore this
+    # entry. Until then, callers must treat this league like
+    # "England - Southern Football League": no GOAL API data
+    # available, fall back to another source or skip it — do NOT
+    # re-add the Veikkausliiga id as a stand-in.
     "Georgia - Erovnuli Liga": "cmr77dx6300r7rx06cupwh420",
     "Iceland - Besta deild": "cmr77dwhd00kgrx06s7jzkv71",
     "Iceland - 1. Deild": "cmr77dwhd00kerx0683zt9qij",
