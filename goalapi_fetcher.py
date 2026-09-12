@@ -1,91 +1,99 @@
 """
-GOAL API fetcher — candidate full replacement for AnnaBet AND
-Oddsbook. No scraping, no Cloudflare fight, no Playwright/browser
-needed — plain authenticated REST calls.
+GOAL API fetcher — production replacement for AnnaBet fixture/stat fetching.
 
-CONFIRMED (2026-09-06) via GitHub Actions testing:
-- Base URL: https://api.goal-api.com/v1, auth via
-  "Authorization: Bearer {key}" header.
-- GET /standings/{leagueId} returns ALL of combined + home + away
-  splits in ONE call — fields are overallLeague{Played,W,D,L,GF,GA,PTS},
-  homeLeague{...same...}, awayLeague{...same...}, all as STRINGS
-  needing int() conversion. Team name is in row["team"]["name"].
-  Confirmed populated for real domestic leagues (La Liga); may be
-  null for international tournaments (Copa America) that don't
-  track home/away splits — handled gracefully below (falls back to
-  combined-only stats in that case, matching AnnaBet's own behavior
-  when split data is unavailable).
-- GET /fixtures/date/{date} returns all fixtures for that date across
-  every league in one call (NOT yet field-confirmed in detail — built
-  from the SDK's documented shape: homeTeam.name, awayTeam.name,
-  homeScore, awayScore, plus a fixture id — verify against a real
-  response and adjust if field names differ).
-- GET /fixtures/{id}/odds — odds shape NOT yet confirmed. Placeholder
-  parsing below needs verification against a real response.
+Purpose
+-------
+1. Fetch league standings from GOAL API.
+2. Convert GOAL API standings into the SAME structure expected by Kickwise.
+3. Fetch ALL fixtures for a given date.
+4. Handle pagination automatically.
+5. Cache standings and fixtures.
+6. Avoid scraping / Playwright / Cloudflare.
+7. Keep GOAL API odds disabled on the free plan.
 
-Rate limits: 1,000 requests/day on free tier. Estimated real usage:
-~61 calls for standings (1 per active league) + 1 call for the day's
-fixtures + ~1 call per match needing odds — comfortably under budget.
+GOAL API
+--------
+Base:
+    https://api.goal-api.com/v1
+
+Authentication:
+    Authorization: Bearer {GOAL_API_KEY}
+
+Important
+---------
+GOAL API list responses are paginated. The daily fixture fetcher therefore
+continues requesting pages until hasMore is false.
+
+Environment variable required:
+    GOAL_API_KEY
 """
 
 import os
 import time
 import requests
 
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
 GOAL_API_BASE = "https://api.goal-api.com/v1"
-GOAL_API_KEY = os.environ.get("GOAL_API_KEY", "")
+GOAL_API_KEY = os.environ.get("GOAL_API_KEY", "").strip()
+
+# Keep the page reasonably large.
+# If GOAL API enforces a smaller maximum, the API response will determine
+# the actual number returned and pagination will continue automatically.
+FIXTURE_PAGE_LIMIT = 100
+
+# Cache settings
+STATS_CACHE_TTL = 3600       # 1 hour
+FIXTURES_CACHE_TTL = 300     # 5 minutes
+
+# Request settings
+REQUEST_TIMEOUT = 20
+MAX_RETRIES = 3
+
+# Small delay between paginated requests.
+# This helps avoid hammering the API if a day contains many pages.
+PAGE_DELAY = 0.15
+
+
+# ============================================================
+# SESSION
+# ============================================================
 
 _SESSION = requests.Session()
-_SESSION.headers.update({"Authorization": f"Bearer {GOAL_API_KEY}"})
 
+_SESSION.headers.update({
+    "Accept": "application/json",
+    "User-Agent": "Kickwise/1.0",
+})
+
+if GOAL_API_KEY:
+    _SESSION.headers.update({
+        "Authorization": f"Bearer {GOAL_API_KEY}"
+    })
+
+
+# ============================================================
+# CACHES
+# ============================================================
 
 _STATS_CACHE = {}
-STATS_CACHE_TTL = 3600  # 1 hour — standings don't change mid-day
-
 _FIXTURES_CACHE = {}
-FIXTURES_CACHE_TTL = 300  # 5 minutes
 
 
-def _get(path, params=None, retries=2):
-    """
-    Authenticated GET with basic retry — GOAL API's own SDK documents
-    exponential backoff with jitter for 429/5xx; this is a simpler
-    fixed-delay version. Returns parsed JSON dict, or None on failure.
-    """
-    url = f"{GOAL_API_BASE}{path}"
-
-    for attempt in range(1, retries + 1):
-        try:
-            resp = _SESSION.get(url, params=params, timeout=20)
-        except Exception as e:
-            print(f"GOAL API request failed (attempt {attempt}): {url} -> {e}")
-            if attempt < retries:
-                time.sleep(3)
-            continue
-
-        if resp.status_code == 200:
-            try:
-                return resp.json()
-            except Exception as e:
-                print(f"GOAL API JSON parse failed: {url} -> {e}")
-                return None
-
-        if resp.status_code in (429, 502, 503):
-            print(f"GOAL API {resp.status_code} (attempt {attempt}): {url}")
-            if attempt < retries:
-                time.sleep(5)
-            continue
-
-        # 404 etc — not worth retrying, just report and stop.
-        print(f"GOAL API {resp.status_code}: {url} -> {resp.text[:300]}")
-        return None
-
-    return None
-
+# ============================================================
+# BASIC HELPERS
+# ============================================================
 
 def _to_float(value, default=0.0):
+    """
+    Safely convert a value to float.
+    """
     if value is None:
         return default
+
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -93,166 +101,789 @@ def _to_float(value, default=0.0):
 
 
 def _to_int(value, default=0):
+    """
+    Safely convert a value to int.
+
+    GOAL API standings values may arrive as strings.
+    """
     if value is None:
         return default
+
     try:
         return int(value)
     except (TypeError, ValueError):
-        return default
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return default
 
 
-# ------------------------------------------------------------
-# Team stats — combined + home/away splits in ONE call
-# ------------------------------------------------------------
+def _clean_name(value):
+    """
+    Normalize a team/league name enough for internal comparisons.
+    Does NOT aggressively alter the actual returned name.
+    """
+    if value is None:
+        return ""
+
+    return " ".join(str(value).strip().split())
+
+
+# ============================================================
+# API REQUEST
+# ============================================================
+
+def _get(path, params=None, retries=MAX_RETRIES):
+    """
+    Authenticated GET request.
+
+    Returns:
+        Parsed JSON dictionary on success.
+        None on failure.
+
+    Retries:
+        429
+        502
+        503
+        504
+        connection/timeouts
+    """
+
+    if not GOAL_API_KEY:
+        print("GOAL API ERROR: GOAL_API_KEY is not configured.")
+        return None
+
+    url = f"{GOAL_API_BASE}{path}"
+
+    for attempt in range(1, retries + 1):
+
+        try:
+            response = _SESSION.get(
+                url,
+                params=params,
+                timeout=REQUEST_TIMEOUT,
+            )
+
+        except requests.RequestException as exc:
+            print(
+                f"GOAL API request exception "
+                f"(attempt {attempt}/{retries}): "
+                f"{url} -> {exc}"
+            )
+
+            if attempt < retries:
+                time.sleep(min(2 ** (attempt - 1), 5))
+
+            continue
+
+        # ----------------------------------------------------
+        # SUCCESS
+        # ----------------------------------------------------
+
+        if response.status_code == 200:
+
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                print(
+                    f"GOAL API JSON parse failed: "
+                    f"{url} -> {exc}"
+                )
+                return None
+
+            return payload
+
+        # ----------------------------------------------------
+        # RATE LIMIT
+        # ----------------------------------------------------
+
+        if response.status_code == 429:
+
+            print(
+                f"GOAL API 429 rate limit "
+                f"(attempt {attempt}/{retries}): {url}"
+            )
+
+            if attempt < retries:
+                # Increasing delay between attempts.
+                time.sleep(min(3 * attempt, 10))
+
+            continue
+
+        # ----------------------------------------------------
+        # TEMPORARY SERVER ERROR
+        # ----------------------------------------------------
+
+        if response.status_code in (502, 503, 504):
+
+            print(
+                f"GOAL API {response.status_code} "
+                f"(attempt {attempt}/{retries}): {url}"
+            )
+
+            if attempt < retries:
+                time.sleep(min(2 ** attempt, 8))
+
+            continue
+
+        # ----------------------------------------------------
+        # OTHER ERROR
+        # ----------------------------------------------------
+
+        body = response.text[:500]
+
+        print(
+            f"GOAL API {response.status_code}: "
+            f"{url} -> {body}"
+        )
+
+        return None
+
+    return None
+
+
+# ============================================================
+# PAGINATION HELPERS
+# ============================================================
+
+def _extract_rows(payload):
+    """
+    Extract the data array from a GOAL API response.
+
+    Expected:
+        {
+            "success": true,
+            "data": [...]
+        }
+    """
+
+    if not isinstance(payload, dict):
+        return []
+
+    rows = payload.get("data")
+
+    if isinstance(rows, list):
+        return rows
+
+    return []
+
+
+def _has_more(payload, current_count, offset):
+    """
+    Determine whether another page should be requested.
+
+    GOAL API responses may expose:
+        hasMore
+        total
+        limit
+        offset
+
+    We prioritize explicit hasMore when available.
+    """
+
+    if not isinstance(payload, dict):
+        return False
+
+    # Most reliable signal.
+    if "hasMore" in payload:
+        return bool(payload.get("hasMore"))
+
+    # Some APIs put pagination inside a pagination object.
+    pagination = payload.get("pagination")
+
+    if isinstance(pagination, dict):
+
+        if "hasMore" in pagination:
+            return bool(pagination.get("hasMore"))
+
+        total = _to_int(pagination.get("total"), 0)
+        limit = _to_int(
+            pagination.get("limit"),
+            current_count,
+        )
+        page_offset = _to_int(
+            pagination.get("offset"),
+            offset,
+        )
+
+        if total > 0 and limit > 0:
+            return page_offset + current_count < total
+
+    # Top-level total/limit/offset.
+    total = _to_int(payload.get("total"), 0)
+    limit = _to_int(payload.get("limit"), current_count)
+    page_offset = _to_int(payload.get("offset"), offset)
+
+    if total > 0 and limit > 0:
+        return page_offset + current_count < total
+
+    # If there is no pagination metadata, a short page is normally
+    # the final page.
+    if current_count < FIXTURE_PAGE_LIMIT:
+        return False
+
+    return True
+
+
+# ============================================================
+# TEAM STATS
+# ============================================================
 
 def fetch_team_stats(league_id):
     """
-    Returns the SAME shape as AnnaBet's fetch_stats_annabet():
+    Fetch league standings.
+
+    Returns the SAME shape expected by the existing Kickwise model:
 
         {
-            team_name: {
-                "gp": ..., "gf": ..., "ga": ..., "tot": ...,
-                "hgf": ..., "hga": ..., "htot": ...,
-                "agf": ..., "aga": ..., "atot": ...,
-            },
-            ...
+            "Team Name": {
+                "gp": ...,
+                "gf": ...,
+                "ga": ...,
+                "tot": ...,
+                "hgf": ...,
+                "hga": ...,
+                "htot": ...,
+                "agf": ...,
+                "aga": ...,
+                "atot": ...
+            }
         }
 
-    Single API call — GOAL API returns combined AND home/away splits
-    together on /standings/{leagueId}, confirmed via testing.
+    GOAL API:
+        GET /standings/{league_id}
 
-    Falls back to 0-valued home/away splits if a league doesn't track
-    them (e.g. international group-stage tournaments) — same
-    graceful-degradation behavior AnnaBet's own code has when split
-    data isn't available.
+    The endpoint provides:
+        overall
+        home
+        away
+
+    statistics.
     """
-    cache_key = league_id
-    cached = _STATS_CACHE.get(cache_key)
-    if cached and time.time() - cached[0] < STATS_CACHE_TTL:
-        return cached[1]
 
-    data = _get(f"/standings/{league_id}")
-
-    if not data or not data.get("success", True) or not data.get("data"):
+    if not league_id:
+        print("GOAL API standings: missing league_id.")
         return {}
 
-    rows = data["data"]
-    if not isinstance(rows, list):
+    cache_key = str(league_id)
+
+    cached = _STATS_CACHE.get(cache_key)
+
+    if cached:
+        cached_time, cached_data = cached
+
+        if time.time() - cached_time < STATS_CACHE_TTL:
+            return cached_data
+
+    # --------------------------------------------------------
+    # API REQUEST
+    # --------------------------------------------------------
+
+    data = _get(
+        f"/standings/{league_id}"
+    )
+
+    if not data:
+        return {}
+
+    if data.get("success") is False:
+        print(
+            f"GOAL API standings unsuccessful "
+            f"for league {league_id}: {data}"
+        )
+        return {}
+
+    rows = _extract_rows(data)
+
+    if not rows:
+        print(
+            f"GOAL API standings returned no rows "
+            f"for league {league_id}"
+        )
         return {}
 
     result = {}
 
+    # --------------------------------------------------------
+    # PARSE TEAMS
+    # --------------------------------------------------------
+
     for row in rows:
-        team_name = (row.get("team") or {}).get("name") or row.get("teamName")
+
+        if not isinstance(row, dict):
+            continue
+
+        team = row.get("team")
+
+        if isinstance(team, dict):
+            team_name = team.get("name")
+        else:
+            team_name = row.get("teamName")
+
+        team_name = _clean_name(team_name)
+
         if not team_name:
             continue
 
-        gp = _to_int(row.get("overallLeaguePlayed"))
-        gf = _to_int(row.get("overallLeagueGF"))
-        ga = _to_int(row.get("overallLeagueGA"))
+        # ----------------------------------------------------
+        # OVERALL
+        # ----------------------------------------------------
 
-        # Skip teams with 0 games played — run_model() (in app.py)
-        # divides by each team's gp when computing its home-advantage
-        # ratio, which crashes with ZeroDivisionError for a team with
-        # no matches yet. AnnaBet's standings never surfaced this
-        # (its table only lists teams that have actually played), but
-        # GOAL API's /standings can include newly-added or not-yet-
-        # started teams. Confirmed real trigger: Algeria - Ligue 1,
-        # 2026-09-11.
-        if gp == 0:
+        gp = _to_int(
+            row.get("overallLeaguePlayed")
+        )
+
+        gf = _to_int(
+            row.get("overallLeagueGF")
+        )
+
+        ga = _to_int(
+            row.get("overallLeagueGA")
+        )
+
+        # ----------------------------------------------------
+        # IMPORTANT:
+        # Skip teams that have played zero matches.
+        #
+        # Your run_model() expects usable GP and can otherwise
+        # encounter division-by-zero situations.
+        # ----------------------------------------------------
+
+        if gp <= 0:
             continue
 
-        hgp = _to_int(row.get("homeLeaguePlayed"))
-        hgf_total = _to_int(row.get("homeLeagueGF"))
-        hga_total = _to_int(row.get("homeLeagueGA"))
+        # ----------------------------------------------------
+        # HOME
+        # ----------------------------------------------------
 
-        agp = _to_int(row.get("awayLeaguePlayed"))
-        agf_total = _to_int(row.get("awayLeagueGF"))
-        aga_total = _to_int(row.get("awayLeagueGA"))
+        hgp = _to_int(
+            row.get("homeLeaguePlayed")
+        )
+
+        hgf_total = _to_int(
+            row.get("homeLeagueGF")
+        )
+
+        hga_total = _to_int(
+            row.get("homeLeagueGA")
+        )
+
+        # ----------------------------------------------------
+        # AWAY
+        # ----------------------------------------------------
+
+        agp = _to_int(
+            row.get("awayLeaguePlayed")
+        )
+
+        agf_total = _to_int(
+            row.get("awayLeagueGF")
+        )
+
+        aga_total = _to_int(
+            row.get("awayLeagueGA")
+        )
+
+        # ----------------------------------------------------
+        # CALCULATED RATES
+        # ----------------------------------------------------
+
+        overall_gf = gf / gp
+        overall_ga = ga / gp
+        overall_total = (gf + ga) / gp
+
+        home_gf = (
+            hgf_total / hgp
+            if hgp > 0
+            else 0.0
+        )
+
+        home_ga = (
+            hga_total / hgp
+            if hgp > 0
+            else 0.0
+        )
+
+        home_total = (
+            (hgf_total + hga_total) / hgp
+            if hgp > 0
+            else 0.0
+        )
+
+        away_gf = (
+            agf_total / agp
+            if agp > 0
+            else 0.0
+        )
+
+        away_ga = (
+            aga_total / agp
+            if agp > 0
+            else 0.0
+        )
+
+        away_total = (
+            (agf_total + aga_total) / agp
+            if agp > 0
+            else 0.0
+        )
 
         result[team_name] = {
             "gp": gp,
-            "gf": gf / gp if gp else 0,
-            "ga": ga / gp if gp else 0,
-            "tot": (gf + ga) / gp if gp else 0,
-            "hgf": hgf_total / hgp if hgp else 0,
-            "hga": hga_total / hgp if hgp else 0,
-            "htot": (hgf_total + hga_total) / hgp if hgp else 0,
-            "agf": agf_total / agp if agp else 0,
-            "aga": aga_total / agp if agp else 0,
-            "atot": (agf_total + aga_total) / agp if agp else 0,
+
+            "gf": overall_gf,
+            "ga": overall_ga,
+            "tot": overall_total,
+
+            "hgf": home_gf,
+            "hga": home_ga,
+            "htot": home_total,
+
+            "agf": away_gf,
+            "aga": away_ga,
+            "atot": away_total,
         }
 
-    _STATS_CACHE[cache_key] = (time.time(), result)
+    # --------------------------------------------------------
+    # CACHE
+    # --------------------------------------------------------
+
+    _STATS_CACHE[cache_key] = (
+        time.time(),
+        result,
+    )
+
+    print(
+        f"GOAL API standings: "
+        f"league={league_id}, teams={len(result)}"
+    )
+
     return result
 
 
-# ------------------------------------------------------------
-# Fixtures — one call for the whole day, all leagues
-# ------------------------------------------------------------
+# ============================================================
+# DAILY FIXTURES — PAGINATED
+# ============================================================
 
 def fetch_fixtures_for_day(date_str):
     """
-    date_str: 'YYYY-MM-DD'.
+    Fetch ALL GOAL API fixtures for a date.
 
-    Returns a list of fixtures:
-        [{"id": ..., "league_id": ..., "league_name": ...,
-          "home": ..., "away": ..., "kickoff": ...,
-          "status": ..., "home_score": ..., "away_score": ...}, ...]
+    date_str:
+        YYYY-MM-DD
 
-    CONFIRMED (2026-09-06) real field names — flat top-level fields,
-    NOT the nested homeTeam/awayTeam objects. Those nested objects
-    sometimes carry a DIFFERENT (globally-shared?) team name than the
-    match-specific homeTeamName/awayTeamName fields (e.g. one fixture
-    showed homeTeam.name="Firpo" vs homeTeamName="Luis Angel Firpo") —
-    using the flat fields avoids that mismatch.
+    Returns:
+
+        [
+            {
+                "id": ...,
+                "league_id": ...,
+                "league_name": ...,
+                "home": ...,
+                "away": ...,
+                "kickoff": ...,
+                "status": ...,
+                "home_score": ...,
+                "away_score": ...
+            }
+        ]
+
+    IMPORTANT
+    ---------
+    GOAL API fixture lists are paginated.
+
+    This function therefore keeps requesting pages until there are
+    no more pages.
+
+    It does NOT filter by GOALAPI_LEAGUE_IDS.
+
+    Therefore this function represents the full fixture universe
+    returned by GOAL API for that date.
     """
-    cache_key = date_str
+
+    if not date_str:
+        return []
+
+    cache_key = str(date_str)
+
+    # --------------------------------------------------------
+    # CACHE
+    # --------------------------------------------------------
+
     cached = _FIXTURES_CACHE.get(cache_key)
-    if cached and time.time() - cached[0] < FIXTURES_CACHE_TTL:
-        return cached[1]
 
-    data = _get(f"/fixtures/date/{date_str}")
+    if cached:
+        cached_time, cached_data = cached
 
-    if not data or not data.get("data"):
-        return []
+        if time.time() - cached_time < FIXTURES_CACHE_TTL:
+            return cached_data
 
-    rows = data["data"]
-    if not isinstance(rows, list):
-        return []
+    # --------------------------------------------------------
+    # PAGINATION
+    # --------------------------------------------------------
+
+    all_rows = []
+
+    offset = 0
+    page_number = 1
+
+    while True:
+
+        params = {
+            "limit": FIXTURE_PAGE_LIMIT,
+            "offset": offset,
+        }
+
+        data = _get(
+            f"/fixtures/date/{date_str}",
+            params=params,
+        )
+
+        if not data:
+            # If page 1 failed, return nothing.
+            # If a later page failed, keep whatever was successfully
+            # retrieved rather than destroying the whole day's data.
+            if page_number == 1:
+                return []
+
+            print(
+                f"GOAL API fixture pagination stopped at "
+                f"page {page_number}"
+            )
+            break
+
+        rows = _extract_rows(data)
+
+        if not rows:
+            break
+
+        all_rows.extend(rows)
+
+        current_count = len(rows)
+
+        print(
+            f"GOAL API fixtures: "
+            f"date={date_str}, "
+            f"page={page_number}, "
+            f"received={current_count}, "
+            f"total_so_far={len(all_rows)}, "
+            f"offset={offset}"
+        )
+
+        # ----------------------------------------------------
+        # STOP CONDITION
+        # ----------------------------------------------------
+
+        if not _has_more(
+            data,
+            current_count,
+            offset,
+        ):
+            break
+
+        # ----------------------------------------------------
+        # NEXT PAGE
+        # ----------------------------------------------------
+
+        next_offset = offset + current_count
+
+        # Safety protection against a broken API response
+        # repeatedly returning the same page.
+        if next_offset <= offset:
+            print(
+                "GOAL API pagination safety stop: "
+                "offset did not advance."
+            )
+            break
+
+        offset = next_offset
+        page_number += 1
+
+        time.sleep(PAGE_DELAY)
+
+    # --------------------------------------------------------
+    # CONVERT RAW ROWS
+    # --------------------------------------------------------
 
     fixtures = []
 
-    for row in rows:
+    seen_ids = set()
+
+    for row in all_rows:
+
+        if not isinstance(row, dict):
+            continue
+
+        fixture_id = row.get("id")
+
+        # ----------------------------------------------------
+        # Duplicate protection
+        # ----------------------------------------------------
+
+        if fixture_id is not None:
+
+            fixture_key = str(fixture_id)
+
+            if fixture_key in seen_ids:
+                continue
+
+            seen_ids.add(fixture_key)
+
+        # ----------------------------------------------------
+        # Confirmed flat fields
+        # ----------------------------------------------------
+
+        home = _clean_name(
+            row.get("homeTeamName")
+        )
+
+        away = _clean_name(
+            row.get("awayTeamName")
+        )
+
+        league_name = _clean_name(
+            row.get("leagueName")
+        )
+
+        league_id = row.get("leagueId")
+
+        kickoff = row.get("kickoffUtc")
+
+        status = row.get("matchStatus")
+
+        home_score = row.get(
+            "homeTeamScore"
+        )
+
+        away_score = row.get(
+            "awayTeamScore"
+        )
+
+        # ----------------------------------------------------
+        # Don't return malformed fixtures.
+        #
+        # A fixture without both teams isn't useful to the
+        # Kickwise prediction engine.
+        # ----------------------------------------------------
+
+        if not home or not away:
+            print(
+                "GOAL API fixture skipped: "
+                f"missing team name, row={row}"
+            )
+            continue
+
         fixtures.append({
-            "id": row.get("id"),
-            "league_id": row.get("leagueId"),
-            "league_name": row.get("leagueName"),
-            "home": row.get("homeTeamName"),
-            "away": row.get("awayTeamName"),
-            "kickoff": row.get("kickoffUtc"),
-            "status": row.get("matchStatus"),
-            "home_score": row.get("homeTeamScore"),
-            "away_score": row.get("awayTeamScore"),
+            "id": fixture_id,
+            "league_id": league_id,
+            "league_name": league_name,
+            "home": home,
+            "away": away,
+            "kickoff": kickoff,
+            "status": status,
+            "home_score": home_score,
+            "away_score": away_score,
         })
 
-    _FIXTURES_CACHE[cache_key] = (time.time(), fixtures)
+    # --------------------------------------------------------
+    # CACHE COMPLETE DAY
+    # --------------------------------------------------------
+
+    _FIXTURES_CACHE[cache_key] = (
+        time.time(),
+        fixtures,
+    )
+
+    print(
+        f"GOAL API fixtures COMPLETE: "
+        f"date={date_str}, "
+        f"raw_rows={len(all_rows)}, "
+        f"usable_fixtures={len(fixtures)}, "
+        f"pages={page_number}"
+    )
+
     return fixtures
 
 
-# ------------------------------------------------------------
-# Odds — per fixture
-# ------------------------------------------------------------
+# ============================================================
+# ODDS
+# ============================================================
 
 def fetch_market_odds(fixture_id):
     """
-    CONFIRMED (2026-09-06): odds require a PAID GOAL API plan — free
-    tier returns 403 "Feature not available in your plan" (capability:
-    canAccessOdds) for /fixtures/:id/odds.
+    GOAL API fixture odds.
 
-    Use oddsbook_odds.get_oddsbook_market_odds(home, away) instead for
-    odds on the free tier — confirmed working via Playwright earlier
-    in this project. This function is kept as a stub in case the plan
-    is upgraded later, but should not be called on the free tier.
+    CURRENT FREE PLAN:
+        Disabled because /fixtures/{id}/odds requires
+        paid-plan access.
+
+    Keep this function so the rest of Kickwise can continue
+    importing it safely if the API plan changes later.
     """
-    return {"market_odds": None, "market_ou25": None}
+
+    return {
+        "market_odds": None,
+        "market_ou25": None,
+    }
+
+
+# ============================================================
+# OPTIONAL CACHE MANAGEMENT
+# ============================================================
+
+def clear_goalapi_cache():
+    """
+    Clear all in-memory GOAL API caches.
+
+    Useful for debugging or testing.
+    """
+
+    _STATS_CACHE.clear()
+    _FIXTURES_CACHE.clear()
+
+    print("GOAL API caches cleared.")
+
+
+def clear_fixture_cache(date_str=None):
+    """
+    Clear fixture cache.
+
+    If date_str is supplied, only that date is cleared.
+    Otherwise all fixture cache is cleared.
+    """
+
+    if date_str is None:
+        _FIXTURES_CACHE.clear()
+        print("GOAL API fixture cache cleared.")
+        return
+
+    _FIXTURES_CACHE.pop(
+        str(date_str),
+        None,
+    )
+
+    print(
+        f"GOAL API fixture cache cleared: "
+        f"{date_str}"
+    )
+
+
+# ============================================================
+# DEBUG / TEST
+# ============================================================
+
+def goalapi_status():
+    """
+    Small diagnostic helper.
+
+    Returns basic configuration information without exposing
+    the API key.
+    """
+
+    return {
+        "base_url": GOAL_API_BASE,
+        "api_key_configured": bool(GOAL_API_KEY),
+        "stats_cache_entries": len(_STATS_CACHE),
+        "fixture_cache_entries": len(_FIXTURES_CACHE),
+        "fixture_page_limit": FIXTURE_PAGE_LIMIT,
+    }
