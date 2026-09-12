@@ -1050,3 +1050,29 @@ Odds API IO
 That independent fallback is important: if OddStorm has 1X2 but happens to be missing O/U 2.5 for one match, Kickwise doesn't throw away the good 1X2 odds.
 
 One caution: your current OddStorm scraper searches its main odds page by team names only. So this combined file is ready, but I would test it with one actual GOAL API fixture before relying on it for hundreds of matches. The next useful test is your "Ogre United - FK Liepāja" example through "/predict-combined-test", because that will tell us whether the GOAL API team names match OddStorm correctly and whether both 1X2 and O/U 2.5 are reaching the existing value/confirmation logic.
+def combined_odds_status():
+    """
+    Show which providers successfully imported.
+
+    Useful for /health or debugging.
+    """
+
+    return {
+        "oddstorm": ODDSTORM_AVAILABLE,
+        "oddsbook": ODDSBOOK_AVAILABLE,
+        "annabet": ANNABET_AVAILABLE,
+        "odds_api_io": ODDS_API_IO_AVAILABLE,
+
+        "priority": [
+            "OddStorm",
+            "Oddsbook",
+            "AnnaBet",
+            "OddsAPI-IO"
+        ],
+
+        "markets": [
+            "1X2",
+            "Over 2.5",
+            "Under 2.5"
+        ]
+    }
