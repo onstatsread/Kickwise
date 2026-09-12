@@ -19,15 +19,36 @@ CONFIRMED real HTML structure:
 
 Team names are split on the en-dash "–" (U+2013), NOT a hyphen.
 
-League grouping isn't yet confirmed from raw HTML (only seen via
-markdown-rendered fetch showing "[Country · League](url) Date"
-headers above each table) — this module returns a FLAT match list
-for now, sufficient for team-name-based odds lookup. Add league
-grouping later if needed for per-league browsing.
+League grouping IS confirmed present on a single-league page, not
+just the homepage — verified via screenshot 2026-09-12 against
+https://www.oddstorm.com/odds/league/1940888-georgia-erovnuli, which
+showed the same "Georgia · Erovnuli" header, en-dash team names, and
+1/X/2 + Over/Under boxes as the homepage listing.
+
+FIX (2026-09-12, part 1): _fetch_odds_page() / get_all_matches() /
+get_market_odds() all accept an optional league_url so callers can
+fetch a SPECIFIC league's page (via
+oddstorm_leagues.get_oddstorm_league_url()) instead of always
+scraping the generic /odds/ homepage listing, which only surfaces
+whatever's currently featured there. See combined_odds.py.
+
+FIX (2026-09-12, part 2): the same screenshot also showed the
+league page defaulting to the NEXT upcoming matchday ("Sunday 13
+September 2026"), not necessarily today's date. Each od-group carries
+its own date in od-group-date (e.g. "Sunday 13 September 2026 UKT").
+_parse_matches() now parses that into a real date per league group,
+and get_market_odds()/get_all_matches() accept a target_date to filter
+against it — so a match on a page defaulting to tomorrow is never
+silently paired with today's stats/prediction run. Without this, a
+lookup for today's fixture could match a same-named fixture group
+dated for a different day and return the wrong odds without any
+error.
 """
 
 import re
 import time
+from datetime import datetime
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -49,6 +70,9 @@ SESSION.headers.update(HEADERS)
 
 _DAY_CACHE = {}
 DAY_CACHE_TTL = 120  # odds refresh ~every minute per OddStorm's own FAQ
+
+# e.g. "Sunday 13 September 2026 UKT" -> day=13, month=September, year=2026
+_GROUP_DATE_RE = re.compile(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})")
 
 
 def _norm_team(name):
@@ -81,6 +105,29 @@ def _to_float(value):
     return f
 
 
+def _parse_group_date(text):
+    """
+    Parses an od-group-date string like "Sunday 13 September 2026 UKT"
+    into a datetime.date. Returns None if it doesn't match the
+    expected pattern (e.g. unexpected format change) — callers treat
+    None as "unknown date, don't filter it out" rather than dropping
+    matches on a parse miss.
+    """
+    if not text:
+        return None
+
+    match = _GROUP_DATE_RE.search(text)
+    if not match:
+        return None
+
+    day, month_name, year = match.groups()
+
+    try:
+        return datetime.strptime(f"{day} {month_name} {year}", "%d %B %Y").date()
+    except ValueError:
+        return None
+
+
 def _add_implied_pct(odds_dict, *keys):
     """Same normalization pattern used for AnnaBet/Oddsbook — adds
     *_pct fields (bookmaker overround removed) so existing app.py
@@ -104,24 +151,30 @@ def _add_implied_pct(odds_dict, *keys):
     return odds_dict
 
 
-def _fetch_odds_page():
+def _fetch_odds_page(url=None):
     """
-    Fetches the main odds page — plain requests works fine (confirmed
-    no Cloudflare challenge). Returns raw HTML, or None on failure.
+    Fetches an odds page — plain requests works fine (confirmed no
+    Cloudflare challenge). Defaults to the generic /odds/ listing,
+    but accepts a specific league URL (from oddstorm_leagues.py's
+    get_oddstorm_league_url()) to fetch that league's full card
+    instead of whatever happens to be currently featured on the
+    homepage. Returns raw HTML, or None on failure.
     """
-    cached = _DAY_CACHE.get("_all")
+    target = url or ODDSTORM_ODDS_URL
+
+    cached = _DAY_CACHE.get(target)
     if cached and time.time() - cached[0] < DAY_CACHE_TTL:
         return cached[1]
 
     try:
-        resp = SESSION.get(ODDSTORM_ODDS_URL, timeout=20)
+        resp = SESSION.get(target, timeout=20)
         resp.raise_for_status()
         html = resp.text
     except Exception as exc:
-        print(f"OddStorm fetch failed: {exc}")
+        print(f"OddStorm fetch failed ({target}): {exc}")
         return None
 
-    _DAY_CACHE["_all"] = (time.time(), html)
+    _DAY_CACHE[target] = (time.time(), html)
     return html
 
 
@@ -129,18 +182,19 @@ def _parse_matches(html):
     """
     Returns a dict keyed by league:
         {
-            "andorra-super-cup": {
-                "league_name": "Andorra · Super Cup",
-                "league_url": "https://www.oddstorm.com/odds/league/1869352-andorra-super-cup",
+            "1940888-georgia-erovnuli": {
+                "league_name": "Georgia · Erovnuli",
+                "league_url": "https://www.oddstorm.com/odds/league/1940888-georgia-erovnuli",
+                "date": date(2026, 9, 13),   # parsed from od-group-date, or None
                 "matches": [
                     {
-                        "match_id": "13549810", "time": "17:30",
-                        "home": "Inter Club d'Escaldes",
-                        "away": "Atletic Club d'Escaldes",
+                        "match_id": "13549810", "time": "14:00",
+                        "home": "FC Dila Gori",
+                        "away": "FC Dinamo Batumi",
                         "match_url": "...",
-                        "home_odds": 1.83, "draw_odds": 3.65, "away_odds": 3.75,
-                        "over_odds": 1.82, "under_odds": 2.05,
-                        "bookmaker_count": 7,
+                        "home_odds": 2.56, "draw_odds": 3.45, "away_odds": 2.65,
+                        "over_odds": 1.76, "under_odds": 2.05,
+                        "bookmaker_count": 11,
                     },
                     ...
                 ],
@@ -148,14 +202,15 @@ def _parse_matches(html):
             ...
         }
 
-    CONFIRMED real structure (2026-09-09):
+    CONFIRMED real structure — both on the generic /odds/ homepage
+    listing and on a single-league page (screenshot 2026-09-12):
         <div class="od-container">
           <div class="od-group">
             <div class="od-group-head">
               <a class="od-group-league" href="/odds/league/{id}-{slug}">
                 {Country} · {League}
               </a>
-              <span class="od-group-date">...</span>
+              <span class="od-group-date">Sunday 13 September 2026 UKT</span>
             </div>
             <table class="od-table">
               <tbody><tr data-mid="...">...</tr>...</tbody>
@@ -180,6 +235,9 @@ def _parse_matches(html):
         # "/odds/league/1869352-andorra-super-cup" -> "1869352-andorra-super-cup"
         slug_match = re.search(r"/odds/league/([^/]+)", league_href)
         league_key = slug_match.group(1) if slug_match else league_name
+
+        date_cell = group.find("span", class_="od-group-date")
+        group_date = _parse_group_date(date_cell.get_text(strip=True) if date_cell else None)
 
         matches = []
 
@@ -252,30 +310,48 @@ def _parse_matches(html):
         by_league[league_key] = {
             "league_name": league_name,
             "league_url": league_url,
+            "date": group_date,
             "matches": matches,
         }
 
     return by_league
 
 
-def get_all_matches():
+def get_all_matches(league_url=None):
     """
     Returns the by_league dict described in _parse_matches' docstring.
+
+    league_url: pass a specific OddStorm league page URL (from
+        oddstorm_leagues.get_oddstorm_league_url()) to fetch that
+        league's full card instead of the generic homepage listing,
+        which only shows whatever's currently featured there.
     """
-    html = _fetch_odds_page()
+    html = _fetch_odds_page(league_url)
     if not html:
         return {}
     return _parse_matches(html)
 
 
-def _iter_all_matches(by_league):
-    """Flattens the by_league dict into a simple list of matches."""
+def _iter_all_matches(by_league, target_date=None):
+    """
+    Flattens the by_league dict into a simple list of matches.
+
+    target_date: if given (a datetime.date), skips any league group
+        whose parsed date doesn't match it — a group with no parseable
+        date (group_date is None) is NOT skipped, since silently
+        dropping every match on a date-parse miss would be worse than
+        occasionally matching an unfiltered group. Pass None to
+        disable date filtering entirely.
+    """
     for league_data in by_league.values():
+        group_date = league_data.get("date")
+        if target_date is not None and group_date is not None and group_date != target_date:
+            continue
         for m in league_data["matches"]:
             yield m
 
 
-def get_market_odds(home, away):
+def get_market_odds(home, away, target_date=None, league_url=None):
     """
     Same return shape as annabet_odds.get_annabet_market_odds() /
     oddsbook_odds.get_oddsbook_market_odds():
@@ -284,12 +360,25 @@ def get_market_odds(home, away):
             "market_odds": {"home_odds":..., "draw_odds":..., "away_odds":...},
             "market_ou25": {"over_odds":..., "under_odds":...}
         }
+
+    league_url: pass the specific OddStorm league page URL when known
+        (see combined_odds.py, which sources it from
+        oddstorm_leagues.get_oddstorm_league_url()) so smaller leagues
+        not featured on the homepage still get matched correctly.
+        Falls back to the generic /odds/ listing if not given.
+
+    target_date: a datetime.date (or None to skip filtering). A league
+        page can default to the NEXT upcoming matchday rather than
+        today (confirmed via screenshot, e.g. a page fetched on the
+        12th showing "Sunday 13 September 2026"). Passing today's date
+        here prevents pairing a fixture with a different day's odds
+        under the same team names without any error being raised.
     """
     result = {"market_odds": None, "market_ou25": None}
 
-    by_league = get_all_matches()
+    by_league = get_all_matches(league_url)
 
-    for m in _iter_all_matches(by_league):
+    for m in _iter_all_matches(by_league, target_date=target_date):
         if not _team_names_match(m["home"], home):
             continue
         if not _team_names_match(m["away"], away):
