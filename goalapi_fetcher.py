@@ -16,16 +16,20 @@ CONFIRMED (2026-09-06) via GitHub Actions testing:
   combined-only stats in that case, matching AnnaBet's own behavior
   when split data is unavailable).
 - GET /fixtures/date/{date} returns all fixtures for that date across
-  every league in one call (NOT yet field-confirmed in detail — built
-  from the SDK's documented shape: homeTeam.name, awayTeam.name,
-  homeScore, awayScore, plus a fixture id — verify against a real
-  response and adjust if field names differ).
-- GET /fixtures/{id}/odds — odds shape NOT yet confirmed. Placeholder
-  parsing below needs verification against a real response.
+  every league. CONFIRMED (2026-09-12) this is a paginated list
+  endpoint like every other list endpoint on GOAL API — response
+  shape is {"success", "data": [...], "pagination": {"total", "limit",
+  "offset", "hasMore"}}. Field names confirmed: homeTeamName,
+  awayTeamName, leagueId, leagueName, kickoffUtc, matchStatus,
+  homeTeamScore, awayTeamScore.
+- GET /fixtures/{id}/odds — odds require a PAID plan, confirmed 403
+  on free tier (capability: canAccessOdds).
 
 Rate limits: 1,000 requests/day on free tier. Estimated real usage:
-~61 calls for standings (1 per active league) + 1 call for the day's
-fixtures + ~1 call per match needing odds — comfortably under budget.
+~61 calls for standings (1 per active league) + however many pages
+the day's fixtures need (previously assumed 1, see fix below) +
+~1 call per match needing odds — comfortably under budget even with
+a few extra pages/day.
 """
 
 import os
@@ -44,6 +48,8 @@ STATS_CACHE_TTL = 3600  # 1 hour — standings don't change mid-day
 
 _FIXTURES_CACHE = {}
 FIXTURES_CACHE_TTL = 300  # 5 minutes
+
+FIXTURES_PAGE_LIMIT = 100  # ceiling per GOAL API docs
 
 
 def _get(path, params=None, retries=2):
@@ -121,6 +127,12 @@ def fetch_team_stats(league_id):
     Single API call — GOAL API returns combined AND home/away splits
     together on /standings/{leagueId}, confirmed via testing.
 
+    NOTE: /standings/{leagueId} is also a paginated list endpoint per
+    the API docs. Not yet fixed here — most leagues have well under
+    100 teams so this is unlikely to truncate in practice, but if a
+    league ever comes back short, apply the same offset-loop pattern
+    used in fetch_fixtures_for_day() below.
+
     Falls back to 0-valued home/away splits if a league doesn't track
     them (e.g. international group-stage tournaments) — same
     graceful-degradation behavior AnnaBet's own code has when split
@@ -188,7 +200,7 @@ def fetch_team_stats(league_id):
 
 
 # ------------------------------------------------------------
-# Fixtures — one call for the whole day, all leagues
+# Fixtures — one day, all leagues, PAGINATED
 # ------------------------------------------------------------
 
 def fetch_fixtures_for_day(date_str):
@@ -199,6 +211,16 @@ def fetch_fixtures_for_day(date_str):
         [{"id": ..., "league_id": ..., "league_name": ...,
           "home": ..., "away": ..., "kickoff": ...,
           "status": ..., "home_score": ..., "away_score": ...}, ...]
+
+    FIX (2026-09-12): /fixtures/date/:date is a paginated list
+    endpoint — GOAL API's docs confirm every list endpoint returns
+    {"success", "data": [...], "pagination": {"total", "limit",
+    "offset", "hasMore"}}. The previous version of this function
+    made exactly ONE call and returned whatever page 1 contained
+    (limit defaults to 50 if not specified), silently dropping every
+    fixture past that on any day with more matches than one page —
+    which, across 1,000+ leagues, is effectively every day. This now
+    walks pages with offset until pagination.hasMore is false.
 
     CONFIRMED (2026-09-06) real field names — flat top-level fields,
     NOT the nested homeTeam/awayTeam objects. Those nested objects
@@ -212,29 +234,40 @@ def fetch_fixtures_for_day(date_str):
     if cached and time.time() - cached[0] < FIXTURES_CACHE_TTL:
         return cached[1]
 
-    data = _get(f"/fixtures/date/{date_str}")
-
-    if not data or not data.get("data"):
-        return []
-
-    rows = data["data"]
-    if not isinstance(rows, list):
-        return []
-
     fixtures = []
+    offset = 0
 
-    for row in rows:
-        fixtures.append({
-            "id": row.get("id"),
-            "league_id": row.get("leagueId"),
-            "league_name": row.get("leagueName"),
-            "home": row.get("homeTeamName"),
-            "away": row.get("awayTeamName"),
-            "kickoff": row.get("kickoffUtc"),
-            "status": row.get("matchStatus"),
-            "home_score": row.get("homeTeamScore"),
-            "away_score": row.get("awayTeamScore"),
-        })
+    while True:
+        data = _get(
+            f"/fixtures/date/{date_str}",
+            params={"limit": FIXTURES_PAGE_LIMIT, "offset": offset},
+        )
+
+        if not data or not data.get("data"):
+            break
+
+        rows = data["data"]
+        if not isinstance(rows, list):
+            break
+
+        for row in rows:
+            fixtures.append({
+                "id": row.get("id"),
+                "league_id": row.get("leagueId"),
+                "league_name": row.get("leagueName"),
+                "home": row.get("homeTeamName"),
+                "away": row.get("awayTeamName"),
+                "kickoff": row.get("kickoffUtc"),
+                "status": row.get("matchStatus"),
+                "home_score": row.get("homeTeamScore"),
+                "away_score": row.get("awayTeamScore"),
+            })
+
+        pagination = data.get("pagination") or {}
+        if not pagination.get("hasMore"):
+            break
+
+        offset += FIXTURES_PAGE_LIMIT
 
     _FIXTURES_CACHE[cache_key] = (time.time(), fixtures)
     return fixtures
@@ -250,9 +283,9 @@ def fetch_market_odds(fixture_id):
     tier returns 403 "Feature not available in your plan" (capability:
     canAccessOdds) for /fixtures/:id/odds.
 
-    Use oddsbook_odds.get_oddsbook_market_odds(home, away) instead for
-    odds on the free tier — confirmed working via Playwright earlier
-    in this project. This function is kept as a stub in case the plan
-    is upgraded later, but should not be called on the free tier.
+    Use combined_odds.get_combined_market_odds() instead for odds on
+    the free tier — OddStorm primary, Oddsbook fallback. This function
+    is kept as a stub in case the plan is upgraded later, but should
+    not be called on the free tier.
     """
     return {"market_odds": None, "market_ou25": None}
