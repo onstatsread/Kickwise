@@ -1820,64 +1820,7 @@ def fixtures_goalapi_test(date_str: str = Query(None, alias="date")):
     fixtures = fetch_fixtures_for_day(str(target))
     return {"date": str(target), "fixture_count": len(fixtures), "fixtures": fixtures}
 
-@app.get("/debug-finland-leagues")
-def debug_finland_leagues():
-    import requests as _requests
 
-    goal_api_key = os.environ.get("GOAL_API_KEY", "")
-    if not goal_api_key:
-        return {"error": "GOAL_API_KEY not set in this environment"}
-
-    session = _requests.Session()
-    session.headers.update({"Authorization": f"Bearer {goal_api_key}"})
-
-    def get_all_pages(path, params=None):
-        params = dict(params or {})
-        params.setdefault("limit", 100)
-        offset = 0
-        results = []
-
-        while True:
-            params["offset"] = offset
-            resp = session.get(f"https://api.goal-api.com/v1{path}", params=params, timeout=20)
-            resp.raise_for_status()
-            data = resp.json()
-
-            rows = data.get("data") or []
-            if not isinstance(rows, list):
-                break
-            results.extend(rows)
-
-            pagination = data.get("pagination") or {}
-            if not pagination.get("hasMore"):
-                break
-            offset += params["limit"]
-
-        return results
-
-    try:
-        leagues = get_all_pages("/leagues", params={"country": "Finland"})
-
-        if not leagues:
-            # ?country= filter may not be a real supported param —
-            # fall back to fetching everything and filtering ourselves.
-            all_leagues = get_all_pages("/leagues")
-            leagues = [
-                lg for lg in all_leagues
-                if "finland" in str(lg.get("country") or lg.get("countryName") or "").lower()
-            ]
-
-        return {
-            "count": len(leagues),
-            "leagues": [
-                {"id": lg.get("id"), "name": lg.get("name"), "raw": lg}
-                for lg in leagues
-            ],
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
-        
 @app.get("/predict-goalapi-test")
 async def predict_goalapi_test(
     league_id: str = Query(..., description="GOAL API league id (from /fixtures-goalapi-test), NOT an AnnaBet short code"),
@@ -2120,7 +2063,7 @@ def fixtures_v2(date_str: str = Query(None, alias="date")):
 
     Unlike the legacy /fixtures (one AnnaBet call PER LEAGUE), this
     makes exactly ONE call to GOAL API's whole-day fixtures endpoint,
-    then filters down to just the 61 leagues in GOALAPI_LEAGUE_IDS.
+    then filters down to just the leagues in GOALAPI_LEAGUE_IDS.
 
     Returns:
         {
@@ -2154,11 +2097,19 @@ def fixtures_v2(date_str: str = Query(None, alias="date")):
     by_league = {}
 
     for fx in all_fixtures:
+        # FIX (2026-09-13): skip completed matches — confirmed real
+        # GOAL API statuses include SCHEDULED, LIVE, HALF_TIME, and
+        # FINISHED. A finished match has no predictive value and
+        # shouldn't be posted/signaled on. LIVE/HALF_TIME are left
+        # untouched — only FINISHED is excluded.
+        if fx.get("status") == "FINISHED":
+            continue
+
         league_id = fx.get("league_id")
         kickwise_name = id_to_kickwise_name.get(league_id)
 
         if not kickwise_name:
-            continue  # not one of our 61 active leagues
+            continue  # not one of our active leagues
 
         by_league.setdefault(kickwise_name, []).append({
             "home": fx.get("home"),
@@ -2415,75 +2366,7 @@ def debug_annabet_login():
         "logged_in": _ANNABET_LOGGED_IN,
         "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
     }
-"""
-REPLACE the earlier /debug-oddstorm-match endpoint in app.py with this
-version.
 
-FINDING (2026-09-13): oddstorm_leagues.py's per-league URLs
-(https://www.oddstorm.com/odds/league/{id}-{slug}) do NOT scope
-content server-side. Confirmed via /debug-oddstorm-match: requesting
-the "USA - MLS" league URL returned 1,195 matches spanning Albania,
-Andorra, Angola, Argentina... i.e. the SAME full listing you get from
-the plain https://www.oddstorm.com/odds/ homepage, which itself
-carries a client-side filter sidebar (confirmed via web search:
-"USA54", "Finland100", "Argentina72" county counts) rather than
-separate real pages per league.
-
-The earlier Georgia test "working" was a coincidence — Georgia's
-matches exist in the same big generic listing, so team-name matching
-found them regardless of which URL was fetched. It did NOT prove
-per-league scoping worked.
-
-This version drops league_url entirely and just searches the ONE
-generic listing, filtering by league_name containing a keyword from
-the Kickwise league name (case-insensitive) — so you can see exactly
-how OddStorm spells team names for that competition, to compare
-against what GOAL API/your fixtures give you and fix
-_team_names_match() accordingly.
-"""
-
-from oddstorm_odds import get_all_matches, _team_names_match
-
-
-@app.get("/debug-oddstorm-match")
-def debug_oddstorm_match(
-    league_keyword: str = Query(..., description="A keyword to search league_name for, e.g. 'MLS' or 'Brazil' or 'Serie A'"),
-    home: str = Query(...),
-    away: str = Query(...),
-):
-    by_league = get_all_matches()  # no league_url — single generic page
-
-    keyword = league_keyword.lower()
-    matching_leagues = []
-
-    for league_key, league_data in by_league.items():
-        league_name = (league_data.get("league_name") or "")
-        if keyword not in league_name.lower():
-            continue
-
-        for m in league_data["matches"]:
-            matching_leagues.append({
-                "league_key": league_key,
-                "league_name": league_data.get("league_name"),
-                "group_date": str(league_data.get("date")),
-                "home": m["home"],
-                "away": m["away"],
-                "time": m["time"],
-                "has_odds": m.get("home_odds") is not None,
-                "would_match_home": _team_names_match(m["home"], home),
-                "would_match_away": _team_names_match(m["away"], away),
-            })
-
-    return {
-        "league_keyword": league_keyword,
-        "queried_home": home,
-        "queried_away": away,
-        "total_matches_on_full_page": sum(len(v["matches"]) for v in by_league.values()),
-        "matches_in_matching_leagues": len(matching_leagues),
-        "matches": matching_leagues,
-            }
-    
-    
 
 @app.get("/league_gp")
 def league_gp(
