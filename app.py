@@ -2416,46 +2416,53 @@ def debug_annabet_login():
         "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
     }
 """
-ADD THIS to app.py, near the other debug/test endpoints.
+REPLACE the earlier /debug-oddstorm-match endpoint in app.py with this
+version.
 
-Purpose: pinpoint exactly why a SPECIFIC match's OddStorm odds lookup
-is returning nothing, instead of guessing. Shows:
-  - the league_url built from oddstorm_leagues.get_oddstorm_league_url()
-  - every raw (date, home, away) triple OddStorm's page actually has
-    for that league, so you can see the REAL team-name spelling and
-    date grouping OddStorm uses
-  - whether _team_names_match() would succeed against the home/away
-    you're querying for
+FINDING (2026-09-13): oddstorm_leagues.py's per-league URLs
+(https://www.oddstorm.com/odds/league/{id}-{slug}) do NOT scope
+content server-side. Confirmed via /debug-oddstorm-match: requesting
+the "USA - MLS" league URL returned 1,195 matches spanning Albania,
+Andorra, Angola, Argentina... i.e. the SAME full listing you get from
+the plain https://www.oddstorm.com/odds/ homepage, which itself
+carries a client-side filter sidebar (confirmed via web search:
+"USA54", "Finland100", "Argentina72" county counts) rather than
+separate real pages per league.
 
-DELETE once the root cause is found and fixed.
+The earlier Georgia test "working" was a coincidence — Georgia's
+matches exist in the same big generic listing, so team-name matching
+found them regardless of which URL was fetched. It did NOT prove
+per-league scoping worked.
+
+This version drops league_url entirely and just searches the ONE
+generic listing, filtering by league_name containing a keyword from
+the Kickwise league name (case-insensitive) — so you can see exactly
+how OddStorm spells team names for that competition, to compare
+against what GOAL API/your fixtures give you and fix
+_team_names_match() accordingly.
 """
 
-from oddstorm_leagues import get_oddstorm_league_url
 from oddstorm_odds import get_all_matches, _team_names_match
 
 
 @app.get("/debug-oddstorm-match")
 def debug_oddstorm_match(
-    league: str = Query(..., description="Kickwise 'Country - League' name, e.g. 'USA - MLS'"),
+    league_keyword: str = Query(..., description="A keyword to search league_name for, e.g. 'MLS' or 'Brazil' or 'Serie A'"),
     home: str = Query(...),
     away: str = Query(...),
 ):
-    league_url = get_oddstorm_league_url(league)
+    by_league = get_all_matches()  # no league_url — single generic page
 
-    if not league_url:
-        return {
-            "league": league,
-            "league_url": None,
-            "note": "has_oddstorm_coverage() would return False for this league — "
-                    "no slug mapped in ODDSTORM_LEAGUE_SLUGS.",
-        }
+    keyword = league_keyword.lower()
+    matching_leagues = []
 
-    by_league = get_all_matches(league_url=league_url)
-
-    all_matches_seen = []
     for league_key, league_data in by_league.items():
+        league_name = (league_data.get("league_name") or "")
+        if keyword not in league_name.lower():
+            continue
+
         for m in league_data["matches"]:
-            all_matches_seen.append({
+            matching_leagues.append({
                 "league_key": league_key,
                 "league_name": league_data.get("league_name"),
                 "group_date": str(league_data.get("date")),
@@ -2468,13 +2475,14 @@ def debug_oddstorm_match(
             })
 
     return {
-        "league": league,
-        "league_url": league_url,
+        "league_keyword": league_keyword,
         "queried_home": home,
         "queried_away": away,
-        "total_matches_on_page": len(all_matches_seen),
-        "matches": all_matches_seen,
-    }
+        "total_matches_on_full_page": sum(len(v["matches"]) for v in by_league.values()),
+        "matches_in_matching_leagues": len(matching_leagues),
+        "matches": matching_leagues,
+            }
+    
     
 
 @app.get("/league_gp")
