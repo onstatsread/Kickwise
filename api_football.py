@@ -26,6 +26,29 @@ IMPORTANT — free tier is 100 requests/day TOTAL:
   automation run has more misses than that, later matches in the run
   will just get no fallback odds either — this fails safely (returns
   None), it does not crash the run.
+
+PROTECTION ADDED (2026-09-13) — the person maintaining this account
+has flagged that this key keeps getting suspended. Two safeguards
+added on top of the original design:
+
+  1. DAILY CALL BUDGET: a proactive counter (MAX_CALLS_PER_DAY) that
+     stops making requests once a conservative ceiling is reached —
+     BEFORE the real 100/day limit, not after. Resets at midnight
+     (local server clock) by tracking the date alongside the count.
+
+  2. CIRCUIT BREAKER ON 429: the ORIGINAL version, on hitting 429,
+     logged it and returned None for that ONE call — but the very
+     next call would try again and could hit ANOTHER 429 immediately.
+     Repeated 429s in quick succession is a common trigger for harder
+     account-level suspension (vs. a normal quota reset), not just a
+     single quota-exceeded response. Now, the first 429 in a day sets
+     a flag that skips ALL further requests to this API for the rest
+     of that calendar day — no retry, no second 429, just an
+     immediate None with a log line explaining why.
+
+Both safeguards fail toward NOT calling the API when in doubt — a
+missed fallback-odds lookup is a minor inconvenience; a suspended key
+is a much bigger problem to recover from.
 """
 
 import os
@@ -45,6 +68,56 @@ FIXTURES_CACHE_TTL = 12 * 60 * 60  # 12 hours — fixtures for a day don't chang
 # Cache: per-fixture-id odds lookups, so re-checking the same match
 # within a run doesn't spend quota twice
 _odds_cache: dict[int, dict] = {}
+
+# --------------------------------------------------------------
+# QUOTA PROTECTION STATE
+# --------------------------------------------------------------
+
+MAX_CALLS_PER_DAY = 85  # real limit is 100 — leave real headroom, don't shave it thin
+
+_call_budget = {"date": None, "count": 0}
+_suspended_until_date = {"date": None, "tripped": False}
+
+
+def _reset_budget_if_new_day():
+    today_str = date.today().isoformat()
+    if _call_budget["date"] != today_str:
+        _call_budget["date"] = today_str
+        _call_budget["count"] = 0
+    if _suspended_until_date["date"] != today_str:
+        _suspended_until_date["date"] = today_str
+        _suspended_until_date["tripped"] = False
+
+
+def _budget_available() -> bool:
+    """
+    True if we're allowed to make ONE MORE call right now. Checks both
+    the proactive daily cap and the reactive 429 circuit breaker.
+    Call this BEFORE every real HTTP request in this module.
+    """
+    _reset_budget_if_new_day()
+
+    if _suspended_until_date["tripped"]:
+        return False
+
+    if _call_budget["count"] >= MAX_CALLS_PER_DAY:
+        print(f"  [api_football] Daily call budget ({MAX_CALLS_PER_DAY}) reached — "
+              f"skipping further calls until tomorrow")
+        return False
+
+    return True
+
+
+def _record_call():
+    _reset_budget_if_new_day()
+    _call_budget["count"] += 1
+
+
+def _trip_circuit_breaker(context: str):
+    _reset_budget_if_new_day()
+    _suspended_until_date["tripped"] = True
+    print(f"  [api_football] 429 received ({context}) — tripping circuit breaker, "
+          f"NO further API-Football calls will be made for the rest of today")
 
 
 def _similar(a: str, b: str) -> float:
@@ -86,6 +159,9 @@ async def _get_todays_fixtures(date_str: str = None) -> list:
         print("  [api_football] No API_FOOTBALL_KEY set — skipping fallback")
         return []
 
+    if not _budget_available():
+        return cached[1] if cached else []
+
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             resp = await client.get(
@@ -93,8 +169,11 @@ async def _get_todays_fixtures(date_str: str = None) -> list:
                 headers=HEADERS,
                 params={"date": date_str},
             )
+        _record_call()
+
         if resp.status_code == 429:
             print(f"  [api_football] Rate limit / quota exceeded (429) fetching fixtures for {date_str}")
+            _trip_circuit_breaker("fixtures fetch")
             return cached[1] if cached else []
         if resp.status_code != 200:
             print(f"  [api_football] Fixtures fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
@@ -106,7 +185,8 @@ async def _get_todays_fixtures(date_str: str = None) -> list:
             print(f"  [api_football] API returned errors on fixtures fetch: {errors}")
         data = body.get("response", [])
         print(f"  [api_football] Fetched {len(data)} global fixtures for {date_str} "
-              f"(requests remaining today: {resp.headers.get('x-ratelimit-requests-remaining', '?')})")
+              f"(requests remaining today: {resp.headers.get('x-ratelimit-requests-remaining', '?')}, "
+              f"local budget used: {_call_budget['count']}/{MAX_CALLS_PER_DAY})")
         _fixtures_cache[date_str] = (time.time(), data)
         return data
     except Exception as e:
@@ -138,13 +218,17 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
     """
     Returns odds in the SAME shape as odds.py's get_odds_for_card():
     { home_odds, draw_odds, away_odds, home_pct, draw_pct, away_pct }
-    Returns None if no fixture/odds found, quota exhausted, or key missing
-    — always fails safe, never raises, so it's safe to call unconditionally
-    as a fallback. Every failure path is logged so Render logs show
-    WHY it returned None (quota, no fixture, no odds posted, or a bug)
+    Returns None if no fixture/odds found, quota exhausted, key missing,
+    or the circuit breaker has tripped for today — always fails safe,
+    never raises, so it's safe to call unconditionally as a fallback.
+    Every failure path is logged so Render logs show WHY it returned
+    None (quota, no fixture, no odds posted, breaker tripped, or a bug)
     instead of leaving it a mystery.
     """
     if not API_FOOTBALL_KEY:
+        return None
+
+    if not _budget_available():
         return None
 
     fixture_id = await _find_fixture_id(home_team, away_team, date_str)
@@ -154,6 +238,9 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
     if fixture_id in _odds_cache:
         return _odds_cache[fixture_id]
 
+    if not _budget_available():
+        return None
+
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
@@ -161,8 +248,11 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
                 headers=HEADERS,
                 params={"fixture": fixture_id, "bet": 1},  # bet=1 is "Match Winner" (1X2)
             )
+        _record_call()
+
         if resp.status_code == 429:
             print(f"  [api_football] Rate limit / quota exceeded (429) fetching odds for fixture {fixture_id}")
+            _trip_circuit_breaker("odds fetch")
             return None
         if resp.status_code != 200:
             print(f"  [api_football] Odds fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
@@ -177,7 +267,8 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
         response_data = body.get("response", [])
         if not response_data:
             print(f"  [api_football] No odds posted yet for fixture {fixture_id} "
-                  f"(requests remaining today: {remaining})")
+                  f"(requests remaining today: {remaining}, local budget used: "
+                  f"{_call_budget['count']}/{MAX_CALLS_PER_DAY})")
             return None
 
         home_odds, draw_odds, away_odds = [], [], []
@@ -216,7 +307,8 @@ async def get_fallback_odds(home_team: str, away_team: str, date_str: str = None
         }
         _odds_cache[fixture_id] = result
         print(f"  [api_football] Fallback odds found for fixture {fixture_id} "
-              f"(requests remaining today: {remaining})")
+              f"(requests remaining today: {remaining}, local budget used: "
+              f"{_call_budget['count']}/{MAX_CALLS_PER_DAY})")
         return result
 
     except Exception as e:
