@@ -1971,6 +1971,20 @@ async def predict_combined_test(
     h = resolved_h or home
     a = resolved_a or away
 
+    # DEBUG (2026-09-13): when a team name fails to resolve, surface
+    # the real team names GOAL API has for this league right in the
+    # response — fastest way to spot a naming mismatch (e.g. "Columbus
+    # Crew SC" vs "Columbus Crew") without a separate lookup call.
+    unresolved_debug = None
+    if not resolved_h or not resolved_a:
+        unresolved_debug = {
+            "home_resolved": resolved_h is not None,
+            "away_resolved": resolved_a is not None,
+            "queried_home": home,
+            "queried_away": away,
+            "real_team_names_in_league": sorted(team_data.keys()),
+        }
+
     with ThreadPoolExecutor(max_workers=2) as executor:
         f1 = executor.submit(run_model, h, a, team_data)
         f2 = executor.submit(run_model, a, h, team_data)
@@ -2017,6 +2031,7 @@ async def predict_combined_test(
         "source": f"goalapi (stats) + {odds_source or 'none'} (odds)",
         "date_checked": str(target_date),
         "team_count_in_league": len(team_data),
+        "unresolved_debug": unresolved_debug,
         "home": h,
         "away": a,
         "d70": r1["d70"],
