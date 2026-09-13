@@ -1,8 +1,7 @@
 """
 Combined odds fetcher — tries OddStorm first (no Playwright needed,
-includes O/U 2.5), falls back to Oddsbook (Playwright-based) for the
-16 leagues confirmed absent from OddStorm's data (see
-oddstorm_leagues.py's docstring for the full list and why).
+includes O/U 2.5), falls back to Oddsbook (Playwright-based) for
+leagues or matches OddStorm doesn't have priced.
 
 Both underlying fetchers return the same shape:
     {
@@ -11,29 +10,22 @@ Both underlying fetchers return the same shape:
     }
 so this wrapper is a straightforward drop-in for either.
 
-FIX (2026-09-12, part 1): now actually calls oddstorm_leagues.
-get_oddstorm_league_url() and passes the result through to
-get_oddstorm_market_odds() as league_url. Previously
-has_oddstorm_coverage() was used to DECIDE whether to try OddStorm,
-but the matching league URL was never fetched or passed anywhere —
-oddstorm_odds.py's fetcher only ever scraped the generic /odds/
-homepage, which doesn't carry the full daily card for every mapped
-league.
+CLEANUP (2026-09-13): removed the league_url call added 2026-09-12.
+CONFIRMED via /debug-oddstorm-match that OddStorm's
+/odds/league/{id}-{slug} URLs don't scope content server-side — they
+return the same full generic listing regardless of the slug given.
+oddstorm_odds.get_market_odds() no longer accepts or needs a
+league_url; it always searches the one full listing internally.
 
-FIX (2026-09-12, part 2): also passes target_date through to
-get_oddstorm_market_odds(). A screenshot of a live league page
-(2026-09-12) showed it defaulting to the NEXT upcoming matchday
-rather than today — so without a date check, a lookup could silently
-pair today's fixture with a different day's odds for a same-named
-match. oddstorm_odds.py now parses each league group's own date and
-filters by it when target_date is given. Defaults to date.today()
-here, same as the Oddsbook branch below, so both branches are
-date-consistent by default.
+has_oddstorm_coverage() is still used as a first-pass filter — a
+league confirmed absent from OddStorm's overall coverage skips
+straight to Oddsbook rather than wasting a search over the full
+listing for something that was never going to be there.
 """
 
 from datetime import date
 
-from oddstorm_leagues import has_oddstorm_coverage, get_oddstorm_league_url
+from oddstorm_leagues import has_oddstorm_coverage
 from oddstorm_odds import get_market_odds as get_oddstorm_market_odds
 from oddsbook_odds import get_oddsbook_market_odds
 
@@ -42,30 +34,27 @@ def get_combined_market_odds(kickwise_league_name, home, away, target_date=None)
     """
     kickwise_league_name: the "Country - League" string used as the
         key in daily_predictions.py's LEAGUE_CODES / GOALAPI_LEAGUE_IDS
-        (e.g. "Algeria - Ligue 1") — used to decide which source to
-        try AND (via get_oddstorm_league_url()) to pick the specific
-        OddStorm league page to fetch.
+        (e.g. "Algeria - Ligue 1") — used only to decide whether
+        OddStorm covers this league at all before searching.
     home, away: team names as they appear in your fixtures data.
     target_date: a date to match fixtures/odds against. Defaults to
         date.today() if not given, and is passed to BOTH the OddStorm
-        and Oddsbook branches so a match is never paired with the
-        wrong day's odds regardless of which source ends up supplying
-        them.
+        and Oddsbook branches.
 
     Returns the standard {"market_odds": ..., "market_ou25": ...}
     shape, with a "source" key added so you can see which fetcher
     actually supplied the data (useful for logging/debugging).
+
+    A null result from both sources for a specific match is often a
+    genuine data-coverage gap (the fixture isn't priced yet by either
+    source's tracked bookmakers) rather than a bug — confirmed via
+    /debug-oddstorm-match and a matching Oddsbook check on 2026-09-13.
     """
     resolved_date = target_date or date.today()
 
     if has_oddstorm_coverage(kickwise_league_name):
-        league_url = get_oddstorm_league_url(kickwise_league_name)
         try:
-            result = get_oddstorm_market_odds(
-                home, away,
-                target_date=resolved_date,
-                league_url=league_url,
-            )
+            result = get_oddstorm_market_odds(home, away, target_date=resolved_date)
             if result.get("market_odds") or result.get("market_ou25"):
                 result["source"] = "oddstorm"
                 return result
@@ -75,8 +64,7 @@ def get_combined_market_odds(kickwise_league_name, home, away, target_date=None)
 
     # Either OddStorm doesn't cover this league, or it returned
     # nothing for this specific match on this date (e.g. not yet
-    # priced, or the fixture only exists on a later matchday page) —
-    # try Oddsbook as the fallback.
+    # priced) — try Oddsbook as the fallback.
     try:
         result = get_oddsbook_market_odds(home, away, resolved_date)
         result["source"] = "oddsbook"
