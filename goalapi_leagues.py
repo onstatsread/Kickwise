@@ -57,14 +57,19 @@ unmapped rather than force a wrong match:
 
 - England - Southern Football League: no matching competition exists
   in GOAL API's database at all (see note above).
-- Finland - Ykkosliiga: FIX (2026-09-12) — previously this shared
-  Veikkausliiga's league_id (cmr77dxae00tlrx06ay98mhmc) as a known
-  placeholder, which meant fetch_team_stats() silently returned
-  Veikkausliiga's standings table for every Ykkösliiga match: wrong
-  teams, wrong stats, wrong prediction, with no error raised anywhere
-  in the pipeline. Removed rather than left wrong. Run
-  find_finland_league_id.py with a real GOAL_API_KEY to get the
-  correct, distinct id, then add it back here.
+RESOLVED (2026-09-13): Finland - Ykkosliiga previously shared
+Veikkausliiga's league_id (cmr77dxae00tlrx06ay98mhmc) as a known
+placeholder, which meant fetch_team_stats() silently returned
+Veikkausliiga's standings table for every Ykkösliiga match: wrong
+teams, wrong stats, wrong prediction, with no error raised anywhere.
+Fixed below using GOAL API's own name for this league, "Ykkönen"
+(cmr77dxae00tmrx06j6n7oh79) — confirmed via /debug-finland-leagues
+as the correct entry: 12 teams (matching Ykkönen's real 2026 team
+count) and 945 fixtures, vs. a duplicate/stale "Ykkönen" entry
+(cmr77dxae00tnrx06cmfvhzsn, apiId 8062) with only 10 teams and 403
+fixtures — likely an old or lower-quality data-source import. Also
+confirmed live via /predict-goalapi-test?league_id=... returning
+team_count_in_league: 12, matching expectations.
 """
 
 GOALAPI_LEAGUE_IDS = {
