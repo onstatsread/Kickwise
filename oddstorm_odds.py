@@ -19,30 +19,30 @@ CONFIRMED real HTML structure:
 
 Team names are split on the en-dash "–" (U+2013), NOT a hyphen.
 
-League grouping IS confirmed present on a single-league page, not
-just the homepage — verified via screenshot 2026-09-12 against
-https://www.oddstorm.com/odds/league/1940888-georgia-erovnuli, which
-showed the same "Georgia · Erovnuli" header, en-dash team names, and
-1/X/2 + Over/Under boxes as the homepage listing.
+CLEANUP (2026-09-13): removed the earlier league_url plumbing added
+2026-09-12. CONFIRMED via /debug-oddstorm-match that
+https://www.oddstorm.com/odds/league/{id}-{slug} URLs do NOT scope
+content server-side — requesting the "USA - MLS" league URL returned
+1,195 matches spanning Albania, Andorra, Angola, Argentina... i.e.
+the exact same full listing as the plain /odds/ homepage. OddStorm's
+real filtering is a client-side sidebar over one big page, not
+separate per-league URLs. The earlier Georgia test that seemed to
+confirm league_url working was a coincidence: Georgia's real matches
+also exist in the same big generic listing, so team-name matching
+found them regardless of which URL was fetched.
 
-FIX (2026-09-12, part 1): _fetch_odds_page() / get_all_matches() /
-get_market_odds() all accept an optional league_url so callers can
-fetch a SPECIFIC league's page (via
-oddstorm_leagues.get_oddstorm_league_url()) instead of always
-scraping the generic /odds/ homepage listing, which only surfaces
-whatever's currently featured there. See combined_odds.py.
+This module now always fetches the single generic /odds/ page and
+relies entirely on team-name matching (+ the date filter added at
+the same time, which IS real and still useful — each match's
+od-group carries its own date) to find the right fixture.
 
-FIX (2026-09-12, part 2): the same screenshot also showed the
-league page defaulting to the NEXT upcoming matchday ("Sunday 13
-September 2026"), not necessarily today's date. Each od-group carries
-its own date in od-group-date (e.g. "Sunday 13 September 2026 UKT").
-_parse_matches() now parses that into a real date per league group,
-and get_market_odds()/get_all_matches() accept a target_date to filter
-against it — so a match on a page defaulting to tomorrow is never
-silently paired with today's stats/prediction run. Without this, a
-lookup for today's fixture could match a same-named fixture group
-dated for a different day and return the wrong odds without any
-error.
+CONFIRMED (2026-09-13) via the same debug endpoint: OddStorm's real
+MLS coverage for a given day is often just a handful of matches (4
+out of ~10 MLS fixtures on 2026-09-13, for example) — most "missing
+odds" cases are a genuine data-coverage gap (bookmakers haven't
+priced that match yet), not a matching bug. Confirmed the same
+match was also absent from Oddsbook, so combined_odds.py correctly
+returned null after trying both sources.
 """
 
 import re
@@ -151,30 +151,26 @@ def _add_implied_pct(odds_dict, *keys):
     return odds_dict
 
 
-def _fetch_odds_page(url=None):
+def _fetch_odds_page():
     """
-    Fetches an odds page — plain requests works fine (confirmed no
-    Cloudflare challenge). Defaults to the generic /odds/ listing,
-    but accepts a specific league URL (from oddstorm_leagues.py's
-    get_oddstorm_league_url()) to fetch that league's full card
-    instead of whatever happens to be currently featured on the
-    homepage. Returns raw HTML, or None on failure.
+    Fetches the single generic /odds/ page — plain requests works
+    fine (confirmed no Cloudflare challenge). There is no working
+    per-league URL variant (see module docstring) so this always
+    hits the same endpoint. Returns raw HTML, or None on failure.
     """
-    target = url or ODDSTORM_ODDS_URL
-
-    cached = _DAY_CACHE.get(target)
+    cached = _DAY_CACHE.get(ODDSTORM_ODDS_URL)
     if cached and time.time() - cached[0] < DAY_CACHE_TTL:
         return cached[1]
 
     try:
-        resp = SESSION.get(target, timeout=20)
+        resp = SESSION.get(ODDSTORM_ODDS_URL, timeout=20)
         resp.raise_for_status()
         html = resp.text
     except Exception as exc:
-        print(f"OddStorm fetch failed ({target}): {exc}")
+        print(f"OddStorm fetch failed: {exc}")
         return None
 
-    _DAY_CACHE[target] = (time.time(), html)
+    _DAY_CACHE[ODDSTORM_ODDS_URL] = (time.time(), html)
     return html
 
 
@@ -202,8 +198,7 @@ def _parse_matches(html):
             ...
         }
 
-    CONFIRMED real structure — both on the generic /odds/ homepage
-    listing and on a single-league page (screenshot 2026-09-12):
+    CONFIRMED real structure on the generic /odds/ page:
         <div class="od-container">
           <div class="od-group">
             <div class="od-group-head">
@@ -218,6 +213,10 @@ def _parse_matches(html):
           </div>
           ...
         </div>
+
+    NOTE: the "href" captured here still points to a /odds/league/...
+    URL — kept for display/reference purposes only. Do NOT treat it
+    as fetchable for scoped content; see module docstring.
     """
     soup = BeautifulSoup(html, "html.parser")
     by_league = {}
@@ -317,16 +316,12 @@ def _parse_matches(html):
     return by_league
 
 
-def get_all_matches(league_url=None):
+def get_all_matches():
     """
-    Returns the by_league dict described in _parse_matches' docstring.
-
-    league_url: pass a specific OddStorm league page URL (from
-        oddstorm_leagues.get_oddstorm_league_url()) to fetch that
-        league's full card instead of the generic homepage listing,
-        which only shows whatever's currently featured there.
+    Returns the by_league dict described in _parse_matches' docstring,
+    for the single generic /odds/ listing.
     """
-    html = _fetch_odds_page(league_url)
+    html = _fetch_odds_page()
     if not html:
         return {}
     return _parse_matches(html)
@@ -351,7 +346,7 @@ def _iter_all_matches(by_league, target_date=None):
             yield m
 
 
-def get_market_odds(home, away, target_date=None, league_url=None):
+def get_market_odds(home, away, target_date=None):
     """
     Same return shape as annabet_odds.get_annabet_market_odds() /
     oddsbook_odds.get_oddsbook_market_odds():
@@ -361,22 +356,20 @@ def get_market_odds(home, away, target_date=None, league_url=None):
             "market_ou25": {"over_odds":..., "under_odds":...}
         }
 
-    league_url: pass the specific OddStorm league page URL when known
-        (see combined_odds.py, which sources it from
-        oddstorm_leagues.get_oddstorm_league_url()) so smaller leagues
-        not featured on the homepage still get matched correctly.
-        Falls back to the generic /odds/ listing if not given.
-
-    target_date: a datetime.date (or None to skip filtering). A league
-        page can default to the NEXT upcoming matchday rather than
-        today (confirmed via screenshot, e.g. a page fetched on the
-        12th showing "Sunday 13 September 2026"). Passing today's date
-        here prevents pairing a fixture with a different day's odds
+    target_date: a datetime.date (or None to skip filtering). Matches
+        are grouped by date on the generic listing; passing today's
+        date prevents pairing a fixture with a different day's odds
         under the same team names without any error being raised.
+
+    A None result here can mean either (a) OddStorm simply doesn't
+    have this fixture priced yet — confirmed a real, common case, not
+    a bug — or (b) a team-name spelling mismatch. Use
+    /debug-oddstorm-match (filtering by a league keyword) to tell
+    the two apart for any specific match.
     """
     result = {"market_odds": None, "market_ou25": None}
 
-    by_league = get_all_matches(league_url)
+    by_league = get_all_matches()
 
     for m in _iter_all_matches(by_league, target_date=target_date):
         if not _team_names_match(m["home"], home):
