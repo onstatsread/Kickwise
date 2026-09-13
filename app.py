@@ -2415,7 +2415,67 @@ def debug_annabet_login():
         "logged_in": _ANNABET_LOGGED_IN,
         "credentials_configured": bool(ANNABET_USERNAME and ANNABET_PASSWORD),
     }
+"""
+ADD THIS to app.py, near the other debug/test endpoints.
 
+Purpose: pinpoint exactly why a SPECIFIC match's OddStorm odds lookup
+is returning nothing, instead of guessing. Shows:
+  - the league_url built from oddstorm_leagues.get_oddstorm_league_url()
+  - every raw (date, home, away) triple OddStorm's page actually has
+    for that league, so you can see the REAL team-name spelling and
+    date grouping OddStorm uses
+  - whether _team_names_match() would succeed against the home/away
+    you're querying for
+
+DELETE once the root cause is found and fixed.
+"""
+
+from oddstorm_leagues import get_oddstorm_league_url
+from oddstorm_odds import get_all_matches, _team_names_match
+
+
+@app.get("/debug-oddstorm-match")
+def debug_oddstorm_match(
+    league: str = Query(..., description="Kickwise 'Country - League' name, e.g. 'USA - MLS'"),
+    home: str = Query(...),
+    away: str = Query(...),
+):
+    league_url = get_oddstorm_league_url(league)
+
+    if not league_url:
+        return {
+            "league": league,
+            "league_url": None,
+            "note": "has_oddstorm_coverage() would return False for this league — "
+                    "no slug mapped in ODDSTORM_LEAGUE_SLUGS.",
+        }
+
+    by_league = get_all_matches(league_url=league_url)
+
+    all_matches_seen = []
+    for league_key, league_data in by_league.items():
+        for m in league_data["matches"]:
+            all_matches_seen.append({
+                "league_key": league_key,
+                "league_name": league_data.get("league_name"),
+                "group_date": str(league_data.get("date")),
+                "home": m["home"],
+                "away": m["away"],
+                "time": m["time"],
+                "has_odds": m.get("home_odds") is not None,
+                "would_match_home": _team_names_match(m["home"], home),
+                "would_match_away": _team_names_match(m["away"], away),
+            })
+
+    return {
+        "league": league,
+        "league_url": league_url,
+        "queried_home": home,
+        "queried_away": away,
+        "total_matches_on_page": len(all_matches_seen),
+        "matches": all_matches_seen,
+    }
+    
 
 @app.get("/league_gp")
 def league_gp(
