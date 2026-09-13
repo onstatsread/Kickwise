@@ -8,7 +8,7 @@ Deploy to Render.com.
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time, calendar, hashlib
+import requests, os, subprocess, statistics, tempfile, shutil, difflib, re, time, calendar, hashlib, asyncio
 from scipy.stats import poisson
 from datetime import date
 from bs4 import BeautifulSoup
@@ -1754,7 +1754,18 @@ async def predict_oddsbook_test(
     market_ou25 = None  # Oddsbook O/U 2.5 still unconfirmed — see oddsbook_odds.py
 
     try:
-        oddsbook_result = get_oddsbook_market_odds(home, away, target_date)
+        # FIX (2026-09-13): oddsbook_odds.py uses Playwright's SYNC
+        # API. Calling it directly from inside this async def endpoint
+        # raises "Playwright Sync API inside the asyncio loop" —
+        # confirmed via Render logs. This was a PRE-EXISTING bug, not
+        # introduced by any recent change: any async def endpoint
+        # calling this function directly has always hit it. Every
+        # earlier "Oddsbook has no data for this match" conclusion
+        # drawn from THIS endpoint should be treated as unconfirmed —
+        # it may have been silently crashing, not genuinely empty.
+        # asyncio.to_thread() runs it in a plain thread with no
+        # running event loop, where Playwright's sync API works fine.
+        oddsbook_result = await asyncio.to_thread(get_oddsbook_market_odds, home, away, target_date)
         market_odds = oddsbook_result.get("market_odds")
         market_ou25 = oddsbook_result.get("market_ou25")
         print(f"[oddsbook-test] Oddsbook market odds {home} - {away}: HDA={market_odds}")
@@ -1868,7 +1879,10 @@ async def predict_goalapi_test(
     market_ou25 = None
 
     try:
-        oddsbook_result = get_oddsbook_market_odds(home, away, target_date)
+        # FIX (2026-09-13): see the identical fix + explanation in
+        # /predict-oddsbook-test above — asyncio.to_thread() avoids
+        # the sync-Playwright-in-asyncio-loop crash.
+        oddsbook_result = await asyncio.to_thread(get_oddsbook_market_odds, home, away, target_date)
         market_odds = oddsbook_result.get("market_odds")
         market_ou25 = oddsbook_result.get("market_ou25")
         print(f"[goalapi-test] Oddsbook market odds {home} - {away}: HDA={market_odds}")
