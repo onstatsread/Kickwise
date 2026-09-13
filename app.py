@@ -764,7 +764,44 @@ def resolve_team(name, team_data):
     if len(close) == 1:
         return close[0]
 
+    # FIX (2026-09-13): known provider naming quirks that neither the
+    # substring check nor difflib's fuzzy cutoff catches — e.g. GOAL
+    # API names a team "New York RB" while our fixtures/queries use
+    # "New York Red Bulls". Neither string contains the other, and
+    # they're different enough that difflib's 0.8 cutoff rejects them.
+    # Confirmed real trigger: USA - MLS, /predict-combined-test,
+    # 2026-09-13, via the unresolved_debug field.
+    #
+    # Add entries here (lowercase, either direction) as new mismatches
+    # are found via unresolved_debug — this is meant to grow over time,
+    # not be exhaustive up front.
+    alias_norm = _team_alias_normalize(name)
+    for k in team_data:
+        if _team_alias_normalize(k) == alias_norm:
+            return k
+
     return None
+
+
+# Lowercase substring replacements applied by _team_alias_normalize()
+# below — each (find, replace) pair collapses a known provider
+# abbreviation/spelling difference down to a common form so two
+# differently-spelled names for the same team normalize identically.
+_TEAM_ALIAS_REPLACEMENTS = [
+    ("red bulls", "rb"),
+    ("whitecaps fc", "whitecaps"),
+    ("montréal", "montreal"),
+    ("d.c. united", "dc united"),
+    ("san jose", "sj"),
+    ("st louis", "st. louis"),
+]
+
+
+def _team_alias_normalize(name):
+    n = " ".join(str(name or "").lower().split())
+    for find, replace in _TEAM_ALIAS_REPLACEMENTS:
+        n = n.replace(find, replace)
+    return n
 
 
 def clean_team_name(name):
