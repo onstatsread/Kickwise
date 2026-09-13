@@ -3,6 +3,16 @@ OddStorm league mapping for the 61 leagues in daily_predictions.py's
 LEAGUE_CODES — manually verified against complete per-country
 candidate dumps (2026-09-10), not just algorithmic best-guess.
 
+IMPORTANT (2026-09-13): these slugs/ids do NOT correspond to working
+per-league URLs. Confirmed via /debug-oddstorm-match that
+https://www.oddstorm.com/odds/league/{id}-{slug} does not scope
+content server-side — it returns the same full generic /odds/
+listing regardless of the id/slug given. OddStorm's real filtering
+is a client-side sidebar over one big page. oddstorm_odds.py no
+longer attempts to fetch these as URLs; has_oddstorm_coverage() is
+still used as a first-pass "does OddStorm carry this league at all"
+check before searching the full listing by team name.
+
 CONFIRMED ABSENT (16 leagues) — OddStorm has NO usable data for these,
 either because the entire country is missing (10 countries) or because
 the specific league doesn't exist even though the country does (6 more):
@@ -37,6 +47,14 @@ scoring alone):
     USA - MLS        -> "MLS (Major League Soccer)", NOT "MLS Next Pro" (the reserve league)
     Jordan           -> "Premier League", NOT "Division 1" (a separate, lower competition)
 
+FIX (2026-09-13): USA - MLS's id was recorded as 90, which is wrong —
+confirmed via /debug-oddstorm-match that OddStorm's real MLS league
+id is 990 ("990-usa-mls-major-league-soccer"); id 90 belongs to a
+different, unrelated league. This never caused a functional bug
+since per-league URLs aren't fetchable anyway (see note above), but
+is corrected here for accuracy and in case a future fix restores
+real per-league fetching.
+
 SUBSTITUTIONS (not a perfect match, but the closest real equivalent —
 flagged so callers can decide whether the tier difference matters):
     Iran - Azadegan League -> substituted with "Pro League" (Iran's
@@ -52,8 +70,10 @@ flagged so callers can decide whether the tier difference matters):
         None (unmatched) rather than guessing wrong.
 """
 
-# Value is the full URL slug after /odds/league/, or None if OddStorm
-# has no usable coverage for this league (see docstring above for why).
+# Value is the full URL slug after /odds/league/, kept for display/
+# reference only — see the IMPORTANT note above; do NOT treat these
+# as fetchable for scoped content. None means OddStorm has no usable
+# coverage for this league at all (see docstring above for why).
 ODDSTORM_LEAGUE_SLUGS = {
     "Belarus - Vysshaya Liga": "160-belarus-premier-league",
     "Brazil - Serie A": "145-brazil-serie-a",
@@ -86,7 +106,7 @@ ODDSTORM_LEAGUE_SLUGS = {
     "Sweden - Allsvenskan": "923-sweden-allsvenskan",
     "Sweden - Superettan": "2181081-sweden-superettan",
     "Uruguay - Liga AUF": "2102325-uruguay-primera-division",
-    "USA - MLS": "90-usa-mls-major-league-soccer",
+    "USA - MLS": "990-usa-mls-major-league-soccer",  # FIXED 2026-09-13, was "90-..." (wrong league)
     "USA - USL Championship": "2181288-usa-usl-championship",
     "Venezuela - Liga FUTVE": None,  # confirmed absent (only Copa Venezuela exists)
     "England - Southern Football League": None,  # unresolved, see docstring
@@ -122,13 +142,3 @@ ODDSTORM_LEAGUE_SLUGS = {
 def has_oddstorm_coverage(kickwise_league_name):
     """Returns True if OddStorm has usable odds data for this league."""
     return ODDSTORM_LEAGUE_SLUGS.get(kickwise_league_name) is not None
-
-
-def get_oddstorm_league_url(kickwise_league_name):
-    """
-    Returns the full OddStorm league URL, or None if not covered.
-    """
-    slug = ODDSTORM_LEAGUE_SLUGS.get(kickwise_league_name)
-    if not slug:
-        return None
-    return f"https://www.oddstorm.com/odds/league/{slug}"
