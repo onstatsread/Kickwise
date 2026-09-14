@@ -2415,6 +2415,69 @@ async def predict_v2(
     }
 
 
+@app.get("/debug-annabet-upcoming")
+def debug_annabet_upcoming():
+    """
+    TEMPORARY debug endpoint — checks whether AnnaBet's /upcoming/
+    page is effectively truncated for a plain HTTP scrape (no JS
+    execution), same as fetch_all_upcoming_annabet() actually does.
+
+    Context (2026-09-13): a web_fetch of the same URL cut off at the
+    identical row on two separate attempts with different content
+    limits — suggesting the page may only server-render a fixed batch
+    of matches, with the rest loaded via JS/AJAX that a plain
+    requests.get() (exactly what fetch_all_upcoming_annabet() does)
+    would never see. This endpoint reports what the REAL scraper
+    actually captures: total match count across all leagues, and the
+    furthest-out kickoff time/date found — the authoritative answer,
+    since it uses the exact same code path as production.
+
+    DELETE once the pagination question is resolved.
+    """
+    by_league = fetch_all_upcoming_annabet()
+
+    total_matches = sum(len(v) for v in by_league.values())
+
+    all_matches_flat = []
+    for code, matches in by_league.items():
+        for m in matches:
+            all_matches_flat.append({
+                "league_code": code,
+                "date": m.get("date"),
+                "time": m.get("time"),
+                "home": m.get("home"),
+                "away": m.get("away"),
+            })
+
+    def sort_key(m):
+        # date is "D.M." (e.g. "15.9."), time is "HH:MM" — build a
+        # roughly sortable string; good enough to find min/max here.
+        d = (m.get("date") or "").strip(".")
+        parts = d.split(".")
+        try:
+            day, month = int(parts[0]), int(parts[1])
+        except (ValueError, IndexError):
+            day, month = 0, 0
+        t = (m.get("time") or "00:00").replace(":", "")
+        try:
+            t_int = int(t)
+        except ValueError:
+            t_int = 0
+        return (month, day, t_int)
+
+    all_matches_flat.sort(key=sort_key)
+
+    furthest_out = all_matches_flat[-1] if all_matches_flat else None
+    earliest = all_matches_flat[0] if all_matches_flat else None
+
+    return {
+        "league_count": len(by_league),
+        "total_matches": total_matches,
+        "earliest_match": earliest,
+        "furthest_out_match": furthest_out,
+    }
+
+
 @app.get("/health")
 def health():
     return {
