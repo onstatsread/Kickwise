@@ -2497,6 +2497,147 @@ def debug_annabet_login():
     }
 
 
+_LEAGUE_NAME_BLACKLIST_WORDS = [
+    "cup", "trophy", "shield", "u18", "u19", "u20", "u21", "u23",
+    "youth", "reserve", "academy", "development", "women", "w.",
+    "ladies", "summer series", "friendlies", "playoff",
+]
+
+_TOP_FLIGHT_HINT_WORDS = [
+    "premier league", "primera", "serie a", "ligue 1", "eredivisie",
+    "super lig", "superliga", "bundesliga", "liga", "division 1",
+    "first division", "top league", "premiership",
+]
+
+
+def _looks_like_youth_or_cup(name):
+    n = (name or "").lower()
+    return any(word in n for word in _LEAGUE_NAME_BLACKLIST_WORDS)
+
+
+def _top_flight_score(league_entry):
+    """
+    Heuristic score for how likely a league entry is to be the
+    COUNTRY'S TOP DOMESTIC FLIGHT, not a cup/reserve/youth/lower-tier
+    competition. Higher is more likely. Not perfect — always eyeball
+    the result — but filters out the obvious noise automatically.
+    """
+    name = (league_entry.get("name") or "").lower()
+    if _looks_like_youth_or_cup(name):
+        return -1000
+
+    score = 0
+    if any(hint in name for hint in _TOP_FLIGHT_HINT_WORDS):
+        score += 50
+
+    # Typical top-flight team counts are roughly 10-24; heavily
+    # penalize far outside that range (lower leagues / combined
+    # divisions tend to have much higher team_count).
+    team_count = league_entry.get("team_count") or 0
+    if 10 <= team_count <= 24:
+        score += 20
+    elif team_count > 40:
+        score -= 20
+
+    # Among remaining candidates, more fixtures tracked usually means
+    # a more actively-maintained, higher-profile competition.
+    score += min((league_entry.get("fixture_count") or 0) / 100, 10)
+
+    return score
+
+
+@app.get("/debug-goalapi-top-leagues")
+def debug_goalapi_top_leagues(
+    countries: str = Query(..., description="Comma-separated country names, e.g. 'Spain,Italy,France,Netherlands,Portugal,Turkey'")
+):
+    """
+    TEMPORARY debug endpoint — for each given country, picks the most
+    likely TOP-FLIGHT league (filtering out cups/youth/women's/reserve
+    competitions via name + team-count heuristics), then checks the
+    gp >= 6 gate automatically. One link, one pass — no need to run
+    /debug-goalapi-league-search + /debug-goalapi-league-gp separately
+    per country.
+
+    The heuristic pick is NOT guaranteed correct — always eyeball the
+    "picked" name against what you expect (e.g. "Premier League" for
+    England, "LaLiga" for Spain) before adding it to GOALAPI_LEAGUE_IDS.
+    "other_candidates" lists what else was considered, in case the
+    heuristic picked wrong and you need the real one instead.
+
+    DELETE once you're done adding leagues for now.
+    """
+    goal_api_key = os.environ.get("GOAL_API_KEY", "")
+    if not goal_api_key:
+        return {"error": "GOAL_API_KEY not set in this environment"}
+
+    session = requests.Session()
+    session.headers.update({"Authorization": f"Bearer {goal_api_key}"})
+
+    def get_all_pages(path, params=None):
+        params = dict(params or {})
+        params.setdefault("limit", 100)
+        offset = 0
+        results = []
+        while True:
+            params["offset"] = offset
+            resp = session.get(f"https://api.goal-api.com/v1{path}", params=params, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+            rows = data.get("data") or []
+            if not isinstance(rows, list):
+                break
+            results.extend(rows)
+            pagination = data.get("pagination") or {}
+            if not pagination.get("hasMore"):
+                break
+            offset += params["limit"]
+        return results
+
+    try:
+        all_leagues = get_all_pages("/leagues")
+    except Exception as e:
+        return {"error": f"Failed to fetch /leagues: {e}"}
+
+    country_list = [c.strip() for c in countries.split(",") if c.strip()]
+    results = []
+
+    for country in country_list:
+        country_lower = country.lower()
+        candidates = [
+            {
+                "id": lg.get("id"),
+                "name": lg.get("name"),
+                "country": lg.get("countryName"),
+                "team_count": (lg.get("_count") or {}).get("teams"),
+                "fixture_count": (lg.get("_count") or {}).get("fixtures"),
+            }
+            for lg in all_leagues
+            if country_lower in str(lg.get("countryName") or "").lower()
+        ]
+
+        if not candidates:
+            results.append({"country": country, "error": "No leagues found for this country"})
+            continue
+
+        scored = sorted(candidates, key=_top_flight_score, reverse=True)
+        picked = scored[0]
+
+        # Check the gp gate for the picked candidate
+        team_data = fetch_team_stats(picked["id"])
+        max_gp = max((d.get("gp", 0) for d in team_data.values()), default=0)
+
+        results.append({
+            "country": country,
+            "picked": picked,
+            "team_count_in_standings": len(team_data),
+            "max_gp": max_gp,
+            "passes_gp_gate": max_gp >= 6,
+            "other_candidates": scored[1:6],  # top 5 runners-up, in case the pick looks wrong
+        })
+
+    return {"results": results}
+
+
 @app.get("/debug-goalapi-league-search")
 def debug_goalapi_league_search(
     keyword: str = Query(..., description="Country or league name to search for, e.g. 'England' or 'Premier League'")
