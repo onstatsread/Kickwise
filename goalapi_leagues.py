@@ -51,8 +51,8 @@ or needed verification):
   as-is
 
 USAGE NOTE: callers must handle a missing key gracefully (fall back
-to another source, or skip that league) rather than assuming all 61
-are present. As of this version, TWO leagues are intentionally
+to another source, or skip that league) rather than assuming all keys
+are present. As of this version, some leagues remain intentionally
 unmapped rather than force a wrong match:
 
 - England - Southern Football League: no matching competition exists
@@ -70,6 +70,38 @@ count) and 945 fixtures, vs. a duplicate/stale "Ykkönen" entry
 fixtures — likely an old or lower-quality data-source import. Also
 confirmed live via /predict-goalapi-test?league_id=... returning
 team_count_in_league: 12, matching expectations.
+
+============================================================
+BATCH ADDITION (2026-09-15) — GOAL API MIGRATION, PHASE 2
+============================================================
+29 new leagues added below, all confirmed via the gp>=6 gate
+(/debug-goalapi-top-leagues, /debug-goalapi-league-gp) against the
+original AnnaBet 162-league candidate list. Every entry here passed
+with a correctly-identified top-flight league (heuristic misses were
+manually corrected — see conversation history for details on each).
+
+league_ids in this batch were transcribed from screenshots of a
+separate session, NOT pulled fresh in this one — spot-check a few
+against /debug-goalapi-league-gp after deploy before fully trusting
+them, since a single mistyped character silently breaks that league
+(same failure mode as the Finland Ykkosliiga bug above).
+
+DELIBERATELY EXCLUDED FROM THIS BATCH — stale-season-data suspects,
+pending a fix in fetch_team_stats() (GOAL API appears to sometimes
+return a stale prior-season "Championship Group"/split-format row
+instead of the current season's row): Austria, Denmark, Switzerland,
+Czech Republic, Slovakia, Israel, Cyprus, Indonesia, Moldova,
+Northern Ireland, Wales. Add these only after the fix is confirmed
+and their gp numbers are re-checked and look realistic (roughly 4-9
+for an Aug-May season in mid-September).
+
+ALSO EXCLUDED — correct league, just not enough games played yet as
+of 2026-09-15 (recheck in a week or two): England, Italy, France,
+Turkey, Saudi Arabia, Kuwait, Hong Kong, Albania, Bahrain,
+San Marino, Tunisia, Uganda, Azerbaijan, Qatar.
+
+NO COVERAGE — GOAL API has no usable top-flight data: South Africa,
+UAE (in addition to England - Southern Football League above).
 """
 
 GOALAPI_LEAGUE_IDS = {
@@ -140,4 +172,42 @@ GOALAPI_LEAGUE_IDS = {
     "Taiwan - Premier League": "cmr77dxk300wvrx06js3lqu1c",
     "Turkmenistan - Higher League": "cmr77dx1400x7rx068a9u2ovm",
     "Tajikistan - Higher League": "cmr77dxkg00wzrx064khv19p3",
+
+    # ===== BATCH ADDITION 2026-09-15 — 29 new leagues =====
+    # Batch 1
+    "Spain - LaLiga": "cmr77dvnt006nrx063v3w622e",
+    "Netherlands - Eredivisie": "cmr77dvrh007vrx0664phtxs5",
+    "Russia - Premier League": "cmr77dvua00a4rx061d2jre7p",
+    "Portugal - Primeira Liga": "cmr77dvun00adrx06xz20yfxe",
+    "Japan - J1 League": "cmr77dx7h00rvrx060kholaxg",
+    # Batch 2
+    "Croatia - HNL": "cmr77dwa300hcrx06k4a5z7z4",
+    "Serbia - Super Liga": "cmr77dwfu00jsrx06lzqv6ouq",
+    "Romania - Liga I": "cmr77dwar00horx06biku04et",
+    "Ukraine - Premier League": "cmr77dwdf00ixrx06z6havnxo",
+    "Mexico - Liga MX": "cmr77dvsv008srx06mier6t7r",
+    "Poland - Ekstraklasa": "cmr77dw8j00gerx06xvshbkow",
+    # Batch 3
+    "Hungary - NB I": "cmr77dwbn00i7rx06l118ra8w3",
+    "Bulgaria - First League": "cmr77dw9r00h6rx06fol99vnt",
+    "Slovenia - 1.SNL": "cmr77dw6e00g4rx06l17qly13",
+    "Argentina - Liga Profesional Argentina": "cmr77dvtc0093rx0667jirsnv",
+    # Batch 4
+    "Bosnia - Premijer Liga": "cmr77dxi400w7rx061xedeerx",
+    "Egypt - Premier League": "cmr77dwd0001irx06go0ax033",
+    "Iraq - Iraqi League": "cmr77dxa700terx06zygnd5xe",
+    "Luxembourg - National Division": "cmr77dx2t00q2rx06gam3mjqd",
+    "Malta - Premier League": "cmr77dwry00ncrx06e35wpszd",
+    "Montenegro - First League": "cmr77dx3c00q9rx06tjmuuiku",
+    "North Macedonia - First League": "cmr77dx3200q5rx061z6mf2q2",
+    # Scotland — stale-data bug confirmed fixed for this league
+    # (38 -> 6 gp after the stageName/updatedAt fix)
+    "Scotland - Premiership": "cmr77dwe100j5rx064jkxo63c",
+    # Final batch
+    "Armenia - Premier League": "cmr77dx0y00pirx061zdi1kou",
+    "Costa Rica - Primera Division": "cmr77dwvj00o4rx06obpfwwsh",
+    "El Salvador - Primera Division": "cmr77dxig00wbrx06ivt8vmh0",
+    "Guatemala - Liga Nacional": "cmr77dxay00tvrx068w5v6fip",
+    "Honduras - Liga Nacional": "cmr77dxb500tyrx064rbv0izc",
+    "Tanzania - Ligi Kuu Bara": "cmr77dxbb00u0rx06vqu9f3rk",
 }
