@@ -2546,6 +2546,52 @@ def _top_flight_score(league_entry):
     return score
 
 
+@app.get("/debug-goalapi-raw-standings")
+def debug_goalapi_raw_standings(
+    league_id: str = Query(...)
+):
+    """
+    TEMPORARY debug endpoint — dumps the RAW /standings/{league_id}
+    response (first 3 team rows only, to keep it phone-readable),
+    unprocessed by fetch_team_stats(). Built to investigate a pattern
+    (2026-09-13) where several leagues — Scotland, Austria, Denmark,
+    Switzerland, Czech Republic, Slovakia, Israel, Cyprus so far —
+    report implausibly high max_gp (30-38) despite being standard
+    Aug-May season leagues that should be at similarly early-season
+    gp as England/Italy/France right now (4-9).
+
+    Look specifically at whatever season/year field the raw response
+    includes — the working theory is GOAL API may be serving a
+    PREVIOUS completed season's standings for these leagues instead
+    of the current one, even though the /leagues list's own "season"
+    field shows the current one.
+
+    DELETE once the root cause is found.
+    """
+    goal_api_key = os.environ.get("GOAL_API_KEY", "")
+    if not goal_api_key:
+        return {"error": "GOAL_API_KEY not set in this environment"}
+
+    session = requests.Session()
+    session.headers.update({"Authorization": f"Bearer {goal_api_key}"})
+
+    try:
+        resp = session.get(f"https://api.goal-api.com/v1/standings/{league_id}", timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+    rows = data.get("data") or []
+
+    return {
+        "league_id": league_id,
+        "top_level_keys": list(data.keys()),
+        "row_count": len(rows) if isinstance(rows, list) else "not a list",
+        "first_3_rows_raw": rows[:3] if isinstance(rows, list) else rows,
+    }
+
+
 @app.get("/debug-goalapi-top-leagues")
 def debug_goalapi_top_leagues(
     countries: str = Query(..., description="Comma-separated country names, e.g. 'Spain,Italy,France,Netherlands,Portugal,Turkey'")
