@@ -152,13 +152,45 @@ def fetch_team_stats(league_id):
     if not isinstance(rows, list):
         return {}
 
-    result = {}
-    result_updated_at = {}  # team_name -> updatedAt string, tracks freshness for dedup below
-
+    # FIX (2026-09-13, v2): the earlier updatedAt-only comparison
+    # wasn't reliable enough on its own — confirmed via raw dumps
+    # that GOAL API's stale "Championship Group" rows sometimes have
+    # updatedAt bumped by a bulk resync even though the underlying
+    # game count never actually changed. Worse: max_gp is reported
+    # across the WHOLE LEAGUE, so even if per-team dedup worked for
+    # most teams, just ONE team lacking a "Current"-stage row (e.g.
+    # newly promoted, or GOAL API hasn't created its current entry
+    # yet) would still leave that team's stale, un-deduped row as the
+    # league's reported max — exactly what happened with Austria.
+    #
+    # New approach: two passes. First, group every row by team name.
+    # Second, for each team: if ANY row has stageName == "Current",
+    # use that one (this label reliably marks the real, in-progress
+    # season row — confirmed across Denmark and Austria's raw data).
+    # Only fall back to comparing updatedAt across all of a team's
+    # rows when no "Current"-labeled row exists at all, so leagues
+    # that don't use this group-stage split (the majority) still
+    # degrade gracefully and unaffected.
+    rows_by_team = {}
     for row in rows:
         team_name = (row.get("team") or {}).get("name") or row.get("teamName")
         if not team_name:
             continue
+        rows_by_team.setdefault(team_name, []).append(row)
+
+    result = {}
+
+    for team_name, team_rows in rows_by_team.items():
+        current_rows = [r for r in team_rows if r.get("stageName") == "Current"]
+
+        if current_rows:
+            # Prefer "Current" stage; if somehow more than one, take
+            # the most recently updated among just those.
+            row = max(current_rows, key=lambda r: r.get("updatedAt") or "")
+        else:
+            # No explicit "Current" row for this team — fall back to
+            # whichever of their rows was updated most recently.
+            row = max(team_rows, key=lambda r: r.get("updatedAt") or "")
 
         gp = _to_int(row.get("overallLeaguePlayed"))
         gf = _to_int(row.get("overallLeagueGF"))
@@ -174,28 +206,6 @@ def fetch_team_stats(league_id):
         # 2026-09-11.
         if gp == 0:
             continue
-
-        # FIX (2026-09-13): some leagues (confirmed: Denmark Superliga,
-        # likely also Austria/Switzerland/Czech Republic/Slovakia —
-        # any league whose season splits into a championship/
-        # relegation group phase) return TWO rows per team: one for
-        # the current season ("stageName": "Current", fresh
-        # updatedAt), and one leftover from LAST season's end-of-
-        # season group stage ("stageName": e.g. "Championship Group",
-        # stale updatedAt, often showing a full season's worth of
-        # games — confirmed real trigger: Denmark Superliga returning
-        # gp=32 for teams whose real current-season gp was 8).
-        # Without this check, whichever row happens to come LAST in
-        # the array silently overwrites the other in `result`,
-        # regardless of which one is actually current.
-        #
-        # Fix: when a team_name repeats, keep whichever row has the
-        # more recent updatedAt — that's the real, current-season row
-        # regardless of which stageName label a given league happens
-        # to use for it.
-        row_updated_at = row.get("updatedAt") or ""
-        if team_name in result_updated_at and row_updated_at <= result_updated_at[team_name]:
-            continue  # an equal-or-fresher row for this team was already kept — skip this older one
 
         hgp = _to_int(row.get("homeLeaguePlayed"))
         hgf_total = _to_int(row.get("homeLeagueGF"))
@@ -217,7 +227,6 @@ def fetch_team_stats(league_id):
             "aga": aga_total / agp if agp else 0,
             "atot": (agf_total + aga_total) / agp if agp else 0,
         }
-        result_updated_at[team_name] = row_updated_at
 
     _STATS_CACHE[cache_key] = (time.time(), result)
     return result
