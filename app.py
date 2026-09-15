@@ -2497,6 +2497,110 @@ def debug_annabet_login():
     }
 
 
+@app.get("/debug-goalapi-league-search")
+def debug_goalapi_league_search(
+    keyword: str = Query(..., description="Country or league name to search for, e.g. 'England' or 'Premier League'")
+):
+    """
+    TEMPORARY debug endpoint — search GOAL API's /leagues list by
+    keyword (matches against league name OR country name), returning
+    candidate league_ids to consider adding to GOALAPI_LEAGUE_IDS.
+
+    Workflow for adding a new league:
+      1. Call this to find the candidate's league_id.
+      2. Call /debug-goalapi-league-gp?league_id=... to check the
+         current season's max games-played — only proceed if it's
+         >= 6 (the agreed minimum for the stats model to be meaningful).
+      3. If it passes, add the "Country - League": "league_id" entry
+         to GOALAPI_LEAGUE_IDS in goalapi_leagues.py.
+      4. Separately decide OddStorm coverage (has_oddstorm_coverage())
+         for oddstorm_leagues.py — best-effort, not required to pass
+         the gp>=6 gate.
+
+    DELETE once you're done adding leagues for now.
+    """
+    goal_api_key = os.environ.get("GOAL_API_KEY", "")
+    if not goal_api_key:
+        return {"error": "GOAL_API_KEY not set in this environment"}
+
+    session = requests.Session()
+    session.headers.update({"Authorization": f"Bearer {goal_api_key}"})
+
+    def get_all_pages(path, params=None):
+        params = dict(params or {})
+        params.setdefault("limit", 100)
+        offset = 0
+        results = []
+        while True:
+            params["offset"] = offset
+            resp = session.get(f"https://api.goal-api.com/v1{path}", params=params, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+            rows = data.get("data") or []
+            if not isinstance(rows, list):
+                break
+            results.extend(rows)
+            pagination = data.get("pagination") or {}
+            if not pagination.get("hasMore"):
+                break
+            offset += params["limit"]
+        return results
+
+    try:
+        all_leagues = get_all_pages("/leagues")
+        kw = keyword.lower()
+        matches = [
+            lg for lg in all_leagues
+            if kw in str(lg.get("name") or "").lower()
+            or kw in str(lg.get("countryName") or "").lower()
+        ]
+
+        return {
+            "keyword": keyword,
+            "count": len(matches),
+            "leagues": [
+                {
+                    "id": lg.get("id"),
+                    "name": lg.get("name"),
+                    "country": lg.get("countryName"),
+                    "season": lg.get("season"),
+                    "team_count": (lg.get("_count") or {}).get("teams"),
+                    "fixture_count": (lg.get("_count") or {}).get("fixtures"),
+                }
+                for lg in matches
+            ],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/debug-goalapi-league-gp")
+def debug_goalapi_league_gp(
+    league_id: str = Query(..., description="GOAL API league_id from /debug-goalapi-league-search")
+):
+    """
+    TEMPORARY debug endpoint — GOAL API equivalent of the existing
+    AnnaBet-only /league_gp: reports the current season's max
+    games-played across teams in a league, so you can check the
+    gp >= 6 gate BEFORE adding a league to GOALAPI_LEAGUE_IDS.
+
+    DELETE once you're done adding leagues for now.
+    """
+    team_data = fetch_team_stats(league_id)
+
+    if not team_data:
+        return {"league_id": league_id, "team_count": 0, "max_gp": 0, "passes_gp_gate": False}
+
+    max_gp = max(d.get("gp", 0) for d in team_data.values())
+
+    return {
+        "league_id": league_id,
+        "team_count": len(team_data),
+        "max_gp": max_gp,
+        "passes_gp_gate": max_gp >= 6,
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
