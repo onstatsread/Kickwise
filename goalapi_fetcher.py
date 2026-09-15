@@ -30,6 +30,21 @@ Rate limits: 1,000 requests/day on free tier. Estimated real usage:
 the day's fixtures need (previously assumed 1, see fix below) +
 ~1 call per match needing odds — comfortably under budget even with
 a few extra pages/day.
+
+FIX (2026-09-15): /standings/{leagueId} is ALSO a paginated list
+endpoint, per the same docs quoted above — but fetch_team_stats() was
+calling it with no limit/offset at all, trusting whatever GOAL API's
+default page size is. This is the exact same bug class as the
+/fixtures/date/{date} truncation fixed 2026-09-12 and the Finland
+Ykkosliiga id mixup fixed 2026-09-13: silent, no error, just missing
+data past page 1. None of the 88 currently-mapped leagues are known
+to exceed a typical default page size (biggest top-flight seen so far
+is ~28 teams), so this hasn't caused an observed failure yet — but
+it's exactly the kind of thing that fails silently the moment a
+bigger league gets added, so fixed proactively rather than waiting
+for it to bite. Now walks pages with offset until
+pagination.hasMore is false, same pattern as fetch_fixtures_for_day()
+below.
 """
 
 import os
@@ -50,6 +65,7 @@ _FIXTURES_CACHE = {}
 FIXTURES_CACHE_TTL = 300  # 5 minutes
 
 FIXTURES_PAGE_LIMIT = 100  # ceiling per GOAL API docs
+STANDINGS_PAGE_LIMIT = 100  # same ceiling, for the standings pagination fix below
 
 
 def _get(path, params=None, retries=2):
@@ -89,6 +105,40 @@ def _get(path, params=None, retries=2):
     return None
 
 
+def _get_all_pages(path, params=None):
+    """
+    Walks a paginated GOAL API list endpoint (limit/offset, stops
+    when pagination.hasMore is false) and returns every row across
+    all pages. Shared by fetch_team_stats() and fetch_fixtures_for_day()
+    so both get the same truncation-proof behavior.
+    """
+    params = dict(params or {})
+    params.setdefault("limit", STANDINGS_PAGE_LIMIT)
+    offset = 0
+    rows = []
+
+    while True:
+        params["offset"] = offset
+        data = _get(path, params=params)
+
+        if not data or not data.get("data"):
+            break
+
+        page_rows = data["data"]
+        if not isinstance(page_rows, list):
+            break
+
+        rows.extend(page_rows)
+
+        pagination = data.get("pagination") or {}
+        if not pagination.get("hasMore"):
+            break
+
+        offset += params["limit"]
+
+    return rows
+
+
 def _to_float(value, default=0.0):
     if value is None:
         return default
@@ -124,14 +174,10 @@ def fetch_team_stats(league_id):
             ...
         }
 
-    Single API call — GOAL API returns combined AND home/away splits
-    together on /standings/{leagueId}, confirmed via testing.
-
-    NOTE: /standings/{leagueId} is also a paginated list endpoint per
-    the API docs. Not yet fixed here — most leagues have well under
-    100 teams so this is unlikely to truncate in practice, but if a
-    league ever comes back short, apply the same offset-loop pattern
-    used in fetch_fixtures_for_day() below.
+    GOAL API returns combined AND home/away splits together on
+    /standings/{leagueId}, confirmed via testing. This now walks
+    ALL pages of that endpoint (see FIX note at the top of the file)
+    rather than trusting a single call to return every team.
 
     Falls back to 0-valued home/away splits if a league doesn't track
     them (e.g. international group-stage tournaments) — same
@@ -143,13 +189,9 @@ def fetch_team_stats(league_id):
     if cached and time.time() - cached[0] < STATS_CACHE_TTL:
         return cached[1]
 
-    data = _get(f"/standings/{league_id}")
+    rows = _get_all_pages(f"/standings/{league_id}")
 
-    if not data or not data.get("success", True) or not data.get("data"):
-        return {}
-
-    rows = data["data"]
-    if not isinstance(rows, list):
+    if not rows:
         return {}
 
     # FIX (2026-09-13, v2): the earlier updatedAt-only comparison
@@ -253,7 +295,8 @@ def fetch_fixtures_for_day(date_str):
     (limit defaults to 50 if not specified), silently dropping every
     fixture past that on any day with more matches than one page —
     which, across 1,000+ leagues, is effectively every day. This now
-    walks pages with offset until pagination.hasMore is false.
+    walks pages with offset until pagination.hasMore is false, via
+    the shared _get_all_pages() helper.
 
     CONFIRMED (2026-09-06) real field names — flat top-level fields,
     NOT the nested homeTeam/awayTeam objects. Those nested objects
@@ -267,40 +310,22 @@ def fetch_fixtures_for_day(date_str):
     if cached and time.time() - cached[0] < FIXTURES_CACHE_TTL:
         return cached[1]
 
-    fixtures = []
-    offset = 0
+    rows = _get_all_pages(f"/fixtures/date/{date_str}", params={"limit": FIXTURES_PAGE_LIMIT})
 
-    while True:
-        data = _get(
-            f"/fixtures/date/{date_str}",
-            params={"limit": FIXTURES_PAGE_LIMIT, "offset": offset},
-        )
-
-        if not data or not data.get("data"):
-            break
-
-        rows = data["data"]
-        if not isinstance(rows, list):
-            break
-
-        for row in rows:
-            fixtures.append({
-                "id": row.get("id"),
-                "league_id": row.get("leagueId"),
-                "league_name": row.get("leagueName"),
-                "home": row.get("homeTeamName"),
-                "away": row.get("awayTeamName"),
-                "kickoff": row.get("kickoffUtc"),
-                "status": row.get("matchStatus"),
-                "home_score": row.get("homeTeamScore"),
-                "away_score": row.get("awayTeamScore"),
-            })
-
-        pagination = data.get("pagination") or {}
-        if not pagination.get("hasMore"):
-            break
-
-        offset += FIXTURES_PAGE_LIMIT
+    fixtures = [
+        {
+            "id": row.get("id"),
+            "league_id": row.get("leagueId"),
+            "league_name": row.get("leagueName"),
+            "home": row.get("homeTeamName"),
+            "away": row.get("awayTeamName"),
+            "kickoff": row.get("kickoffUtc"),
+            "status": row.get("matchStatus"),
+            "home_score": row.get("homeTeamScore"),
+            "away_score": row.get("awayTeamScore"),
+        }
+        for row in rows
+    ]
 
     _FIXTURES_CACHE[cache_key] = (time.time(), fixtures)
     return fixtures
