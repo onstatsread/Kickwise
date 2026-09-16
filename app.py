@@ -2788,6 +2788,74 @@ def debug_goalapi_league_gp(
     }
 
 
+@app.get("/debug-annabet-league-gp")
+def debug_annabet_league_gp(
+    serie_id: int = Query(..., description="AnnaBet serie_id from annabet_leagues.py's ANNABET_LEAGUE_IDS — NOT a short code")
+):
+    """
+    TEMPORARY debug endpoint — AnnaBet equivalent of
+    /debug-goalapi-league-gp. /league_gp only works for leagues
+    ALREADY active (it looks up by short code in ANNABET_SERIE_ID),
+    so this checks the gp gate for a CANDIDATE league directly by its
+    numeric serie_id, before it's been promoted/added anywhere.
+
+    Reports both the gp>=10 threshold (used for the original 34->61
+    AnnaBet expansion) and gp>=6 (used for the newer GOAL API
+    migration) so you can decide which to apply here.
+
+    DELETE once done promoting leagues from annabet_leagues.py's
+    candidate list.
+    """
+    try:
+        team_data = fetch_stats_annabet(serie_id)
+    except Exception as e:
+        return {"serie_id": serie_id, "error": str(e)}
+
+    if not team_data:
+        return {"serie_id": serie_id, "team_count": 0, "max_gp": 0, "passes_gp_gate_10": False, "passes_gp_gate_6": False}
+
+    max_gp = max(d.get("gp", 0) for d in team_data.values())
+
+    return {
+        "serie_id": serie_id,
+        "team_count": len(team_data),
+        "max_gp": max_gp,
+        "passes_gp_gate_10": max_gp >= 10,
+        "passes_gp_gate_6": max_gp >= 6,
+    }
+
+
+@app.get("/debug-odds-api-io")
+async def debug_odds_api_io(
+    home: str = Query(...),
+    away: str = Query(...)
+):
+    """
+    TEMPORARY debug endpoint — calls Odds-API.io DIRECTLY, bypassing
+    every other tier in combined_odds.py, so you can confirm it's
+    actually working (not just silently failing and falling through
+    to OddStorm) after being promoted to primary 2026-09-16.
+
+    A None result here means Odds-API.io itself found nothing for
+    this match (missing key, no event match, no odds posted yet, rate
+    limited, etc.) — check Render logs for the specific "[odds_api_io]"
+    line to see which. A populated result confirms it's genuinely
+    working end-to-end.
+
+    DELETE once you've confirmed it's stable.
+    """
+    hda = await get_odds_api_io_fallback(home, away)
+    ou25 = await get_ou25_api_io_fallback(home, away)
+
+    return {
+        "home": home,
+        "away": away,
+        "market_odds": hda,
+        "market_ou25": ou25,
+        "api_key_configured": bool(os.environ.get("ODDS_API_IO_KEY", "")),
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
