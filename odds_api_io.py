@@ -23,10 +23,27 @@ empty, so if it doesn't work first try, checking Render's logs for
 "[odds_api_io] Could not parse odds" or "WARNING: could not extract
 team names" will show the actual shape to fix against, the same way
 we diagnosed api_football.py's issues.
+
+FIX (2026-09-16): _similar() compared lowercased team names directly
+with no accent normalization, so an accented query (e.g. "Grêmio")
+would never trigger the prefix-match bonus against this provider's
+unaccented spelling ("Gremio FB Porto Alegrense RS") — Python string
+comparison treats "ê" and "e" as different characters. Confirmed real
+trigger (2026-09-16): "Botafogo" vs "Grêmio" scored only 1.11 against
+the 1.2 confidence cutoff (home side matched fine at ~0.82; away side
+collapsed to ~0.29 purely from the accent mismatch), even though the
+correct event ("Botafogo FR RJ" vs "Gremio FB Porto Alegrense RS",
+event_id 74302776) was sitting right there in the events list —
+confirmed via a raw keyword search of the events list. This isn't
+specific to Portuguese — any accented name (São Paulo, Atlético,
+Málaga, Köln, etc.) would hit the same failure. Now strips diacritics
+(NFKD normalize + drop combining marks) on both sides before any
+comparison, so "Grêmio" and "Gremio" normalize identically.
 """
 
 import os
 import time
+import unicodedata
 import httpx
 from difflib import SequenceMatcher
 
@@ -113,8 +130,27 @@ async def _get_valid_bookmakers() -> list:
 _raw_odds_cache: dict[str, dict] = {}
 
 
+def _strip_accents(s: str) -> str:
+    """
+    Normalizes accented characters to their plain-ASCII equivalent
+    (e.g. "Grêmio" -> "Gremio", "São Paulo" -> "Sao Paulo") so team
+    names that differ only by diacritics compare as equal. See the
+    FIX note at the top of this file for why this matters — without
+    it, prefix-match scoring silently fails for any accented name.
+    """
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", s)
+        if not unicodedata.combining(c)
+    )
+
+
 def _similar(a: str, b: str) -> float:
-    """Same abbreviation-aware fuzzy matcher used in odds.py and api_football.py."""
+    """Same abbreviation-aware fuzzy matcher used in odds.py and
+    api_football.py, with accent-stripping applied first (see FIX note
+    at the top of this file)."""
+    a = _strip_accents(a)
+    b = _strip_accents(b)
+
     base_score = SequenceMatcher(None, a.lower().strip(), b.lower().strip()).ratio()
 
     a_words = a.lower().replace(".", "").split()
@@ -222,8 +258,14 @@ async def _find_event_id(home_team: str, away_team: str):
             best_home, best_away = ev_home, ev_away
 
     if best_id is None or best_score < 1.2:
+        # FIX (2026-09-16): now logs the best (rejected) candidate's
+        # actual names alongside the score — previously only the
+        # score was logged, making it impossible to tell a genuine
+        # coverage gap apart from a near-miss (e.g. an accent-only
+        # mismatch) without a separate raw events search.
         print(f"  [odds_api_io] No confident event match for '{home_team}' vs '{away_team}' "
-              f"(best score: {best_score:.2f})")
+              f"(best score: {best_score:.2f}"
+              f"{f', closest candidate: {best_home!r} vs {best_away!r}' if best_id else ''})")
         return None
 
     if _has_unwanted_qualifier(home_team, best_home) or _has_unwanted_qualifier(away_team, best_away):
