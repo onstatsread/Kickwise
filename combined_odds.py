@@ -2,15 +2,23 @@
 Combined odds fetcher — tries sources in order of coverage breadth and
 cost:
 
-    1. OddStorm   (free, no quota limit, but coverage varies by match)
-    2. Oddsbook   (free, Playwright-based, broader coverage but slower)
-    3. The Odds API (paid quota — only covers a narrow set of major
+    1. Odds-API.io (free tier, 100 req/hour / 500/day — CONFIRMED real
+       schema against live Render logs, not a guess; promoted to
+       PRIMARY 2026-09-16 after confirming the account works again.
+       Aggressively cached — see odds_api_io.py — so actual API usage
+       should stay well under quota even as the primary tier.)
+    2. OddStorm    (free, no quota limit, but coverage varies by match
+       — demoted from primary to first fallback 2026-09-16)
+    3. Oddsbook    (free, Playwright-based, broader coverage but
+       slower; note market_ou25 is currently ALWAYS None here — see
+       oddsbook_odds.py, the O/U fetcher was never actually built)
+    4. The Odds API (paid quota — only covers a narrow set of major
        leagues, resolved dynamically via odds_api_leagues.py)
-    4. API-Football (very tight free quota — 100 req/day total — used
+    5. API-Football (very tight free quota — 100 req/day total — used
        as the last resort only, with its own daily budget cap and
        429 circuit breaker; see api_football.py)
 
-All four fetchers return (or are normalized to) the same shape:
+All five fetchers return (or are normalized to) the same shape:
     {
         "market_odds": {"home_odds":..., "draw_odds":..., "away_odds":...},
         "market_ou25": {"over_odds":..., "under_odds":...}
@@ -28,22 +36,22 @@ Spain - LaLiga, Rayo Vallecano vs Espanyol — OddStorm supplied HDA,
 market_ou25 came back empty on the live blog post even though
 Oddsbook might well have had it, because the old logic never asked.
 
-This version now tracks market_odds and market_ou25 SEPARATELY and
-keeps trying subsequent tiers until BOTH are filled (or every tier is
+This version tracks market_odds and market_ou25 SEPARATELY and keeps
+trying subsequent tiers until BOTH are filled (or every tier is
 exhausted) — so a match can end up with HDA from one source and O/U
 from a different one. "source" reports whichever tier supplied
 market_odds (kept for backward compatibility with any caller/logging
-that reads it); a new "ou25_source" field reports whichever tier
-supplied market_ou25, in case they differ.
+that reads it); "ou25_source" reports whichever tier supplied
+market_ou25, in case they differ.
 
 Earlier fix (2026-09-13): added The Odds API and API-Football as
-tiers 3 and 4. Neither of these supplies market_ou25 at all (The Odds
-API's O/U support is stubbed out in odds.py's get_ou25_for_card();
+tiers. Neither of these supplies market_ou25 at all (The Odds API's
+O/U support is stubbed out in odds.py's get_ou25_for_card();
 API-Football's get_fallback_odds() only returns 1X2) — they can only
 ever fill the market_odds side of a still-incomplete result.
 
-This function is ASYNC (The Odds API and API-Football both use
-httpx.AsyncClient). Both call sites in app.py (/predict-v2,
+This function is ASYNC (Odds-API.io, The Odds API, and API-Football
+all use httpx.AsyncClient). Both call sites in app.py (/predict-v2,
 /predict-combined-test) are already `async def`, so callers just need
 to add `await`.
 
@@ -58,6 +66,7 @@ league_url; it always searches the one full listing internally.
 from datetime import date
 import asyncio
 
+from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
 from oddstorm_leagues import has_oddstorm_coverage
 from oddstorm_odds import get_market_odds as get_oddstorm_market_odds
 from oddsbook_odds import get_oddsbook_market_odds
@@ -80,13 +89,13 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
         {
             "market_odds": {...} or None,
             "market_ou25": {...} or None,
-            "source": "oddstorm" / "oddsbook" / "odds_api" /
-                       "api_football" / None — whichever tier supplied
-                       market_odds,
+            "source": "odds_api_io" / "oddstorm" / "oddsbook" /
+                       "odds_api" / "api_football" / None — whichever
+                       tier supplied market_odds,
             "ou25_source": same set of values, or None — whichever
                        tier supplied market_ou25 (may differ from
-                       "source" now that fields are merged across
-                       tiers; see FIX note above),
+                       "source" since fields are merged across tiers;
+                       see FIX note above),
         }
 
     Keeps trying tiers, in order, until BOTH market_odds and
@@ -109,8 +118,28 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
     def _still_incomplete():
         return market_odds is None or market_ou25 is None
 
-    # ---- Tier 1: OddStorm ----
-    if has_oddstorm_coverage(kickwise_league_name):
+    # ---- Tier 1: Odds-API.io (PRIMARY as of 2026-09-16) ----
+    try:
+        io_odds = await get_odds_api_io_fallback(home, away)
+        if market_odds is None and io_odds:
+            market_odds = io_odds
+            source = "odds_api_io"
+    except Exception as e:
+        print(f"Odds-API.io HDA failed for {kickwise_league_name} "
+              f"({home} vs {away}): {e} — trying next source")
+
+    if market_ou25 is None:
+        try:
+            io_ou25 = await get_ou25_api_io_fallback(home, away)
+            if io_ou25:
+                market_ou25 = io_ou25
+                ou25_source = "odds_api_io"
+        except Exception as e:
+            print(f"Odds-API.io O/U 2.5 failed for {kickwise_league_name} "
+                  f"({home} vs {away}): {e} — trying next source")
+
+    # ---- Tier 2: OddStorm ----
+    if _still_incomplete() and has_oddstorm_coverage(kickwise_league_name):
         try:
             result = get_oddstorm_market_odds(home, away, target_date=resolved_date)
             if market_odds is None and result.get("market_odds"):
@@ -123,7 +152,7 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
             print(f"OddStorm odds failed for {kickwise_league_name} "
                   f"({home} vs {away}): {e} — trying next source")
 
-    # ---- Tier 2: Oddsbook ----
+    # ---- Tier 3: Oddsbook ----
     # FIX (2026-09-13): oddsbook_odds.py uses Playwright's SYNC API
     # internally. Now that this whole function is async and runs
     # inside FastAPI's asyncio event loop, calling that sync function
@@ -145,7 +174,7 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
             print(f"Oddsbook odds failed for {kickwise_league_name} "
                   f"({home} vs {away}): {e} — trying next source")
 
-    # ---- Tier 3: The Odds API ----
+    # ---- Tier 4: The Odds API ----
     # Narrow coverage (mostly major leagues) — get_sport_key() returns
     # None for anything it doesn't confidently recognize, in which
     # case we skip straight to API-Football without spending a call.
@@ -169,7 +198,7 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
             print(f"The Odds API failed for {kickwise_league_name} "
                   f"({home} vs {away}): {e} — trying next source")
 
-    # ---- Tier 4: API-Football (last resort — tight quota) ----
+    # ---- Tier 5: API-Football (last resort — tight quota) ----
     # Also can only ever fill market_odds — no O/U 2.5 data here either.
     if market_odds is None:
         try:
