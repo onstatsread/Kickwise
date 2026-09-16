@@ -2898,6 +2898,31 @@ async def debug_odds_api_io_search(
     }
 
 
+@app.get("/debug-odds-api-io-raw-sample")
+async def debug_odds_api_io_raw_sample(count: int = Query(5, description="How many raw events to return, unprocessed")):
+    """
+    TEMPORARY debug endpoint — dumps N raw, UNPROCESSED events exactly
+    as Odds-API.io returns them, no field-name guessing via
+    _extract_team_names(). Built to find out whether events carry a
+    league/competition name field at all, since the module's own
+    docstring admits the schema wasn't fully confirmed ahead of
+    deployment — needed before we can build a systematic per-league
+    coverage check (same approach used for GOAL API/OddStorm earlier
+    this session) instead of guessing today's fixtures per league.
+
+    DELETE once the schema is confirmed and the coverage-check
+    endpoint (if built) is working.
+    """
+    from odds_api_io import _get_football_events
+
+    events = await _get_football_events()
+
+    return {
+        "total_events": len(events),
+        "sample": events[:count],
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
