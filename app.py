@@ -2923,6 +2923,79 @@ async def debug_odds_api_io_raw_sample(count: int = Query(5, description="How ma
     }
 
 
+@app.get("/debug-odds-api-io-league-coverage")
+async def debug_odds_api_io_league_coverage():
+    """
+    TEMPORARY debug endpoint — checks Odds-API.io's league coverage
+    against all 88 of GOALAPI_LEAGUE_IDS's leagues at once, using the
+    same fuzzy-match-against-a-live-list approach odds_api_leagues.py
+    already uses for The Odds API. Confirmed (2026-09-16) via a raw
+    event sample that Odds-API.io events carry a clean
+    league.name/league.slug field close to Kickwise's own
+    "Country - League" naming, so this doesn't need a static mapping
+    file — extracts every distinct league from the live events list
+    and matches against GOALAPI_LEAGUE_IDS's keys directly.
+
+    NOTE: the events list backing this is NOT confirmed to be
+    date-filtered to "upcoming" only — a raw sample showed
+    already-"settled" matches from the prior day mixed in. This
+    endpoint only checks LEAGUE coverage (does Odds-API.io carry this
+    competition at all), which is unaffected by that; it does NOT
+    confirm whether _find_event_id() is safely picking only
+    upcoming/live matches for actual odds lookups — that's a separate
+    concern, still open.
+
+    DELETE once you're done evaluating Odds-API.io coverage.
+    """
+    from odds_api_io import _get_football_events
+    from difflib import SequenceMatcher
+
+    events = await _get_football_events()
+
+    distinct_leagues = {}
+    for ev in events:
+        league = ev.get("league") or {}
+        name = league.get("name")
+        slug = league.get("slug")
+        if name and slug not in distinct_leagues:
+            distinct_leagues[slug] = name
+
+    def normalize(text):
+        return " ".join(text.lower().replace("-", " ").replace(",", " ").split())
+
+    results = []
+    for kickwise_name in GOALAPI_LEAGUE_IDS.keys():
+        kw_norm = normalize(kickwise_name)
+        best_name, best_score = None, 0.0
+        for slug, name in distinct_leagues.items():
+            score = SequenceMatcher(None, kw_norm, normalize(name)).ratio()
+            country = kw_norm.split(" ")[0] if kw_norm else ""
+            if country and country in normalize(name):
+                score += 0.15
+            if score > best_score:
+                best_score = score
+                best_name = name
+
+        results.append({
+            "kickwise_league": kickwise_name,
+            "best_odds_api_io_match": best_name,
+            "confidence": round(best_score, 2),
+            "likely_covered": best_score >= 0.55,
+        })
+
+    covered = [r for r in results if r["likely_covered"]]
+    not_covered = [r for r in results if not r["likely_covered"]]
+
+    return {
+        "total_events_scanned": len(events),
+        "distinct_leagues_found": len(distinct_leagues),
+        "kickwise_leagues_checked": len(results),
+        "likely_covered_count": len(covered),
+        "likely_covered": covered,
+        "likely_not_covered": not_covered,
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
