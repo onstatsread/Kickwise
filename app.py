@@ -19,7 +19,8 @@ from annabet_leagues import ANNABET_LEAGUE_IDS
 
 # Existing fallbacks. AnnaBet is now the PRIMARY odds source.
 from odds import get_odds_for_card, get_ou25_for_card, router as odds_router
-from api_football import get_fallback_oddsfrom odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
+from api_football import get_fallback_odds
+from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
 
 # NEW — Oddsbook fixtures+odds fetcher, used ONLY by the /predict-oddsbook-test
 # endpoint for side-by-side comparison. Does not touch the existing AnnaBet
