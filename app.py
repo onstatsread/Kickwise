@@ -2856,6 +2856,48 @@ async def debug_odds_api_io(
     }
 
 
+@app.get("/debug-odds-api-io-search")
+async def debug_odds_api_io_search(
+    keyword: str = Query(..., description="Team name (or part of one) to search for in Odds-API.io's raw events list")
+):
+    """
+    TEMPORARY debug endpoint — dumps the RAW events from Odds-API.io
+    whose home or away team name contains the given keyword, using
+    the exact same _get_football_events() call _find_event_id() uses
+    internally. Built because _find_event_id()'s own log line reports
+    only the best score it found, never the actual team names it
+    almost matched — so a borderline miss (e.g. score 1.11 against
+    the 1.2 cutoff) gives no way to tell whether the real match is
+    missing entirely or just named differently than expected.
+
+    Use this to see Odds-API.io's ACTUAL team name spelling for a
+    match, then re-run /debug-odds-api-io with that exact spelling.
+
+    DELETE once you're done diagnosing Odds-API.io coverage/matching.
+    """
+    from odds_api_io import _get_football_events, _extract_team_names, _extract_event_id
+
+    events = await _get_football_events()
+    kw = keyword.lower()
+
+    matches = []
+    for ev in events:
+        home, away = _extract_team_names(ev)
+        if kw in home.lower() or kw in away.lower():
+            matches.append({
+                "event_id": _extract_event_id(ev),
+                "home": home,
+                "away": away,
+            })
+
+    return {
+        "keyword": keyword,
+        "total_events_in_list": len(events),
+        "match_count": len(matches),
+        "matches": matches[:20],  # cap for phone-readability
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
