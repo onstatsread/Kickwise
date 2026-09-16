@@ -2996,6 +2996,47 @@ async def debug_odds_api_io_league_coverage():
     }
 
 
+@app.get("/debug-odds-api-io-league-search")
+async def debug_odds_api_io_league_search(
+    keyword: str = Query(..., description="Country or league name to search for, e.g. 'Malaysia' or 'Uruguay'")
+):
+    """
+    TEMPORARY debug endpoint — searches Odds-API.io's distinct league
+    names (extracted from the live events list) by keyword, same
+    pattern as /debug-goalapi-league-search. Built to correct false
+    positives found in /debug-odds-api-io-league-coverage's naive
+    fuzzy-match (e.g. "Malaysia" incorrectly matching "Malawi" purely
+    on spelling similarity + a same-sounding country-prefix bonus).
+
+    DELETE once you're done correcting Odds-API.io league mappings.
+    """
+    from odds_api_io import _get_football_events
+
+    events = await _get_football_events()
+
+    distinct_leagues = {}
+    for ev in events:
+        league = ev.get("league") or {}
+        name = league.get("name")
+        slug = league.get("slug")
+        if name and slug not in distinct_leagues:
+            distinct_leagues[slug] = name
+
+    kw = keyword.lower()
+    matches = [
+        {"slug": slug, "name": name}
+        for slug, name in distinct_leagues.items()
+        if kw in name.lower()
+    ]
+
+    return {
+        "keyword": keyword,
+        "total_distinct_leagues": len(distinct_leagues),
+        "match_count": len(matches),
+        "matches": matches,
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
