@@ -6,7 +6,11 @@ cost:
        schema against live Render logs, not a guess; promoted to
        PRIMARY 2026-09-16 after confirming the account works again.
        Aggressively cached — see odds_api_io.py — so actual API usage
-       should stay well under quota even as the primary tier.)
+       should stay well under quota even as the primary tier. Gated by
+       has_odds_api_io_coverage() — see odds_api_io_leagues.py — which
+       only skips leagues CONFIRMED to have no coverage at all; every
+       other league still gets tried, since the underlying search
+       already fails safe to None.)
     2. OddStorm    (free, no quota limit, but coverage varies by match
        — demoted from primary to first fallback 2026-09-16)
     3. Oddsbook    (free, Playwright-based, broader coverage but
@@ -67,6 +71,7 @@ from datetime import date
 import asyncio
 
 from odds_api_io import get_odds_api_io_fallback, get_ou25_api_io_fallback
+from odds_api_io_leagues import has_odds_api_io_coverage
 from oddstorm_leagues import has_oddstorm_coverage
 from oddstorm_odds import get_market_odds as get_oddstorm_market_odds
 from oddsbook_odds import get_oddsbook_market_odds
@@ -119,24 +124,29 @@ async def get_combined_market_odds(kickwise_league_name, home, away, target_date
         return market_odds is None or market_ou25 is None
 
     # ---- Tier 1: Odds-API.io (PRIMARY as of 2026-09-16) ----
-    try:
-        io_odds = await get_odds_api_io_fallback(home, away)
-        if market_odds is None and io_odds:
-            market_odds = io_odds
-            source = "odds_api_io"
-    except Exception as e:
-        print(f"Odds-API.io HDA failed for {kickwise_league_name} "
-              f"({home} vs {away}): {e} — trying next source")
-
-    if market_ou25 is None:
+    # has_odds_api_io_coverage() only skips leagues CONFIRMED absent
+    # (see odds_api_io_leagues.py) — everything else still gets tried,
+    # since odds_api_io.py's own team-name search already fails safe
+    # to None with no side effects if a league turns out uncovered.
+    if has_odds_api_io_coverage(kickwise_league_name):
         try:
-            io_ou25 = await get_ou25_api_io_fallback(home, away)
-            if io_ou25:
-                market_ou25 = io_ou25
-                ou25_source = "odds_api_io"
+            io_odds = await get_odds_api_io_fallback(home, away)
+            if market_odds is None and io_odds:
+                market_odds = io_odds
+                source = "odds_api_io"
         except Exception as e:
-            print(f"Odds-API.io O/U 2.5 failed for {kickwise_league_name} "
+            print(f"Odds-API.io HDA failed for {kickwise_league_name} "
                   f"({home} vs {away}): {e} — trying next source")
+
+        if market_ou25 is None:
+            try:
+                io_ou25 = await get_ou25_api_io_fallback(home, away)
+                if io_ou25:
+                    market_ou25 = io_ou25
+                    ou25_source = "odds_api_io"
+            except Exception as e:
+                print(f"Odds-API.io O/U 2.5 failed for {kickwise_league_name} "
+                      f"({home} vs {away}): {e} — trying next source")
 
     # ---- Tier 2: OddStorm ----
     if _still_incomplete() and has_oddstorm_coverage(kickwise_league_name):
