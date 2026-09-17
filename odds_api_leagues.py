@@ -1,98 +1,75 @@
 """
-Odds-API.io league mapping — NOT a complete, individually-verified
-mapping of all 88 GOALAPI_LEAGUE_IDS leagues. This file exists to
-record leagues where the automated fuzzy-match check
-(/debug-odds-api-io-league-coverage) got it WRONG, or where a league
-is confirmed to have no usable Odds-API.io coverage at all — built
-incrementally, same pattern as oddstorm_leagues.py's own history of
-"CORRECTIONS" and "CONFIRMED ABSENT" sections.
+Kickwise — The Odds API sport_key resolver
+--------------------------------------------
+The Odds API identifies leagues with its own "sport_key" strings
+(e.g. "soccer_epl", "soccer_brazil_campeonato") that don't match
+Kickwise's "Country - League" naming. Rather than hardcode a guessed
+mapping — risky, since a wrong key silently returns zero matches with
+no error — this module fetches The Odds API's own official list via
+GET /v4/sports ONCE, caches it, and fuzzy-matches each Kickwise league
+name against it automatically.
 
-WHY THIS FILE IS DELIBERATELY INCOMPLETE:
-On 2026-09-16, a naive automated pass (fuzzy string-matching every
-Kickwise league name against ~640 distinct league names pulled from
-Odds-API.io's live events list) reported 87 of 88 leagues as
-"likely_covered". Manually eyeballing a sample of those results found
-SIX were wrong despite passing the confidence threshold — including
-one that matched an entirely different COUNTRY ("Malaysia - Super
-League" -> "Malawi - Super League", fooled by spelling similarity).
-Baking all 88 unaudited guesses into this file as if they were
-confirmed would repeat exactly the mistake this whole migration
-effort has been built around catching (see: the Azerbaijan/Qatar/
-Finland-Ykkosliiga naming mixups, the Denmark/Austria stale-season
-bug). Only manually-verified entries go here. Everything else falls
-through to Odds-API.io's own real-time team-name search in
-odds_api_io.py, which already fails safe to None on no match — so an
-unaudited league isn't broken, it's just unconfirmed.
+CONFIRMED per The Odds API's own docs: GET /v4/sports does NOT count
+against your paid quota (it's a free reference endpoint), so calling
+it liberally (once per day, cached) costs nothing.
 
-CORRECTIONS (fuzzy-match picked the wrong entry — verified via
-/debug-odds-api-io-league-search, 2026-09-16):
-    Bolivia - LFPB: fuzzy-match picked "Bolivia - Copa Bolivia" (a
-        CUP competition, wrong) -> corrected to
-        "Bolivia - Division Profesional" (the real league)
-    Uruguay - Liga AUF: fuzzy-match picked "Uruguay - Segunda
-        Division" (wrong tier) -> corrected to
-        "Uruguay - Primera Division, Clausura" (Uruguay splits into
-        Apertura/Clausura tournaments; this is the current top-flight
-        stage)
-    Montenegro - First League: fuzzy-match picked "Montenegro -
-        2. CFL" (the SECOND tier) -> corrected to
-        "Montenegro - 1. CFL" (the actual top flight)
-
-CONFIRMED ABSENT (verified via /debug-odds-api-io-league-search,
-2026-09-16 — Odds-API.io genuinely does not carry these):
-    Malaysia - Super League: only "Malaysia FA Cup", "President Cup
-        U20", and "Liga A1" exist — no top-flight entry. (Liga A1 is
-        semi-pro, not top-flight — independently confirmed by
-        oddstorm_leagues.py's own notes on this same league.)
-    England - Southern Football League: same structural ambiguity
-        oddstorm_leagues.py already documented — TWO same-tier
-        geographic divisions exist ("Southern League, Premier
-        Division Central" and "...Premier Division South") with no
-        single unified entry. Left unmatched rather than guess which
-        region, for the same reason oddstorm_leagues.py did.
-
-STILL PENDING — not yet resolved, needs more investigation before
-adding:
-    Ecuador - Liga Pro: Odds-API.io splits Ecuador's Serie A into
-        "Championship Round", "Relegation Round", and "Qualifying
-        Round" stage-based entries — no plain "Serie A" entry. Which
-        one is CURRENT depends on where the season actually is right
-        now (same shape of problem as the GOAL API stale-season-stage
-        bug fixed earlier this migration) — do not guess a fixed
-        entry here without checking round dates first.
-
-UNAUDITED (2026-09-16): the remaining ~82 of 88 leagues also came
-back "likely_covered" from the same fuzzy-match pass, but have NOT
-been individually eyeballed the way the six above were. Treat these
-the same as any other auto-matched result pending confirmation —
-they're probably fine (many showed near-perfect ~1.0+ confidence
-scores), but "probably fine" is not the same as "verified", and this
-file's whole purpose is to not blur that line.
+The Odds API's soccer coverage is comparatively narrow — mostly
+top-flight European leagues, a few top-flight leagues elsewhere
+(Brazil, USA/MLS, etc.) — so most of Kickwise's 61 leagues will have
+NO match here. That's expected and fine: get_sport_key() returns None
+for anything uncovered, and callers should treat that exactly like
+"this source doesn't have this league" and move to the next fallback.
 """
 
-# Only CONFIRMED entries go here — corrections point to the real
-# Odds-API.io league name (kept for reference/debugging only, since
-# the actual runtime lookup in odds_api_io.py searches team names
-# globally rather than filtering by this value); None means confirmed
-# no usable coverage.
-ODDS_API_IO_LEAGUE_OVERRIDES = {
-    "Bolivia - LFPB": "Bolivia - Division Profesional",
-    "Uruguay - Liga AUF": "Uruguay - Primera Division, Clausura",
-    "Montenegro - First League": "Montenegro - 1. CFL",
-    "Malaysia - Super League": None,  # confirmed absent
-    "England - Southern Football League": None,  # confirmed absent — genuinely ambiguous, same as OddStorm
-    # "Ecuador - Liga Pro": PENDING — see docstring, do not add until round-currency is checked
+import os
+import time
+import httpx
+from difflib import SequenceMatcher
+
+ODDS_API_KEY = os.getenv("ODDS_API_KEY", "").strip()
+ODDS_API_BASE = "https://api.the-odds-api.com/v4"
+
+_SPORTS_LIST_CACHE_TTL = 24 * 60 * 60  # 24 hours — this list changes rarely
+_sports_list_cache: tuple[float, list] | None = None
+
+# Manual override for cases where fuzzy matching could plausibly guess
+# wrong (e.g. multiple divisions of the same country/sport name) —
+# checked BEFORE fuzzy matching. Add entries here if a specific
+# Kickwise league keeps resolving to the wrong sport_key.
+MANUAL_OVERRIDES: dict[str, str] = {
+    # "Kickwise league name": "confirmed_correct_sport_key",
 }
 
 
-def has_odds_api_io_coverage(kickwise_league_name):
-    """
-    Returns False only for leagues CONFIRMED absent above. Returns
-    True for everything else, including unaudited leagues — this is
-    intentionally permissive, since odds_api_io.py's own team-name
-    search already fails safe to None with no side effects if a
-    league turns out to have no real coverage. This function exists
-    to skip a known-wasted lookup for confirmed-absent leagues, not
-    to gate correctness.
-    """
-    return ODDS_API_IO_LEAGUE_OVERRIDES.get(kickwise_league_name, True) is not None
+async def _get_sports_list(force_refresh: bool = False) -> list:
+    global _sports_list_cache
+
+    if not force_refresh and _sports_list_cache:
+        fetched_at, data = _sports_list_cache
+        if time.time() - fetched_at < _SPORTS_LIST_CACHE_TTL:
+            return data
+
+    if not ODDS_API_KEY:
+        print("  [odds_api_leagues] No ODDS_API_KEY set — cannot resolve sport_keys")
+        return []
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.get(
+                f"{ODDS_API_BASE}/sports",
+                params={"apiKey": ODDS_API_KEY, "all": "true"},
+            )
+        if resp.status_code != 200:
+            print(f"  [odds_api_leagues] /sports fetch failed: HTTP {resp.status_code} — {resp.text[:200]}")
+            return _sports_list_cache[1] if _sports_list_cache else []
+
+        data = resp.json()
+        soccer_only = [s for s in data if s.get("key", "").startswith("soccer_")]
+        print(f"  [odds_api_leagues] Fetched {len(soccer_only)} soccer competitions from The Odds API "
+              f"(does not count against quota)")
+        _sports_list_cache = (time.time(), soccer_only)
+        return soccer_only
+
+    except Exception as e:
+        print(f"  [odds_api_leagues] Exception fetching /sports: {e}")
+        return _sports_list_cache[1] if _sports_list_cache el
