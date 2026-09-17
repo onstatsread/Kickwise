@@ -72,4 +72,4 @@ async def _get_sports_list(force_refresh: bool = False) -> list:
 
     except Exception as e:
         print(f"  [odds_api_leagues] Exception fetching /sports: {e}")
-        return _sports_list_cache[1] if _sports_list_cache el
+        return _sports_list_cache[1] if _sports_list_cache else []
