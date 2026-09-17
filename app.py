@@ -3037,6 +3037,68 @@ async def debug_odds_api_io_league_search(
     }
 
 
+@app.get("/debug-goalapi-stage-audit")
+async def debug_goalapi_stage_audit(
+    league_id: str = Query(...)
+):
+    """
+    TEMPORARY debug endpoint — for EVERY team in a league (not just
+    the first 3 rows like /debug-goalapi-raw-standings), reports
+    whether a "Current"-stage row exists, what gp that row shows, and
+    what gp the OLDEST/stale row shows for comparison. Built because
+    the "Current"-stage dedup fix's own comments already predicted
+    that even ONE team lacking a "Current" row would keep the
+    league-wide max_gp stuck on stale data — this confirms whether
+    that's actually happening, instead of guessing from a 3-row
+    sample.
+
+    DELETE once the stale-data investigation is fully resolved.
+    """
+    from goalapi_fetcher import _get_all_pages
+
+    rows = _get_all_pages(f"/standings/{league_id}")
+
+    if not rows:
+        return {"league_id": league_id, "error": "No rows returned"}
+
+    rows_by_team = {}
+    for row in rows:
+        team_name = (row.get("team") or {}).get("name") or row.get("teamName")
+        if not team_name:
+            continue
+        rows_by_team.setdefault(team_name, []).append(row)
+
+    audit = []
+    for team_name, team_rows in rows_by_team.items():
+        current_rows = [r for r in team_rows if r.get("stageName") == "Current"]
+        stage_names = sorted(set(r.get("stageName") for r in team_rows))
+
+        current_gp = current_rows[0].get("overallLeaguePlayed") if current_rows else None
+        fallback_row = max(team_rows, key=lambda r: r.get("updatedAt") or "")
+
+        audit.append({
+            "team": team_name,
+            "has_current_row": bool(current_rows),
+            "stage_names_present": stage_names,
+            "current_row_gp": current_gp,
+            "row_count": len(team_rows),
+            "would_select_gp": (
+                current_rows[0].get("overallLeaguePlayed") if current_rows
+                else fallback_row.get("overallLeaguePlayed")
+            ),
+        })
+
+    missing_current = [a for a in audit if not a["has_current_row"]]
+
+    return {
+        "league_id": league_id,
+        "team_count": len(audit),
+        "teams_missing_current_row": len(missing_current),
+        "missing_current_details": missing_current,
+        "full_audit": audit,
+    }
+
+
 @app.get("/league_gp")
 def league_gp(
     league: str = Query(...)
