@@ -73,3 +73,70 @@ async def _get_sports_list(force_refresh: bool = False) -> list:
     except Exception as e:
         print(f"  [odds_api_leagues] Exception fetching /sports: {e}")
         return _sports_list_cache[1] if _sports_list_cache else []
+
+
+def _normalize(text: str) -> str:
+    return " ".join(text.lower().replace("-", " ").replace(".", "").split())
+
+
+def _score(kickwise_league_name: str, sport_entry: dict) -> float:
+    """
+    Compares a Kickwise "Country - League" name against one of The Odds
+    API's sport entries, which look like:
+        {"key": "soccer_epl", "group": "Soccer",
+         "title": "EPL", "description": "English Premier League"}
+    Scores against BOTH title and description, keeping the best.
+    """
+    kw_norm = _normalize(kickwise_league_name)
+
+    candidates = [sport_entry.get("title", ""), sport_entry.get("description", "")]
+    best = 0.0
+    for candidate in candidates:
+        if not candidate:
+            continue
+        cand_norm = _normalize(candidate)
+        score = SequenceMatcher(None, kw_norm, cand_norm).ratio()
+
+        # Boost for exact country match at minimum — the "Country - "
+        # prefix in Kickwise names is a strong, cheap signal to check.
+        country = kw_norm.split(" ")[0] if kw_norm else ""
+        if country and country in cand_norm:
+            score += 0.15
+
+        best = max(best, score)
+
+    return best
+
+
+async def get_sport_key(kickwise_league_name: str, min_confidence: float = 0.55) -> str | None:
+    """
+    Returns The Odds API's sport_key for a given Kickwise league name,
+    or None if there's no confident match (meaning: this source almost
+    certainly doesn't cover this league — treat like any other "no
+    coverage" case and move to the next fallback source).
+
+    min_confidence is deliberately conservative — a wrong guess here
+    means silently pulling ANOTHER league's odds under the wrong
+    match, which is worse than just having no odds at all. When in
+    doubt, this returns None rather than a low-confidence guess.
+    """
+    if kickwise_league_name in MANUAL_OVERRIDES:
+        return MANUAL_OVERRIDES[kickwise_league_name]
+
+    sports = await _get_sports_list()
+    if not sports:
+        return None
+
+    best_key, best_score = None, 0.0
+    for entry in sports:
+        score = _score(kickwise_league_name, entry)
+        if score > best_score:
+            best_score = score
+            best_key = entry.get("key")
+
+    if best_key is None or best_score < min_confidence:
+        return None
+
+    print(f"  [odds_api_leagues] Matched '{kickwise_league_name}' -> '{best_key}' "
+          f"(confidence {best_score:.2f})")
+    return best_key
