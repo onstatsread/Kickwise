@@ -3071,7 +3071,7 @@ async def debug_goalapi_stage_audit(
     audit = []
     for team_name, team_rows in rows_by_team.items():
         current_rows = [r for r in team_rows if r.get("stageName") == "Current"]
-        stage_names = sorted(set(r.get("stageName") for r in team_rows))
+        stage_names = sorted(set(str(r.get("stageName")) for r in team_rows))
 
         current_gp = current_rows[0].get("overallLeaguePlayed") if current_rows else None
         fallback_row = max(team_rows, key=lambda r: r.get("updatedAt") or "")
