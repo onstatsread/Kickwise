@@ -209,10 +209,27 @@ def fetch_team_stats(league_id):
     # Second, for each team: if ANY row has stageName == "Current",
     # use that one (this label reliably marks the real, in-progress
     # season row — confirmed across Denmark and Austria's raw data).
-    # Only fall back to comparing updatedAt across all of a team's
-    # rows when no "Current"-labeled row exists at all, so leagues
-    # that don't use this group-stage split (the majority) still
-    # degrade gracefully and unaffected.
+    # A team with NO "Current"-labeled row at all is now SKIPPED
+    # entirely (see FIX 2026-09-17 below) rather than falling back to
+    # a stale row — leagues that don't use this group-stage split
+    # (the majority) are unaffected either way.
+    #
+    # FIX (2026-09-17): the "fall back to most-recently-updated row"
+    # branch this comment originally described has been REMOVED.
+    # Confirmed via /debug-goalapi-stage-audit that this v2 fix was
+    # otherwise working correctly (12 of 13 Austria teams resolved
+    # correctly to gp=5-6) but Austria's league-wide max_gp still
+    # stuck at 32 because of exactly ONE team (Blau-Weiß Linz) with
+    # no "Current" row, only leftover last-season rows. That team's
+    # stale fallback alone was enough to corrupt the whole league's
+    # reported max — the failure mode this comment predicted, now
+    # actually observed. A team missing a "Current" row entirely is
+    # almost certainly no longer active in the league's current
+    # season (relegated/promoted out) or GOAL API hasn't created
+    # their entry yet — either way, stale data pretending to be
+    # current is worse than no data, so that team is now skipped
+    # entirely, same principle as the existing "skip teams with
+    # gp==0" rule just below.
     rows_by_team = {}
     for row in rows:
         team_name = (row.get("team") or {}).get("name") or row.get("teamName")
@@ -225,14 +242,28 @@ def fetch_team_stats(league_id):
     for team_name, team_rows in rows_by_team.items():
         current_rows = [r for r in team_rows if r.get("stageName") == "Current"]
 
-        if current_rows:
-            # Prefer "Current" stage; if somehow more than one, take
-            # the most recently updated among just those.
-            row = max(current_rows, key=lambda r: r.get("updatedAt") or "")
-        else:
-            # No explicit "Current" row for this team — fall back to
-            # whichever of their rows was updated most recently.
-            row = max(team_rows, key=lambda r: r.get("updatedAt") or "")
+        if not current_rows:
+            # FIX (2026-09-17): no fallback to "most recently updated
+            # stale row" anymore — confirmed real trigger: Blau-Weiß
+            # Linz in Austria - Bundesliga, only had "Relegation
+            # Group"/null-stage rows present (both leftover from last
+            # season), while all 12 other teams in the same league
+            # correctly had a "Current" row. A team with NO "Current"
+            # row at all is most likely no longer active in this
+            # league's current season (relegated/promoted out) or
+            # GOAL API simply hasn't created their current-season
+            # entry yet — either way, including their stale historical
+            # row was silently corrupting the WHOLE LEAGUE's reported
+            # max_gp with last-season data (Austria stayed stuck at
+            # gp=32 because of exactly this one team, even though the
+            # per-team dedup logic itself was working correctly for
+            # the other 12). Skip this team entirely, same principle
+            # as the existing "skip teams with gp==0" rule below.
+            continue
+
+        # Prefer "Current" stage; if somehow more than one, take
+        # the most recently updated among just those.
+        row = max(current_rows, key=lambda r: r.get("updatedAt") or "")
 
         gp = _to_int(row.get("overallLeaguePlayed"))
         gf = _to_int(row.get("overallLeagueGF"))
