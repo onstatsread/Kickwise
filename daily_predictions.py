@@ -509,6 +509,45 @@ def passes_double_chance_extra_filter(value_pct):
     return True
 
 
+# ============================================================
+# NEW — additional criterion applied on top of
+# passes_double_chance_extra_filter, to ALL THREE Double Chance
+# signals. Divides the POSITIVE value_pct side by the absolute value
+# of the NEGATIVE side; only passes when that ratio is LESS THAN 1
+# (i.e. the positive side's magnitude is smaller than the negative
+# side's). Confirmed via real examples given directly:
+#     home_v=-45.2, away_v=30  -> 30/45.2  = 0.66 -> PASS (< 1)
+#     home_v=48,    away_v=-40 -> 48/40    = 1.2  -> FAIL (>= 1)
+# NOTE: this is stricter than passes_double_chance_extra_filter's own
+# existing ratio<=1.7 cutoff — nothing between 1.0 and 1.7 will pass
+# this new check even though it passes the old one, so this
+# effectively replaces the practical effect of that older threshold
+# for these three signals, not just adds to it. Re-derives its own
+# positive/negative split rather than trusting a value computed
+# elsewhere, so it stays self-contained and safe to call on its own.
+# ============================================================
+def passes_dominance_ratio_filter(value_pct):
+    if not value_pct:
+        return False
+
+    home_v = value_pct.get("home")
+    away_v = value_pct.get("away")
+
+    if home_v is None or away_v is None:
+        return False
+    if home_v == 0 or away_v == 0:
+        return False
+    if (home_v > 0) == (away_v > 0):
+        return False
+
+    positive_val = home_v if home_v > 0 else away_v
+    negative_val = home_v if home_v < 0 else away_v
+
+    ratio = positive_val / abs(negative_val)
+
+    return ratio < 1
+
+
 def check_double_chance_signal(pred):
     # NEW condition — the model's H/D/A odds must all be no bigger than
     # 15 for the match to qualify at all, checked before the value-pct
@@ -771,7 +810,11 @@ def main():
             dc_side = check_double_chance_signal(pred)
             if dc_side:
                 dc_signal = refine_double_chance_signal(pred, dc_side)
-                if dc_signal and passes_double_chance_extra_filter(value_pct):
+                if (
+                    dc_signal
+                    and passes_double_chance_extra_filter(value_pct)
+                    and passes_dominance_ratio_filter(value_pct)
+                ):
                     dc_notify_cards.append(
                         f"🕐 {match_time} | {m['league_name']}\n"
                         f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
@@ -782,7 +825,11 @@ def main():
                     )
 
             dc2_result = check_double_chance_signal_2(pred)
-            if dc2_result and passes_double_chance_extra_filter(value_pct):
+            if (
+                dc2_result
+                and passes_double_chance_extra_filter(value_pct)
+                and passes_dominance_ratio_filter(value_pct)
+            ):
                 model_odds = pred.get("odds") or {}
                 dc2_notify_cards.append(
                     f"🕐 {match_time} | {m['league_name']}\n"
@@ -795,7 +842,11 @@ def main():
                 )
 
             dc3_result = check_double_chance_signal_3(pred)
-            if dc3_result and passes_double_chance_extra_filter(value_pct):
+            if (
+                dc3_result
+                and passes_double_chance_extra_filter(value_pct)
+                and passes_dominance_ratio_filter(value_pct)
+            ):
                 model_odds = pred.get("odds") or {}
                 value_signal = pred.get("value_signal") or {}
                 dc3_notify_cards.append(
