@@ -210,4 +210,26 @@ GOALAPI_LEAGUE_IDS = {
     "Guatemala - Liga Nacional": "cmr77dxay00tvrx068w5v6fip",
     "Honduras - Liga Nacional": "cmr77dxb500tyrx064rbv0izc",
     "Tanzania - Ligi Kuu Bara": "cmr77dxbb00u0rx06vqu9f3rk",
+
+    # ===== BATCH ADDITION 2026-09-17 — 8 more leagues =====
+    # These 8 were originally flagged in the stale-season-data
+    # investigation (see goalapi_fetcher.py's FIX notes) alongside
+    # Scotland above. All confirmed genuinely fixed and gp>=6 after
+    # the "skip teams with no Current-stage row entirely" fix
+    # (2026-09-17) — verified via /debug-goalapi-league-gp AND
+    # /debug-goalapi-stage-audit, not just a single spot-check.
+    #
+    # Still pending, correct league confirmed but not enough games
+    # played yet as of 2026-09-17 (recheck in a week or two):
+    # Israel - Ligat Ha'al (cmr77dwbc00i0rx06adepi1hb, gp=5),
+    # Cyprus - 1. Division (cmr77dwj200korx0664b8h5mq, gp=4),
+    # Indonesia - Liga 1 (cmr77dwae00hjrx061fdxl3eb, gp=3).
+    "Austria - Bundesliga": "cmr77dvjm005brx062i1cpb4k",
+    "Denmark - Superliga": "cmr77dw1z00exrx062x6co26u",
+    "Czech Republic - Czech Liga": "cmr77dw9200gmrx06o9tqq555",
+    "Switzerland - Super League": "cmr77dvyx00egrx06pta3wmnc",
+    "Slovakia - 1. Liga": "cmr77dw5l00fyrx064o73i0dp",
+    "Northern Ireland - Premiership": "cmr77dwuo00nqrx06v4rpsuzk",
+    "Wales - Premier League": "cmr77dx8b00slrx06b733ce6d",
+    "Moldova - Super Liga": "cmr77dx5k00r2rx06srbm93dq",
 }
