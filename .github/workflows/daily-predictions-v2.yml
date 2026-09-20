@@ -51,4 +51,4 @@ jobs:
           #     as BLOG_ID above once this pipeline is trusted.
           BLOG_ID_V2: ${{ secrets.BLOG_ID_V2 }}
           BLOG_ID_2_V2: ${{ secrets.BLOG_ID_2_V2 }}
-        run: python daily_predictions_v2.py
+        run: python daily_predictions.py
