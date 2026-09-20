@@ -1,0 +1,54 @@
+name: Kickwise Daily Predictions V2 (GOAL API)
+
+on:
+  schedule:
+    # 23:30 UTC — offset 30 min AFTER the main pipeline's 23:00 UTC
+    # run, so both scripts don't hit the same Render backend at the
+    # exact same moment (free-tier cold-start/spin-down makes
+    # simultaneous load a real risk, not just theoretical).
+    - cron: '30 23 * * *'
+  workflow_dispatch: {}  # allows manual runs from the Actions tab, useful while testing
+
+jobs:
+  run-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run daily predictions v2
+        env:
+          # --- Required because daily_predictions_v2.py imports from
+          #     daily_predictions.py, which needs these at import time
+          #     even though v2 doesn't use BLOG_ID itself for posting.
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          BLOG_ID: ${{ secrets.BLOG_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+
+          # --- Optional, only needed if the main pipeline's Blog 2 /
+          #     Telegram are configured — safe to leave unset otherwise.
+          BLOG_ID_2: ${{ secrets.BLOG_ID_2 }}
+          GOOGLE_CLIENT_ID_2: ${{ secrets.GOOGLE_CLIENT_ID_2 }}
+          GOOGLE_CLIENT_SECRET_2: ${{ secrets.GOOGLE_CLIENT_SECRET_2 }}
+          GOOGLE_REFRESH_TOKEN_2: ${{ secrets.GOOGLE_REFRESH_TOKEN_2 }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+          # --- v2-specific. Leave BLOG_ID_V2 unset for dry-run mode
+          #     (logs matches, posts nothing) during the trial period.
+          #     Set it once you're ready to go live — point it at a
+          #     separate test blog first, then later at the SAME value
+          #     as BLOG_ID above once this pipeline is trusted.
+          BLOG_ID_V2: ${{ secrets.BLOG_ID_V2 }}
+          BLOG_ID_2_V2: ${{ secrets.BLOG_ID_2_V2 }}
+        run: python daily_predictions_v2.py
