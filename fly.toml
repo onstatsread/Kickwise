@@ -1,22 +1,23 @@
-# fly.toml — generated for Kickwise backend
-# Run `fly launch` first (it can generate/overwrite this), or `fly deploy`
-# directly if you keep this file as-is and just fill in the app name below.
+# fly.toml app configuration file generated for kickwise on 2026-09-25T20:37:14Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "kickwise-backend"   # <- change to whatever name you pick; must be globally unique on Fly
-primary_region = "iad"      # <- pick the region closest to you or your users; run `fly platform regions` to see options
+app = 'kickwise'
+primary_region = 'ams'
 
 [build]
 
 [env]
-  PORT = "8080"
+  PORT = '8080'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = false   # keep it always-on — this is what avoids Render's suspend-on-idle behavior
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
 
 [[vm]]
-  size = "shared-cpu-2x"   # LibreOffice + Playwright/Chromium are memory-hungry; start here, size down later if it's stable
-  memory = "2gb"
+  size = 'shared-cpu-2x'
+  memory = '2gb'
