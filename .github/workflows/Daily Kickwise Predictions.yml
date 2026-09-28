@@ -1,0 +1,59 @@
+name: Daily Kickwise Predictions
+
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+jobs:
+  post_predictions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BACKEND_URL: http://127.0.0.1:8080
+      BLOG_ID: ${{ secrets.BLOG_ID }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+      BLOG_ID_2: ${{ secrets.BLOG_ID_2 }}
+      GOOGLE_CLIENT_ID_2: ${{ secrets.GOOGLE_CLIENT_ID_2 }}
+      GOOGLE_CLIENT_SECRET_2: ${{ secrets.GOOGLE_CLIENT_SECRET_2 }}
+      GOOGLE_REFRESH_TOKEN_2: ${{ secrets.GOOGLE_REFRESH_TOKEN_2 }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      ANNABET_USERNAME: ${{ secrets.ANNABET_USERNAME }}
+      ANNABET_PASSWORD: ${{ secrets.ANNABET_PASSWORD }}
+      GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
+      ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
+      # add any other env vars your modules read (from Render's Environment tab)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install LibreOffice
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-calc
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install --with-deps chromium
+
+      - name: Start backend
+        run: |
+          nohup uvicorn app:app --host 127.0.0.1 --port 8080 > backend.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8080/health && break
+            sleep 2
+          done
+
+      - name: Run daily predictions poster
+        run: python daily_predictions_v2.py
+
+      - name: Show backend log on failure
+        if: failure()
+        run: tail -n 100 backend.log
