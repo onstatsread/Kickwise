@@ -200,6 +200,32 @@ def scores(pred_csv, out_csv):
     write(out, out_csv)
     print(f"{len(out)} scored, {missed} not found (not played yet or names differ)")
 
+def probe(date, needle=""):
+    """Diagnose GOAL API coverage for one date: counts, kickoff hours, sample match."""
+    import os
+    from collections import Counter
+    from datetime import date as _d, timedelta as _td
+    key = os.environ["GOAL_API_KEY"]
+    items = _fetch_day(key, date)
+    print(f"{date}: {len(items)} results")
+    if not items:
+        return
+    print("fields of first item:", sorted(items[0].keys()))
+    hrs = Counter()
+    for m in items:
+        k = str(m.get("kickoffUtc") or m.get("matchTime") or "")
+        hrs[k[11:13] if "T" in k else k[:2]] += 1
+    print("results per kickoff hour (UTC):", dict(sorted(hrs.items())))
+    print("statuses:", dict(Counter(str(m.get("matchStatus")) for m in items)))
+    print("sample:", items[0])
+    if needle:
+        for delta in range(-2, 3):
+            dd = (_d.fromisoformat(date) + _td(days=delta)).isoformat()
+            for m in (items if delta == 0 else _fetch_day(key, dd)):
+                blob = json.dumps(m, default=str).lower() if False else str(m).lower()
+                if needle.lower() in blob:
+                    print(f"FOUND under {dd}:", {k: m.get(k) for k in ("homeTeam", "awayTeam", "kickoffUtc", "matchStatus")}, "| score fields:", _score(m))
+
 def analyze(path):
     """Hit rate of each prediction field value, using the merged file."""
     from collections import defaultdict
@@ -238,6 +264,8 @@ if __name__ == "__main__":
         crawl(sys.argv[2], sys.argv[3])
     elif cmd == "scores":
         scores(sys.argv[2], sys.argv[3])
+    elif cmd == "probe":
+        probe(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "")
     elif cmd == "analyze":
         analyze(sys.argv[2])
     elif cmd == "fetch":
