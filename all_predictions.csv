@@ -1,519 +1,519 @@
-date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,decision,signal,ou_result,pred1,pred2,pred3
-2026-09-30,18:00,RWDM Brussels,Union Rochefortoise,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.52,2.92,3.0,2.0,3.5,3.0,,,over,,,Home handicap
-2026-09-30,21:00,San Felipe,San Luis,Chile,Primera B,"San Luis FC, handicap/ handicap",,not match,one,4goals,3.46,2.24,3.79,3.0,3.25,2.1,Home,,under,,,Home
-2026-09-30,23:00,Brooklyn,Detroit,USA,USL Championship,"Detroit City, handicap/ double",,not match,both,4goals,5.85,3.06,1.99,3.25,3.25,2.0,Home 2-handicap,,under,Detroit City/ double / double / 4goals,Detroit City / 4goals / same,Home
-2026-09-30,23:00,Miami FC,Sporting Jax,USA,USL Championship,Miami/ handicap,double,match,both,4goals,1.72,5.24,4.41,1.61,4.0,4.1,Home,,under confirmed,Miami/ handicap / double,Miami only,Away handicap
-2026-09-30,23:30,Rhode Island,Indy Eleven,USA,USL Championship,Rhode Island/ handicap,,match,one,4goals,1.52,4.35,9.09,1.85,3.5,3.5,Away 2-handicap,,under,,,Home handicap
-2026-09-29,11:00,Wuxi Wugou,Ningbo Professional,China,League One,Wuxi Wugou/ handicap,,match,one,4goals,3.23,3.06,2.76,2.1,3.1,3.2,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
-2026-09-29,22:30,Botafogo SP,Ponte Preta,Brazil,Serie B,Botafogo SP/ double,double,match,both,3goals,1.23,8.55,13.89,1.23,6.5,10.17,Away 2-handicap,,under confirmed,Botafogo SP/ double / double / 3goals,Botafogo SP / 3goals,Away
-2026-09-24,01:00,Luis Angel Firpo,Cacahuatique El,Salvador,Primera Division,Firpo / low/ handicap,,not match,both,4goals,2.56,3.31,3.25,,,,,,,Firpo/ handicap / double / 4goals,Firpo / 4goals / same,
-2026-09-24,01:00,Alianza FC,Fuerte San Francisco El,Salvador,Primera Division,Alianza/ wins,double,match,both,4goals,1.4,4.78,12.82,1.25,5.3,8.0,Home,,over,Alianza/ wins / double / 4goals,Alianza / 4goals,Home
-2026-09-23,16:00,Bregalnica Stip,FK Skopje North,Macedonia,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.1,10.75,5.25,1.45,4.0,5.25,,,under,,,Home handicap
-2026-09-23,16:00,Birmingham,Brooklyn,USA,USL Championship,Birmingham City/ handicap,double,match,both,4goals,1.95,4.48,3.82,1.73,3.75,3.75,Away,,over,Birmingham City/ handicap / double,Birmingham City / same,Home handicap
-2026-09-22,01:00,Arnett Gardens,Dunbeholden,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.02,17.0,26.0,1.02,17.0,26.0,,,,,,
-2026-09-22,16:00,Biskra,Saoura,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.55,2.78,2.77,2.55,2.78,2.77,,,over,,,
-2026-09-21,13:00,Pyrgos,AEL Larissa,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,3.7,3.15,1.89,3.7,3.15,1.89,,,,,,
-2026-09-21,14:00,Struga,Arsimi North,Macedonia,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.05,20.0,,,,,,,,,,
-2026-09-21,14:00,Panthrakikos,Niki Volos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.11,10.0,1.8,4.33,3.4,1.8,,,over,,,Home handicap
-2026-09-21,15:00,Rustavi,Iberia 1999,Georgia,Erovnuli Liga,Rustavi/ handicap,,not match,one,3goals,1.91,3.88,4.59,,,,,,,,,
-2026-09-21,17:00,Spaeri,Dila Gori,Georgia,Erovnuli Liga,Spaeri/ handicap,,not match,both,3goals,3.21,4.17,2.23,2.9,3.15,2.18,Away,,under confirmed,Dila/ handicap / double / 3goals,Dila / same,Away
-2026-09-21,18:00,Petrolul,Csikszereda M. Ciuc,Romania,Liga I,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.49,2.92,3.92,,,,,,,,,
-2026-09-21,19:00,Manta,Orense,Ecuador,Liga Pro,"Orense, handicap/ handicap",,not match,both,3goals,5.18,2.81,2.22,2.6,3.0,2.8,Home 2-handicap,under,under,Orense/ handicap / double / 3goals,Orense only,Home
-2026-09-21,22:30,Criciuma,Operario-PR,Brazil,Serie B,Criciúma/ handicap,double,match,both,3goals,2.63,3.16,3.29,1.67,3.53,5.37,Home,,under,Criciúma/ handicap / double / 3goals,Criciúma / 3goals / same,Home
-2026-09-20,00:00,Emelec,Libertad,Ecuador,Liga Pro,Emelec/ handicap,under,not match,one,3goals,2.74,3.14,3.16,1.19,5.3,17.5,Home,,under,,,Home
-2026-09-20,00:00,Sao Paulo,Internacional,Brazil,Serie A,São Paulo/ handicap,,match,one,4goals,2.01,3.76,4.24,1.28,4.6,14.0,Home,,,,,
-2026-09-20,01:00,Colorado Springs,New Mexico,USA,USL Championship,Colorado Springs/ handicap,,not match,both,4goals,3.28,4.46,2.12,,,,,,,New Mexico United/ handicap / double,New Mexico United / same,
-2026-09-20,02:00,Phoenix Rising,El Paso,USA,USL Championship,Phoenix Rising/ handicap,,not match,both,4goals,4.78,4.42,1.77,2.1,3.5,2.9,Home,under,over,El Paso Locomotive/ handicap / double,El Paso Locomotive / same,Home
-2026-09-20,02:30,Las Vegas Lights,Hartford Athletic,USA,USL Championship,Hartford Athletic / low/ handicap,,match,one,4goals,4.63,2.49,2.62,2.05,3.6,2.9,Home 2-handicap,under,over,,,Home
-2026-09-20,07:30,Jeonbuk,Gwangju FC South,Korea,K League 1,Jeonbuk Motors/ wins,double,match,both,3goals,1.11,13.16,41.67,1.38,4.45,6.58,Away 2-handicap,,under confirmed,Jeonbuk Motors/ wins / double / 3goals,Jeonbuk Motors,Away
-2026-09-20,07:30,Ansan Greeners,Cheongju South,Korea,K League 2,Chungbuk Cheongju/ handicap,,match,one,4goals,4.85,4.42,1.76,3.5,3.4,1.85,Home 2-handicap,,under confirmed,,,Away handicap
-2026-09-20,07:30,Yongin,Gyeongnam South,Korea,K League 2,Gyeongnam / low/ handicap,,match,one,4goals,2.62,3.4,3.08,2.2,3.1,2.9,Away,,under,,,Home handicap
-2026-09-20,08:00,Gamba Osaka,Vissel Kobe,Japan,J1 League,Vissel Kobe/ wins,double,match,both,5goals,12.82,3.46,1.58,3.4,3.2,2.19,Home 2-handicap,,under,Vissel Kobe/ wins / double / 5goals,Vissel Kobe / same,Home
-2026-09-20,08:00,Machida,Kashiwa Reysol,Japan,J1 League,Machida Zelvia/ handicap,double,match,both,5goals,2.51,3.98,2.85,2.52,3.23,2.7,Away 2-handicap,under,under confirmed,Machida Zelvia/ handicap / double,Machida Zelvia only,Away
-2026-09-20,10:00,Kudrivka,Kolos Kovalivka,Ukraine,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,3.6,3.18,1.92,3.6,3.18,1.92,,,under,,,Home handicap
-2026-09-20,10:00,Incheon,Daejeon South,Korea,K League 1,Daejeon Hana Citizen/ handicap,double,match,both,3goals,3.22,3.95,2.3,2.77,3.23,2.31,Home 2-handicap,,under confirmed,Daejeon Hana Citizen/ handicap / double,Daejeon Hana Citizen / same,Away handicap
-2026-09-20,10:00,Pohang,Seoul South,Korea,K League 1,Seoul/ double,double,match,both,3goals,14.71,3.5,1.55,4.12,3.37,1.79,Home 2-handicap,,under,Seoul/ double / double / 3goals,Seoul,Home
-2026-09-20,10:00,Seongnam,Hwaseong South,Korea,K League 2,Hwaseong / low/ handicap,,match,both,4goals,4.57,2.71,2.42,2.63,3.1,2.4,Away,,under,Hwaseong / low/ handicap / double / 4goals,Hwaseong,Home handicap
-2026-09-20,10:15,Piast Gliwice,Pogon Szczecin,Poland,Ekstraklasa,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.29,3.42,2.82,2.29,3.42,2.82,,,over,,,Home handicap
-2026-09-20,10:15,Feyenoord,Utrecht,Netherlands,Eredivisie,handicap /Aw/ double,,not match,both,5,1.61,5.81,4.83,1.28,6.03,9.5,Home,,under confirmed,Feyenoord/ double / double,Feyenoord / same,Away handicap
-2026-09-20,11:00,Hradec Kralove,Teplice Czech,Republic,Czech Liga,Hradec Králové/ handicap,,match,one,4goals,2.16,3.98,3.48,1.76,3.47,4.4,Home,under,under confirmed,,,Home/ under 4goals
-2026-09-20,11:00,Ogre United,Super Nova,Latvia,Virsliga,Super Nova/ handicap,double,match,both,4goals,8.55,4.81,1.48,2.87,3.42,2.09,Home 2-handicap,,under,Super Nova/ handicap / double,Super Nova only,Home
-2026-09-20,11:00,Sundsvall,Ljungskile,Sweden,Superettan,Ljungskile/ double,double,match,both,4goals,6.85,5.03,1.53,3.38,3.55,1.88,Home 2-handicap,,over,Ljungskile/ double / double / 4goals,Ljungskile,Away handicap
-2026-09-20,11:00,Chonburi,Buriram,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,7.46,10.87,1.29,4.9,3.82,1.53,Home 2-handicap,,over,,,Away handicap
-2026-09-20,11:00,Rayong FC,Ratchaburi,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.18,6.41,1.89,3.43,3.43,1.89,,,under,,,Home handicap
-2026-09-20,11:00,Celtic,Rangers,Scotland,Premiership,"Celtic, handicap/ double",,match,both,3goals,1.72,3.13,9.9,2.15,3.65,3.03,Away 2-handicap,under,over,"Celtic, handicap/ double / double / 3goals",Celtic / 3goals,Home handicap
-2026-09-20,11:15,Hegelmann,Suduva,Lithuania,A Lyga,"Sūduva, handicap/ double",,match,both,3goals,4.69,4.57,1.76,,,,,,,"Sūduva, handicap/ double / double / 3goals",Sūduva / 3goals,
-2026-09-20,11:30,Tammeka,Kalju,Estonia,Meistriliiga,handicap /H/ handicap,,match,both,5goals,7.75,3.24,1.78,3.9,3.8,1.67,Away,,over,handicap /H/ handicap / double / 5goals,Nõmme Kalju only,Home handicap
-2026-09-20,11:30,Sukhothai,Port MTI FC,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,10.0,9.26,1.26,4.73,3.85,1.54,Home 2-handicap,,under confirmed,,,Away handicap
-2026-09-20,11:45,Athens Kallithea,Panserraikos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.16,7.19,3.12,2.35,3.0,3.12,,,over,,,Home handicap
-2026-09-20,12:00,Getafe,Malaga,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.34,4.61,26.32,2.01,3.08,4.32,Away 2-handicap,,under,,,Home handicap
-2026-09-20,12:00,Baranovici,FC Gomel,Belarus,Vysshaya Liga,"Gomel, handicap/ double",,match,both,3goals,6.02,4.42,1.64,4.38,3.4,1.85,Home 2-handicap,,under confirmed,"Gomel, handicap/ double / double / 3goals",Gomel,Away handicap
-2026-09-20,12:00,Sonderjyske,Randers FC,Denmark,Superliga,Randers/ double,double,match,both,4goals,11.63,4.95,1.41,2.77,3.48,2.38,Home 2-handicap,,under,Randers/ double / double / 4goals,Randers,Home
-2026-09-20,12:00,Djurgarden,Elfsborg,Sweden,Allsvenskan,Djurgården/ handicap,double,match,both,4goals,1.9,4.29,4.13,1.54,4.02,5.93,Home,,over,Djurgården/ handicap / double / 4goals,Djurgården only,Home
-2026-09-20,12:00,Halmstad,AIK,Sweden,Allsvenskan,AIK/ double,double,match,both,4goals,18.87,7.19,1.24,3.32,3.62,2.07,Home 2-handicap,,under,AIK/ double / double,AIK,Home
-2026-09-20,12:00,Kalmar,Hacken,Sweden,Allsvenskan,Kalmar/ handicap,,match,both,4goals,4.18,4.15,1.92,2.78,3.43,2.42,Home 2-handicap,under,over,Kalmar/ handicap / double,Häcken,Home
-2026-09-20,12:00,Vaduz,Thun,Switzerland,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.27,11.11,8.2,2.33,3.95,2.58,Away,,over,,,Away
-2026-09-20,12:00,Ararat,Syunik,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,5.75,2.75,2.16,1.85,3.47,3.55,Home 2-handicap,,over,,,Home
-2026-09-20,12:00,Bangkok Utd,Pathum United,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.95,3.3,3.3,1.95,3.3,3.3,,,,,,
-2026-09-20,12:30,Valerenga,Fredrikstad,Norway,Eliteserien,Vålerenga/ handicap,under,not match,one,5,2.53,4.57,2.59,1.95,3.73,3.5,Home,under,under confirmed,,,Away handicap
-2026-09-20,12:30,Karpaty Lviv,Veres-Rivne,Ukraine,Premier League,"Karpaty Lviv, handicap/ double",,match,both,2goals,3.07,1.96,6.06,1.35,4.17,7.25,Home 2-handicap,,under,,,Home
-2026-09-20,12:30,Hartberg,LASK,Austria,Bundesliga,LASK/ wins,double,match,both,4goals,58.82,20.0,1.07,9.5,5.43,1.29,Home 2-handicap,,over,LASK/ wins / double,LASK,Away handicap
-2026-09-20,12:30,Ried,Wolfsberger AC,Austria,Bundesliga,Ried / low/ handicap,,match,both,4goals,3.68,2.15,3.82,1.9,3.8,3.6,Away,,over,,4goals / same,Home handicap
-2026-09-20,12:30,AZ Alkmaar,Telstar,Netherlands,Eredivisie,AZ/ wins,double,match,both,5,1.62,3.3,12.5,1.22,6.58,11.5,Away,,over,AZ/ wins / double / 5goals,AZ,Home handicap
-2026-09-20,12:30,Twente,PSV,Netherlands,Eredivisie,PSV/ handicap,,match,one,5,1.69,3.62,7.69,2.89,3.93,2.15,Away 2-handicap,,over,,,Home handicap
-2026-09-20,13:00,Sigma Olomouc,Sparta Prague Czech,Republic,Czech Liga,Sigma Olomouc/ handicap,double,match,both,4goals,1.51,6.06,5.78,3.15,3.47,2.09,Away,,under confirmed,Sigma Olomouc/ handicap / double,Sigma Olomouc / same,Away
-2026-09-20,13:00,Tukums 2000,Grobina,Latvia,Virsliga,Tukums/ handicap,double,match,both,4goals,1.42,5.43,8.93,2.29,3.25,2.65,Away 2-handicap,,under confirmed,Tukums/ handicap / double,Tukums only,Away
-2026-09-20,13:00,FA Siauliai,Kauno Zalgiris,Lithuania,A Lyga,Kauno Žalgiris/ wins,double,match,both,3goals,41.67,12.99,1.11,8.17,5.6,1.22,Home 2-handicap,,under confirmed,Kauno Žalgiris/ wins / double,Kauno Žalgiris,Away handicap
-2026-09-20,13:00,Helsingborg,Norrby,Sweden,Superettan,Helsingborg/ handicap,,not match,one,4goals,2.2,3.69,3.64,2.02,3.45,3.07,Home,,under,,,Home
-2026-09-20,13:30,Bayer Leverkusen,RB Leipzig,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.01,200.0,3.25,1.94,4.17,3.25,,,over,,,Away handicap
-2026-09-20,14:00,Gremio,Palmeiras,Brazil,Serie A,handicap /H/ double,,match,both,4goals,7.04,5.15,1.51,4.2,3.6,1.85,Home 2-handicap,,under confirmed,handicap /H/ double / double / 4goals,Palmeiras / 4goals,Away handicap
-2026-09-20,14:00,Ponte Preta,CRB,Brazil,Serie B,CRB/ double,double,match,both,3goals,7.52,5.26,1.48,10.0,5.78,1.34,Away,,,CRB/ double / double,CRB,
-2026-09-20,14:00,Otrant,Jezero,Montenegro,First League,Otrant-Olympic/ handicap,double,not match,both,2goals,1.74,3.53,7.09,1.8,3.25,4.0,Away 2-handicap,,under,Otrant-Olympic / low/ handicap / double / 2goals,Otrant-Olympic / 2goals or less / same,Home handicap
-2026-09-20,14:00,Dynamo Brest,Dnepr Mogilev,Belarus,Vysshaya Liga,Dinamo Brest/ double,double,match,both,3goals,1.44,5.32,8.47,1.43,4.4,7.21,Home,,over,Dinamo Brest/ double / double / 3goals,Dinamo Brest / 3goals,Away handicap
-2026-09-20,14:00,Real Sireti,Milsami,Moldova,Super Liga,handicap /H/ handicap,,not match,both,4goals,3.97,2.6,2.75,5.0,3.7,1.55,Away 2-handicap,,under,Milsami/ handicap / double / 4goals,Milsami / 4goals / same,Home handicap
-2026-09-20,14:00,Shirak Gyumri,Ararat-Armenia,Armenia,Premier League,handicap /H/ handicap,,match,one,4goals,6.25,6.76,1.45,5.83,4.03,1.43,Away,,under confirmed,,,Away
-2026-09-20,14:00,Asteras Tripolis B,Kalamaria,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.91,3.2,4.2,1.91,3.2,4.2,,,over,,,
-2026-09-20,14:00,Olympiacos Piraeus B,Marko,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,5.0,3.3,1.75,5.0,3.3,1.75,,,,,,
-2026-09-20,14:30,Estrela,Academico Viseu,Portugal,Primeira Liga,handicap /Aw/ handicap,,match,both,4goals,2.51,4.76,2.56,2.17,3.32,3.33,Home,under,under confirmed,handicap /Aw/ handicap / double,Estrela,Home/ under 4goals
-2026-09-20,14:30,Vitoria Guimaraes,Moreirense,Portugal,Primeira Liga,Vitória Guimarães / low/ handicap,,match,one,4goals,2.91,1.77,10.99,1.52,3.87,6.83,Away,,under,,,Home handicap
-2026-09-20,14:30,Degerfors,Hammarby,Sweden,Allsvenskan,Hammarby/ double,double,match,both,4goals,5.29,4.18,1.75,7.83,5.4,1.33,Away,,under,Hammarby/ double / double,Hammarby,Home handicap
-2026-09-20,14:30,Mjallby,GAIS,Sweden,Allsvenskan,Mjällby/ handicap,,not match,both,4goals,3.72,3.55,2.23,2.63,3.53,2.47,Home 2-handicap,under,under,GAIS/ handicap / double / 4goals,GAIS only,Home 2-handicap/ under 4goals
-2026-09-20,14:30,Basel,St. Gallen,Switzerland,Super League,handicap /Aw/ handicap,,not match,both,5,2.47,4.22,2.79,2.42,3.9,2.52,Home,,under,Basel/ handicap / double,Basel / same,Home
-2026-09-20,14:30,Lausanne,Lugano,Switzerland,Super League,Lugano/ wins,double,match,both,5,11.9,7.04,1.29,3.93,3.73,1.84,Home 2-handicap,,under confirmed,Lugano/ wins / double / 5goals,Lugano,Away handicap
-2026-09-20,15:00,Rijeka,Hajduk Split,Croatia,HNL,Rijeka/ double,,match,both,5,6.49,7.04,1.42,2.01,3.22,3.2,Home,,under confirmed,Rijeka/ double / double / 5goals,Hajduk Split / 5 goals,Away handicap
-2026-09-20,15:00,Tromso,HamKam,Norway,Eliteserien,Tromsø/ double,double,match,both,5,1.5,4.67,8.26,1.48,4.5,5.92,Home,,under,Tromsø/ double / double,Tromsø / same,Home
-2026-09-20,15:00,Viking,Lillestrom,Norway,Eliteserien,Viking/ double,double,match,both,5,1.66,4.88,5.21,1.39,4.83,6.58,Home,,over,Viking/ double / double,Viking / same,Home
-2026-09-20,15:00,Sandefjord,Start,Norway,Eliteserien,handicap /H/ handicap,,match,one,5,3.15,2.99,2.87,1.99,3.62,3.47,Home 2-handicap,,over,,,Home
-2026-09-20,15:00,Skalica,Podbrezova,Slovakia,1. Liga,Skalica/ handicap,,match,both,5,2.57,5.92,2.27,3.28,3.47,2.04,Away,under,under confirmed,Skalica/ handicap / double / 5goals,Podbrezová / 5 goals,Away
-2026-09-20,15:00,Shakhtar Donetsk,LNZ Cherkasy,Ukraine,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.23,5.29,5.07,1.56,3.63,5.07,,,under,,,Home handicap
-2026-09-20,15:00,Haugesund,Strommen,Norway,1st Division,Haugesund/ wins,double,match,both,5,1.4,6.58,7.52,1.3,5.47,7.58,Home 2-handicap,under,over,Haugesund/ wins / double,Haugesund,Away handicap
-2026-09-20,15:00,Lyn,Ranheim,Norway,1st Division,handicap /H/ handicap,,not match,one,5,3.47,5.68,1.87,1.63,4.42,4.05,Home,,over,,,Away handicap
-2026-09-20,15:00,Odd,Egersund,Norway,1st Division,Odd/ handicap,double,match,both,5,1.87,4.41,4.2,1.79,4.0,3.65,Home,,over,Odd/ handicap / double,Odd / same,Home
-2026-09-20,15:00,Raufoss,Stromsgodset,Norway,1st Division,Strømsgodset/ wins,double,match,both,5,9.52,6.9,1.33,7.33,5.73,1.29,Away,,under,Strømsgodset/ wins / double,Strømsgodset,Home handicap
-2026-09-20,15:00,Sandnes,Moss,Norway,1st Division,handicap /H/ handicap,,match,one,5,2.91,4.67,2.26,2.16,3.65,2.96,Home,under,under confirmed,,,Away handicap
-2026-09-20,15:00,Salzburg,Sturm Graz,Austria,Bundesliga,Salzburg/ double,double,match,both,4goals,1.35,6.45,9.52,1.63,4.25,4.45,Away 2-handicap,,over,Salzburg/ double / double / 4goals,Salzburg,Home handicap
-2026-09-20,15:30,Jagiellonia,Legia,Poland,Ekstraklasa,"Legia Warszawa, handicap/ double",,match,both,4goals,6.1,3.45,1.83,2.88,3.4,2.26,Home 2-handicap,,under,"Legia Warszawa, handicap/ double / double / 4goals",Legia Warszawa / 4goals / same,Home
-2026-09-20,15:30,Schalke,Elversberg,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.99,3.7,3.47,1.99,3.7,3.47,,,,,,
-2026-09-20,16:00,Hibernians,Floriana,Malta,Premier League,Floriana/ handicap,double,not match,both,3goals,10.1,5.65,1.38,3.65,3.53,1.8,Home 2-handicap,,over,Floriana/ handicap / double,Floriana / same,Away handicap
-2026-09-20,16:00,Flora,Parnu JK Vaprus,Estonia,Meistriliiga,Flora/ double,double,match,both,5goals,1.46,5.78,7.04,1.49,5.1,5.89,Away 2-handicap,under,under,Flora/ double / double,Flora,Home handicap
-2026-09-20,16:00,Viborg,Nordsjaelland,Denmark,Superliga,Viborg/ handicap,under,not match,one,4goals,1.68,4.2,5.99,2.79,3.67,2.26,Away,under,,,,
-2026-09-20,16:00,Dinamo Batumi,Torpedo Kutaisi,Georgia,Erovnuli Liga,Dinamo Batumi/ handicap,under,not match,one,3goals,2.94,4.12,2.4,2.07,3.55,3.35,Home,under,under confirmed,,,Home/ under 3goals
-2026-09-20,16:30,Villarreal,Levante,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.81,2.23,6.21,1.54,4.88,6.21,,,,,,
-2026-09-20,17:00,Santa Clara,Braga,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.2,9.26,16.67,3.59,3.1,2.1,Away,,,,,
-2026-09-20,17:00,Estoril,Casa Pia,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,4.59,1.28,4.64,1.7,3.65,4.64,,,,,,
-2026-09-20,17:00,Crvena zvezda,Radnicki Nis,Serbia,Super Liga,Crvena zvezda/ wins,double,match,both,3goals,1.54,3.51,14.93,,,,,,,Crvena zvezda/ wins / double / 3goals,Crvena zvezda,
-2026-09-20,17:00,Bokelj,Mladost DG,Montenegro,First League,Bokelj/ handicap,,not match,one,2goals,1.42,4.42,13.89,,,,,,,,,
-2026-09-20,17:15,Brann,Bodo/Glimt,Norway,Eliteserien,handicap /H/ double,,match,both,5,10.75,7.3,1.3,4.39,4.47,1.61,Home 2-handicap,,,handicap /H/ double / double,Bodø / Glimt,
-2026-09-20,17:30,Levski Sofia,Ludogorets,Bulgaria,First League,Levski Sofia/ double,double,match,both,4goals,1.35,5.13,15.38,,,,,,,Levski Sofia/ double / double / 4goals,Levski Sofia / 4goals,
-2026-09-20,17:30,Dinamo Bucuresti,Farul Constanta,Romania,Liga I,Dinamo Bucureşti/ handicap,double,match,both,3goals,2.39,4.39,2.83,,,,,,,Dinamo Bucureşti/ handicap / double,Dinamo Bucureşti only,
-2026-09-20,17:30,Paderborn,Hoffenheim,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,4.62,4.57,1.76,4.62,4.57,1.76,,,over,,,Home handicap
-2026-09-20,18:15,Lech Poznan,Radomiak Radom,Poland,Ekstraklasa,Lech Poznań/ double,double,not match,both,4goals,1.13,9.17,125.0,1.29,5.52,7.86,Away 2-handicap,,,"Lech Poznań, handicap/ double / double / 4goals",Lech Poznań / 4goals / same,
-2026-09-20,19:00,Corinthians,Fluminense,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,3.57,3.45,2.33,2.2,3.2,3.8,Home,,,Fluminense/ handicap / double / 4goals,Fluminense / 4goals / same,
-2026-09-20,19:00,Vitoria,Cruzeiro,Brazil,Serie A,Vitória/ handicap,under,not match,one,4goals,2.02,3.58,4.42,2.91,3.23,2.38,Away 2-handicap,under,,,,
-2026-09-20,19:00,Valencia,Real Sociedad,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,2.82,3.49,2.67,2.82,3.49,2.67,,,,,,
-2026-09-20,19:30,FC Porto,Benfica,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.67,3.31,2.49,2.67,3.31,2.49,,,,,,
-2026-09-20,20:30,Chapelton,Molynes,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-20,20:30,Montego Bay,Tru-Juice,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-20,20:30,Mount Pleasant,Racing United,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-20,20:30,Treasure Beach,Tivoli,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-20,21:00,Alianza FC,Municipal Limeno El,Salvador,Primera Division,Alianza/ double,double,match,both,4goals,1.45,5.38,8.06,,,,,,,Alianza/ double / double,Alianza,
-2026-09-20,21:00,Platense Municipal,Aguila El,Salvador,Primera Division,#N/A,,#N/A,one,4goals,1.74,3.5,7.25,,,,,,,,,
-2026-09-20,21:00,Indy Eleven,Oakland Roots,USA,USL Championship,Indy Eleven/ handicap,,match,one,4goals,1.79,4.39,4.67,,,,,,,,,
-2026-09-20,21:30,Flamengo RJ,Bragantino,Brazil,Serie A,Flamengo/ double,double,match,both,4goals,1.92,3.52,5.1,1.39,5.26,9.0,Home,,,Flamengo/ double / double / 4goals,Flamengo,
-2026-09-20,21:30,Londrina,Fortaleza,Brazil,Serie B,Londrina/ handicap,under,not match,one,3goals,2.78,2.99,3.27,3.0,3.2,2.62,Away 2-handicap,under,,,,
-2026-09-20,23:00,Sacramento Republic,San Antonio,USA,USL Championship,Sacramento Republic/ handicap,double,match,both,4goals,2.0,3.82,4.22,,,,,,,Sacramento Republic/ handicap / double / 4goals,Sacramento Republic / 4goals / same,
-2026-09-19,09:00,Avispa Fukuoka,Sanfrecce Hiroshima,Japan,J1 League,"Sanfrecce Hiroshima, handicap/ double",,match,both,5goals,4.05,4.55,1.88,38.0,6.62,1.11,Away,,,"Sanfrecce Hiroshima, handicap/ double / double",Sanfrecce Hiroshima,
-2026-09-19,09:00,Kawasaki Frontale,Kashima Antlers,Japan,J1 League,Kawasaki Frontale/ handicap,double,match,both,5goals,1.51,7.94,4.69,2.55,2.69,3.12,Away,,,Kawasaki Frontale/ handicap / double / 5goals,Kawasaki Frontale / 5goals / same,
-2026-09-19,09:30,Urawa Reds,Verdy,Japan,J1 League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.04,12.75,38.5,1.04,12.75,38.5,,,,,,
-2026-09-19,09:30,V-Varen Nagasaki,Cerezo Osaka,Japan,J1 League,V-Varen Nagasaki/ handicap,under,not match,one,5goals,1.11,12.99,43.48,1.57,3.55,6.0,Away 2-handicap,,,,,
-2026-09-19,10:00,Okayama,Kyoto,Japan,J1 League,Fagiano Okayama/ double,double,match,both,5goals,1.73,3.57,7.14,3.0,3.4,2.3,Away,,,Fagiano Okayama/ double / double / 5goals,Fagiano Okayama / 5goals,
-2026-09-19,10:00,FC Tokyo,Nagoya Grampus,Japan,J1 League,Tokyo/ wins,double,match,both,5goals,1.26,6.67,18.18,1.63,3.6,5.12,Away 2-handicap,,,Tokyo/ wins / double,Tokyo,
-2026-09-19,10:00,Anyang,Ulsan HD South,Korea,K League 1,Ulsan HD/ handicap,double,match,both,3goals,4.72,4.35,1.79,3.73,3.38,1.92,Home 2-handicap,,under,Ulsan HD/ handicap / double,Ulsan HD,Home
-2026-09-19,10:00,Seoul E-Land,Daegu South,Korea,K League 2,Seoul E-Land/ handicap,double,match,both,4goals,2.52,4.78,2.54,2.6,3.4,2.6,,,under confirmed,Seoul E-Land/ handicap / double,Seoul E-Land / same,Away handicap
-2026-09-19,11:00,Isloch,Neman,Belarus,Vysshaya Liga,Isloch/ handicap,double,match,both,3goals,1.9,3.26,5.95,2.18,3.2,3.6,Away 2-handicap,under,under,Isloch/ handicap / double / 3goals,Isloch only,Home handicap
-2026-09-19,11:00,Dunav Ruse,Botev Vratsa,Bulgaria,First League,handicap /H/ handicap,,not match,one,4goals,5.75,4.18,1.71,3.2,3.27,2.26,Home 2-handicap,,over,,,Away handicap
-2026-09-19,11:00,Nordic United,Landskrona,Sweden,Superettan,Landskrona/ handicap,double,not match,both,4goals,4.0,4.61,1.88,2.41,3.2,2.62,Home 2-handicap,,under confirmed,Landskrona/ handicap / double / 4goals,Landskrona / same,Away handicap
-2026-09-19,11:00,Oster,Norrkoping,Sweden,Superettan,Norrköping/ double,double,match,both,4goals,7.3,3.72,1.68,4.03,3.82,1.65,Away,,over,Norrköping/ double / double / 4goals,Norrköping / 4goals,Home handicap
-2026-09-19,11:00,Rasisalai Utd,Lamphun Warrior,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.75,3.2,2.27,2.75,3.2,2.27,,,over,,,
-2026-09-19,11:00,Shaanxi Union,Suzhou Dongwu,China,League One,Shaanxi Union/ handicap,double,match,both,4goals,1.54,4.44,7.94,1.65,3.75,4.32,Away 2-handicap,,under,Shaanxi Union/ handicap / double / 4goals,Shaanxi Union only,Home handicap
-2026-09-19,11:00,Shenzhen Juniors,Changchun Yatai,China,League One,Shenzhen Juniors/ handicap,double,match,both,4goals,1.77,4.46,4.74,1.5,3.9,5.25,Home 2-handicap,under,over,Shenzhen Juniors/ handicap / double,Shenzhen Juniors only,Away handicap
-2026-09-19,11:15,Banga,Dziugas Telsiai,Lithuania,A Lyga,handicap /H/ handicap,,match,one,3goals,2.87,3.83,2.56,1.86,3.28,3.53,Home,under,over,,,Home
-2026-09-19,11:30,Pattani,Prachuap,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,3.25,3.1,2.1,3.25,3.1,2.1,,,over,,,
-2026-09-19,11:30,Young Lions,Geylang,Singapore,S.League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,5.17,4.25,1.45,5.17,4.25,1.45,,,over,,,
-2026-09-19,11:30,Nanjing City,Wuxi Wugou,China,League One,handicap /H/ handicap,,match,both,4goals,3.88,3.85,2.08,2.23,3.1,2.95,Home 2-handicap,under,over,handicap /H/ handicap / double / 4goals,Wuxi Wugou / 4goals,Away handicap
-2026-09-19,11:30,Meizhou Hakka,Shijiazhuang Gongfu,China,League One,Shijiazhuang Gongfu/ handicap,double,match,both,4goals,4.15,4.12,1.94,3.57,3.3,1.89,Away,,under confirmed,Shijiazhuang Gongfu/ handicap / double / 4goals,Shijiazhuang Gongfu,Away
-2026-09-19,12:00,Osasuna,Rayo Vallecano,Spain,LaLiga,handicap /H/ handicap,,not match,both,5goals,3.28,2.59,3.25,2.52,3.33,2.82,Away,,under,Rayo Vallecano/ handicap / double / 5goals,Rayo Vallecano only,Home handicap
-2026-09-19,12:00,Alashkert,Pyunik Yerevan,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.15,7.69,,,,,,,,,,
-2026-09-19,12:00,TPS,Ilves,Finland,Veikkausliiga,TPS/ handicap,,match,one,3goals,1.65,5.18,4.98,2.63,3.55,2.41,Away,under,,,,
-2026-09-19,12:00,Chiangrai Utd,Sisaket United,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.07,14.49,4.22,1.76,3.15,4.22,,,under confirmed,,,Away handicap
-2026-09-19,12:30,FK Zorya Luhansk,Dyn. Kyiv,Ukraine,Premier League,"Dynamo Kyiv, handicap/ double",,match,both,2goals,6.62,6.33,1.45,,,,,,,,Dynamo Kyiv only,
-2026-09-19,13:00,Artis Brno,Liberec Czech,Republic,Czech Liga,Slovan Liberec/ wins,double,match,both,4goals,500.0,90.91,1.01,4.88,3.73,1.63,Home 2-handicap,,under confirmed,Slovan Liberec/ wins / double / 4goals,Slovan Liberec,Away handicap
-2026-09-19,13:00,FK Pardubice,Bohemians Czech,Republic,Czech Liga,"Bohemians 1905, handicap/ double",,not match,both,4goals,7.09,4.67,1.55,2.0,3.5,3.4,Home,,under,Bohemians 1905/ double / double / 4goals,Bohemians 1905 / same,Home
-2026-09-19,13:00,Elva,FC Tallinn,Estonia,Esiliiga,Elva/ handicap,double,match,both,5,1.74,4.2,5.32,1.56,4.27,4.1,Home,,over,Elva/ handicap / double,Elva only,Home
-2026-09-19,13:00,Politehnica UTM,Petrocub,Moldova,Super Liga,Politehnica UTM/ handicap,under,not match,one,4goals,2.49,2.85,4.02,4.0,3.8,1.67,Away,,over,,,Home handicap
-2026-09-19,13:00,Oddevold,Varnamo,Sweden,Superettan,Oddevold/ handicap,double,match,both,4goals,1.69,5.15,4.63,2.14,3.32,2.93,Away 2-handicap,,under confirmed,Oddevold/ handicap / double,Oddevold,Away
-2026-09-19,13:00,Varberg,Brage,Sweden,Superettan,Varberg/ handicap,double,not match,both,4goals,1.81,4.33,4.63,1.6,3.88,4.42,Away,,under,Varberg/ handicap / double,Varberg only,Home handicap
-2026-09-19,13:00,Jelgava,Riga FC,Latvia,Virsliga,Riga/ wins,double,match,both,4goals,52.63,19.61,1.08,6.83,4.75,1.32,Home 2-handicap,,over,Riga/ wins / double,Riga,Away handicap
-2026-09-19,13:00,Karditsa,Panionios,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,3.8,3.0,2.1,3.8,3.0,2.1,,,over,,,
-2026-09-19,13:00,Zakynthos,Ellas Syrou,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.5,3.2,2.8,2.5,3.2,2.8,,,,,,
-2026-09-19,13:30,Eintracht Frankfurt,Freiburg,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,2.47,3.73,2.55,2.47,3.73,2.55,,,under,,,Home handicap
-2026-09-19,13:30,Werder Bremen,Augsburg,Germany,Bundesliga,handicap /H/ double,,match,both,5,5.56,6.41,1.51,2.3,3.77,2.75,Home,under,over,handicap /H/ double / double,Augsburg / same,Away handicap
-2026-09-19,13:30,Septemvri Sofia,Botev Plovdiv,Bulgaria,First League,handicap /H/ handicap,,not match,both,4goals,4.39,4.81,1.77,4.03,3.43,1.92,Home,under,under confirmed,Botev Plovdiv/ handicap / double / 4goals,Botev Plovdiv only,Away handicap
-2026-09-19,14:00,Slavia Mozyr,Naftan,Belarus,Vysshaya Liga,Slavia/ double,double,match,both,3goals,1.43,6.49,6.9,1.35,5.4,8.45,Home,,under confirmed,Slavia/ double / double / 3goals,Slavia / 3goals,Away handicap
-2026-09-19,14:00,Bangor FC,Portadown Northern,Ireland,Premiership,Portadown/ handicap,,match,one,3goals,3.14,4.61,2.15,2.7,3.3,2.25,Home 2-handicap,,under confirmed,,,Away handicap
-2026-09-19,14:00,Carrick Rangers,Larne Northern,Ireland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,4.2,3.7,1.67,4.2,3.7,1.67,,,under,,,Home handicap
-2026-09-19,14:00,Cliftonville,Glentoran Northern,Ireland,Premiership,handicap /Aw/ handicap,,match,one,3goals,1.69,4.88,4.95,3.1,3.4,2.0,Away,under,under confirmed,,,Away/ under 3goals
-2026-09-19,14:00,Dungannon,Ballymena Northern,Ireland,Premiership,Ballymena United/ handicap,under,not match,one,3goals,2.74,4.42,2.44,2.05,3.4,3.0,Home 2-handicap,under,under confirmed,,,Away handicap
-2026-09-19,14:00,Linfield,Crusaders Northern,Ireland,Premiership,Linfield/ handicap,double,match,both,3goals,1.48,5.29,7.3,1.25,5.0,8.5,Home,under,under,Linfield/ handicap / double / 3goals,Linfield only,Home/ under 3goals
-2026-09-19,14:00,Dundee FC,Motherwell,Scotland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.82,4.52,4.37,2.89,3.43,2.29,Away,under,under confirmed,,,Away/ under 4goals
-2026-09-19,14:00,Hibernian,Aberdeen,Scotland,Premiership,Aberdeen/ handicap,,match,one,4goals,4.74,5.21,1.68,1.73,3.78,4.37,Home,,under confirmed,,,Away handicap
-2026-09-19,14:00,St Johnstone,Falkirk,Scotland,Premiership,St. Johnstone/ handicap,,match,one,4goals,1.28,7.69,11.36,2.08,3.35,3.38,Away 2-handicap,,under confirmed,,,Away
-2026-09-19,14:00,St. Mirren,Dundee Utd,Scotland,Premiership,St. Mirren / low/ handicap,,not match,one,4goals,4.31,3.27,2.16,2.28,3.57,2.85,Home 2-handicap,under,over,,,Home
-2026-09-19,14:00,Kristiansund,Rosenborg,Norway,Eliteserien,Kristiansund/ handicap,under,not match,one,5,2.77,3.51,2.82,5.53,4.47,1.51,Away,,over,,,Home handicap
-2026-09-19,14:00,Gagra,Meshakhte Tkibuli,Georgia,Erovnuli Liga,Gagra/ handicap,double,match,both,3goals,2.48,3.33,3.38,1.8,3.4,3.8,Home 2-handicap,under,under,Gagra/ handicap / double / 3goals,Gagra / 3goals,Home 2-handicap/ under 3goals
-2026-09-19,14:00,Vikingur,07 Vestur Sorvagur Faroe,Islands,Premier League,Víkingur/ double,double,match,both,4goals,2.0,3.07,5.78,1.3,5.0,6.5,Home 2-handicap,,over,Víkingur/ double / double / 4goals,Víkingur,Home
-2026-09-19,14:00,Asane,Bryne,Norway,1st Division,#N/A,,#N/A,both,5,2.78,3.73,2.69,3.8,3.7,1.82,Away,,under,,,Home handicap
-2026-09-19,14:00,VPS,KuPS,Finland,Veikkausliiga,handicap /H/ handicap,,match,both,3goals,6.02,4.35,1.66,3.36,3.33,2.08,Home 2-handicap,,,handicap /H/ handicap / double / 3goals,KuPS / 3goals,
-2026-09-19,14:30,Gil Vicente,Maritimo,Portugal,Primeira Liga,Gil Vicente / low/ handicap,,match,one,4goals,1.7,3.29,9.26,1.99,3.3,3.85,Away 2-handicap,,under,,,Home handicap
-2026-09-19,14:30,Nacional,Famalicao,Portugal,Primeira Liga,Famalicão / low/ handicap,,match,one,4goals,2.14,4.41,3.27,3.72,3.38,2.03,Away,,under confirmed,,,Away
-2026-09-19,14:30,Den Haag,Cambuur,Netherlands,Eredivisie,handicap /Aw/ handicap,,match,one,5,1.68,6.06,4.18,1.93,3.78,3.6,Away,,over,,,Away
-2026-09-19,14:30,HB Torshavn,AB Argir Faroe,Islands,Premier League,HB/ double,double,match,both,4goals,1.59,4.27,7.19,1.35,4.7,6.0,Home,,over,HB/ double / double / 4goals,HB / 4goals / same,Home
-2026-09-19,15:00,Olympique Akbou,USM Alger,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.45,2.75,2.87,2.45,2.75,2.87,,,over,,,
-2026-09-19,15:00,Ben Aknoun,El Biar,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.07,14.93,,,,,,,,,,
-2026-09-19,15:00,Constantine,Biskra,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.01,125.0,2.88,2.27,3.15,2.88,,,over,,,Away handicap
-2026-09-19,15:00,Kabylie,ASO Chlef,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.07,16.13,,,,,,,,,,
-2026-09-19,15:00,CR Belouizdad,Khenchela,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-19,15:00,MC Alger,Temouchent,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.01,166.67,,,,,,,,,,
-2026-09-19,15:00,Rouisset,USM Alger,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.45,2.75,2.87,2.45,2.75,2.87,,,over,,,
-2026-09-19,15:00,Saoura,Olympique Akbou,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-19,15:00,Varazdin,Osijek,Croatia,HNL,Varaždin/ handicap,,match,one,5,1.81,3.51,6.13,1.88,3.32,3.4,Away 2-handicap,,under,,,Home handicap
-2026-09-19,15:00,Novi Pazar,Zemun,Serbia,Super Liga,Novi Pazar/ double,double,match,both,3goals,1.41,4.83,11.76,1.35,4.5,7.42,Home,,under,Novi Pazar/ double / double / 3goals,Novi Pazar / 3goals,Home
-2026-09-19,15:00,Vojvodina,IMT Novi Beograd,Serbia,Super Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.46,3.0,3.85,1.64,3.85,4.42,Home 2-handicap,,over,,,Home
-2026-09-19,15:00,Sandviken,Orebro,Sweden,Superettan,Sandviken/ handicap,double,match,both,4goals,1.88,4.76,3.88,2.15,3.48,2.79,Away 2-handicap,,under confirmed,Sandviken/ handicap / double / 4goals,Sandviken only,Away
-2026-09-19,15:00,Epitsentr,Livyi Bereg,Ukraine,Premier League,Epitsentr/ handicap,double,match,both,2goals,4.41,1.62,6.37,,,,,,,Epitsentr/ handicap / double / 2goals,Epitsentr / 2goals or less,
-2026-09-19,15:00,BKMA,Sardarapat,Armenia,Premier League,Sardarapat / low/ handicap,,match,one,4goals,9.62,4.41,1.5,2.5,3.2,2.45,Home 2-handicap,,under,,,Home
-2026-09-19,15:30,GKS Katowice,Cracovia,Poland,Ekstraklasa,GKS Katowice/ handicap,,not match,one,4goals,1.07,18.87,100.0,2.19,3.42,3.0,Away,,under confirmed,,,Away
-2026-09-19,15:30,Orgryte,Sirius,Sweden,Allsvenskan,Sirius/ wins,double,match,both,4goals,16.67,11.36,1.17,5.83,4.63,1.46,Home 2-handicap,,over,Sirius/ wins / double,Sirius,Away handicap
-2026-09-19,15:45,Ghaz Al Shamal,Newroz,Iraq,Iraqi League,"Newroz, handicap/ double",,match,both,3goals,100.0,7.75,1.16,3.2,3.0,2.15,Home 2-handicap,,over,"Newroz, handicap/ double / double / 3goals",Newroz / 3goals,Home
-2026-09-19,15:45,Al Quwa Al Jawiya,Diyala,Iraq,Iraqi League,handicap /H/ handicap,,match,one,3goals,3.94,3.38,2.23,1.72,3.35,4.35,Home,,under,,,Home
-2026-09-19,16:00,Slovacko,Ostrava Czech,Republic,Czech Liga,Slovácko/ handicap,,match,one,4goals,2.32,2.6,5.41,2.4,3.33,2.73,Away 2-handicap,under,under,,,Away 2-handicap/ under 4goals
-2026-09-19,16:00,Molde,Aalesund,Norway,Eliteserien,Molde/ double,double,match,both,5,1.52,5.38,6.49,1.35,5.67,6.83,Home 2-handicap,under,over,Molde/ double / double,Molde,Home
-2026-09-19,16:00,Luzern,Grasshoppers,Switzerland,Super League,Luzern/ handicap,,not match,one,5,2.13,4.12,3.46,1.65,4.3,4.35,Home,,,,,
-2026-09-19,16:00,Young Boys,Servette,Switzerland,Super League,Young Boys/ double,double,match,both,5,1.99,5.15,3.3,1.55,4.6,4.93,Home,,under confirmed,Young Boys/ double / double,Young Boys,Away handicap
-2026-09-19,16:00,Sion,Zurich,Switzerland,Super League,Sion/ double,double,match,both,5,1.19,10.75,15.15,1.44,4.92,5.97,Away 2-handicap,,over,Sion/ double / double,Sion,Away
-2026-09-19,16:00,Zimbru Chisinau,Dacia Buiucani,Moldova,Super Liga,Zimbru/ handicap,,match,one,4goals,3.14,3.72,2.42,1.3,4.5,7.5,Home,,under,,,Home
-2026-09-19,16:00,Samgurali,Dinamo Tbilisi,Georgia,Erovnuli Liga,"Dinamo Tbilisi, handicap/ handicap",,match,both,3goals,5.68,4.61,1.65,3.4,3.5,1.9,Home 2-handicap,,over,"Dinamo Tbilisi, handicap/ handicap / double",Dinamo Tbilisi only,Away handicap
-2026-09-19,16:00,Shabab Al Ordon,Al Hussein,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,8.4,4.5,1.38,8.4,4.5,1.38,,,,,,
-2026-09-19,16:30,Celta Vigo,Racing Santander,Spain,LaLiga,Racing de Santander / low/ handicap,,not match,both,5goals,4.05,3.51,2.14,,,,,,,,5goals / same,
-2026-09-19,16:30,Stuttgart,Dortmund,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.34,9.01,6.94,2.52,4.27,2.78,Away,under,over,,,Away
-2026-09-19,16:45,Sparta Rotterdam,Heerenveen,Netherlands,Eredivisie,Heerenveen/ handicap,,not match,both,5,1.77,5.15,4.17,2.39,3.73,2.63,Away 2-handicap,under,,Sparta Rotterdam/ handicap / double / 5goals,Sparta Rotterdam / 5 goals / same,
-2026-09-19,16:45,Kilmarnock,Hearts,Scotland,Premiership,Hearts/ wins,double,match,both,4goals,142.86,40.0,1.03,4.47,3.95,1.68,Home 2-handicap,,,Hearts/ wins / double,Hearts,
-2026-09-19,17:00,Alverca,Rio Ave,Portugal,Primeira Liga,Alverca/ double,double,not match,both,4goals,1.77,4.02,5.35,1.88,3.46,3.91,Away 2-handicap,,,Alverca/ double / double,Alverca / same,
-2026-09-19,17:00,Din. Minsk,BATE,Belarus,Vysshaya Liga,Minsk/ handicap,double,match,both,3goals,1.83,3.07,7.75,1.48,4.25,6.67,Away,,under,Minsk/ handicap / double / 3goals,Minsk only,Home handicap
-2026-09-19,17:00,Radnik,Partizan,Serbia,Super Liga,handicap /H/ handicap,,match,one,3goals,3.62,4.5,1.99,,,,,,,,,
-2026-09-19,17:00,Coleraine,Limavady Northern,Ireland,Premiership,Coleraine/ wins,double,match,both,3goals,1.15,11.11,23.81,,,,,,,Coleraine/ wins / double,Coleraine,
-2026-09-19,17:00,Arsenal Tivat,Sutjeska,Montenegro,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,12.5,1.09,,,,,,,,,,
-2026-09-19,17:30,Grazer AK,Austria Vienna,Austria,Bundesliga,Grazer AK/ handicap,,match,one,4goals,1.72,3.56,7.35,2.62,3.23,2.54,Away 2-handicap,under,,,,
-2026-09-19,18:00,Ajax,Excelsior,Netherlands,Eredivisie,Excelsior/ handicap,under,not match,one,5,4.93,5.13,1.66,1.21,6.84,10.57,Home,,,,,
-2026-09-19,18:00,Al-Karma,Zakho,Iraq,Iraqi League,Al-Karma/ double,double,match,both,3goals,1.13,11.63,35.71,,,,,,,Al-Karma/ double / double / 3goals,Al-Karma / 3goals,
-2026-09-19,18:00,ES Setif,Constantine,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-19,18:00,Vardar,Shkendija Haracine North,Macedonia,First League,Vardar Skopje/ handicap,,match,both,4goals,8.47,4.78,1.49,,,,,,,Vardar Skopje/ handicap / double,Shkendija,
-2026-09-19,18:00,Istra 1961,Gorica,Croatia,HNL,Istra 1961/ wins,double,match,both,5,1.34,5.99,11.9,,,,,,,Istra 1961/ wins / double,Istra 1961 / same,
-2026-09-19,18:00,Meux,RWDM Brussels,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.56,3.14,3.42,,,,,,,,,
-2026-09-19,18:15,Motor Lublin,Gornik Zabrze,Poland,Ekstraklasa,Górnik Zabrze/ double,double,not match,both,4goals,62.5,14.49,1.09,3.15,3.49,2.09,Home 2-handicap,,,,,
-2026-09-19,18:30,Al Shorta,Al Kahraba,Iraq,Iraqi League,Al Shorta/ handicap,double,match,both,3goals,2.31,2.18,9.17,,,,,,,Al Shorta/ handicap / double / 3goals,Al Shorta only,
-2026-09-19,18:30,Komarno,Slovan Bratislava,Slovakia,1. Liga,Slovan Bratislava/ wins,double,match,both,5,40.0,6.58,1.22,,,,,,,Slovan Bratislava/ wins / double / 5goals,Slovan Bratislava / 5 goals,
-2026-09-19,18:30,Gzira,Mosta,Malta,Premier League,Gzira United/ handicap,,match,one,3goals,1.1,15.38,40.0,,,,,,,,,
-2026-09-19,19:00,Willem II,Sittard,Netherlands,Eredivisie,Fortuna Sittard/ double,double,match,both,5,6.62,6.67,1.43,2.53,3.63,2.6,Home,under,under confirmed,Fortuna Sittard/ double / double,Fortuna Sittard / same,Away handicap
-2026-09-19,19:00,Sevilla,Barcelona,Spain,LaLiga,Barcelona/ handicap,double,match,both,5goals,125.0,38.46,1.04,9.83,6.5,1.25,Home 2-handicap,,over,Barcelona/ handicap / double,Barcelona only,Away handicap
-2026-09-19,19:30,Sport Recife,Juventude,Brazil,Serie B,Sport Recife/ handicap,under,not match,one,3goals,2.79,3.19,3.03,2.48,3.03,2.97,Away,,under,,,Home handicap
-2026-09-19,19:30,Sporting CP,Arouca,Portugal,Primeira Liga,Sporting CP/ handicap,,match,one,4goals,1.53,3.55,15.15,1.18,7.33,13.0,Away,,over,,,Home handicap
-2026-09-19,20:00,Mirassol,Botafogo RJ,Brazil,Serie A,Mirassol/ handicap,,not match,both,4goals,3.66,4.61,1.96,2.05,3.57,3.48,Home,,under confirmed,Botafogo/ handicap / double,Botafogo / same,Away handicap
-2026-09-19,21:00,Cacahuatique,FAS El,Salvador,Primera Division,FAS/ double,double,match,both,4goals,10.53,6.21,1.34,3.7,3.7,1.7,Home 2-handicap,,,FAS/ double / double,FAS,
-2026-09-19,21:30,Remo,Santos,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,3.51,4.48,2.03,2.83,3.22,2.52,Home,under,under confirmed,Santos/ handicap / double,Santos / same,Away handicap
-2026-09-19,21:30,Athletic Club,Botafogo SP,Brazil,Serie B,Athletic Club MG/ handicap,double,match,both,3goals,2.63,2.66,4.1,2.23,3.1,3.4,Home,,over,Athletic Club MG/ handicap / double / 3goals,Athletic Club MG / 3goals / same,Home
-2026-09-19,21:30,Guayaquil City,Leones del Norte,Ecuador,Liga Pro,Leones del Norte / low/ handicap,,not match,one,3goals,2.94,3.06,3.0,2.25,3.1,3.1,Home 2-handicap,under,under,,,Home
-2026-09-19,23:00,Charleston,Monterey Bay,USA,USL Championship,Charleston Battery/ double,double,match,both,4goals,1.09,16.67,40.0,1.4,4.2,6.0,Away 2-handicap,,over,Charleston Battery/ double / double,Charleston Battery / same,Away
-2026-09-19,23:00,Detroit,Pittsburgh,USA,USL Championship,Detroit City/ handicap,double,match,both,4goals,2.15,2.75,5.88,2.1,3.0,3.4,Home,,over,Detroit City/ handicap / double / 4goals,Detroit City / 4goals / same,Home
-2026-09-19,23:00,Lexington,Orange County SC,USA,USL Championship,handicap /H/ handicap,,not match,one,4goals,3.6,4.24,2.06,1.53,3.8,5.0,Home,,over,,,Away handicap
-2026-09-19,23:00,Louisville City,Loudoun,USA,USL Championship,Louisville City/ handicap,double,match,both,4goals,2.02,3.56,4.48,1.4,4.33,6.0,Home,,over,Louisville City/ handicap / double / 4goals,Louisville City only,Home
-2026-09-19,23:00,Brooklyn,FC Tulsa,USA,USL Championship,"FC Tulsa, handicap/ double",,match,both,4goals,4.44,3.39,2.08,2.45,3.5,2.38,Home 2-handicap,under,under,"FC Tulsa, handicap/ double / double / 4goals",FC Tulsa / 4goals,Home
-2026-09-19,23:30,Rhode Island,Miami FC,USA,USL Championship,Rhode Island/ double,double,match,both,4goals,1.48,4.5,9.9,1.38,4.33,6.25,Home,,over,Rhode Island/ double / double / 4goals,Rhode Island / 4goals,Home
-2026-09-19,23:30,Tampa Bay,Birmingham,USA,USL Championship,Tampa Bay Rowdies/ handicap,double,match,both,4goals,2.06,5.56,2.99,1.36,4.75,6.25,Home,,over,Tampa Bay Rowdies/ handicap / double / 4goals,Tampa Bay Rowdies only,Away handicap
-2026-09-19,23:30,Vasco,Coritiba,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,5.0,4.59,1.72,1.47,4.2,7.67,Home,,under confirmed,Coritiba/ handicap / double,Coritiba / same,Away handicap
-2026-09-19,00:30,Aucas,Macara,Ecuador,Liga Pro,Macará / low/ handicap,,match,one,3goals,3.69,3.92,2.11,2.6,2.25,3.85,Home,,,,,
-2026-09-19,07:30,Bucheon FC 1995,Gimcheon Sangmu South,Korea,K League 1,handicap /Aw/ handicap,,not match,both,3goals,2.82,3.37,2.87,2.98,3.18,2.19,Away 2-handicap,under,under,Bucheon 1995/ handicap / double / 3goals,Bucheon 1995 / 3goals / same,Home handicap
-2026-09-19,07:30,Jeonnam,Suwon FC South,Korea,K League 2,"Suwon, handicap/ double",,match,both,4goals,3.62,4.26,2.04,3.6,3.5,1.8,Home,,over,"Suwon, handicap/ double / double",Suwon,Away handicap
-2026-09-19,19:00,Manta,Orense,Ecuador,Liga Pro,"Orense, handicap/ handicap",,not match,both,3goals,5.18,2.81,2.22,,,,,,,Orense/ handicap / double / 3goals,Orense only,
-2026-09-18,10:00,Yanbian Longding,Guangdong,GZ,Power China - League One,handicap /H/ handicap,,match,both,4goals,4.26,3.82,1.99,3.65,3.47,1.83,Away,,under,handicap /H/ handicap / double / 4goals,Guangdong GZ-Power only,Home handicap
-2026-09-18,11:00,Dalian K'un City,Ningbo Professional,China,League One,Dalian K'un City FC/ handicap,,not match,both,4goals,3.19,3.45,2.52,1.9,3.5,3.4,Home 2-handicap,under,under,Ningbo Professional/ handicap / double / 4goals,Ningbo Professional / 4goals / same,Home 2-handicap/ under 4goals
-2026-09-18,11:30,Nantong Zhiyun,Guangxi Hengchen,China,League One,Nantong Zhiyun/ handicap,,match,one,4goals,1.97,3.82,4.33,1.95,3.2,3.6,Home,,under,,,Home
-2026-09-18,11:35,Zhejiang Professional,Wuhan Three Towns,China,Super League,Zhejiang/ handicap,double,match,both,5goals,2.44,5.03,2.56,1.97,4.03,3.27,Home,under,under confirmed,Zhejiang/ handicap / double,Zhejiang / same,Away handicap
-2026-09-18,12:00,Ayutthaya Utd,Uthai Thani,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,3.41,5.92,1.86,2.4,2.98,2.7,Home,,over,,,Away handicap
-2026-09-18,12:30,Polissya Zhytomyr,Kryvbas,Ukraine,Premier League,Polissya/ handicap,,match,one,2goals,2.92,4.76,2.24,,,,,,,,,
-2026-09-18,13:30,Belshina,FC Minsk,Belarus,Vysshaya Liga,"Minsk, handicap/ handicap",,match,both,3goals,2.84,3.73,2.63,4.24,3.5,1.87,Away,,over,"Minsk, handicap/ handicap / double",Minsk only,Away
-2026-09-18,14:00,FC Gandzasar,Urartu,Armenia,Premier League,Gandzasar/ double,,match,both,4goals,7.35,5.29,1.48,3.5,3.7,1.8,Home 2-handicap,,under confirmed,Gandzasar/ double / double,Urartu,Away handicap
-2026-09-18,14:00,Kyzylzhar,Kaisar Kyzylorda,Kazakhstan,Premier League,Kyzyl-Zhar/ handicap,under,not match,one,3goals,2.44,3.91,2.99,2.06,3.15,3.15,Home 2-handicap,under,under confirmed,,,Away handicap
-2026-09-18,14:00,Shkendija,Bashkimi North,Macedonia,First League,Shkendija/ wins,double,match,both,4goals,1.18,9.9,18.52,1.04,13.0,34.0,Home,,under confirmed,Shkendija/ wins / double,Shkendija,Away handicap
-2026-09-18,14:00,Sileks,Tikves North,Macedonia,First League,handicap /H/ double,,match,both,4goals,16.39,10.53,1.18,,,,,,,handicap /H/ double / double,Tikvesh / same,
-2026-09-18,15:00,Khenchela,Ben Aknoun,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.03,3.02,3.42,2.03,3.02,3.42,,,over,,,
-2026-09-18,15:00,UTA Arad,Sepsi Sf. Gheorghe,Romania,Liga I,UTA Arad/ handicap,,match,one,3goals,2.12,3.09,4.88,,,,,,,,,
-2026-09-18,15:00,Al Arabi Irbid,Al Jazeera Amman,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,3.37,3.22,1.96,3.37,3.22,1.96,,,over,,,
-2026-09-18,15:00,Lahti,Jaro,Finland,Veikkausliiga,Lahti/ double,double,match,both,3goals,1.22,7.52,21.28,1.53,3.97,5.43,Away 2-handicap,,over,Lahti/ double / double / 3goals,Lahti / 3goals / same,Home handicap
-2026-09-18,15:00,SJK,Mariehamn,Finland,Veikkausliiga,SJK/ handicap,double,match,both,3goals,1.61,4.95,5.68,1.72,3.65,4.17,Away 2-handicap,,under confirmed,SJK/ handicap / double / 3goals,SJK only,Away
-2026-09-18,15:00,Aktobe,Ulytau,Kazakhstan,Premier League,Aktobe/ handicap,,match,one,3goals,1.65,3.82,7.52,1.49,3.98,5.07,Home,,under,,,Home
-2026-09-18,15:45,Karbala,Erbil,Iraq,Iraqi League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,4.73,3.52,1.6,4.73,3.52,1.6,,,under,,,Home handicap
-2026-09-18,15:45,Al Mosul,Al Naft,Iraq,Iraqi League,Al Mosul/ handicap,under,not match,one,3goals,2.34,3.48,3.51,2.33,2.95,2.92,Home,,over,,,Home
-2026-09-18,16:00,Zabbar,Birkirkara,Malta,Premier League,Birkirkara/ handicap,double,match,both,3goals,6.58,3.77,1.72,,,,,,,Birkirkara/ handicap / double / 3goals,Birkirkara only,
-2026-09-18,16:00,Harju JK Laagri,Kuressaare,Estonia,Meistriliiga,Laagri/ handicap,double,match,both,5goals,2.44,3.92,2.98,1.96,3.62,3.12,Home 2-handicap,under,under,Laagri/ handicap / double,Laagri / same,Home
-2026-09-18,16:00,Noah,Van,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.01,76.92,,,,,,,,,,
-2026-09-18,16:00,AC Oulu,Inter Turku,Finland,Veikkausliiga,Inter Turku / low/ handicap,,match,both,3goals,6.33,3.62,1.77,4.12,3.35,1.79,Home 2-handicap,,under,Inter Turku / low/ handicap / double / 3goals,Inter Turku / 3goals,Home
-2026-09-18,16:00,Gnistan,HJK,Finland,Veikkausliiga,Gnistan/ handicap,under,not match,one,3goals,5.49,5.78,1.55,3.73,3.77,1.8,Home 2-handicap,,under confirmed,,,Away handicap
-2026-09-18,17:00,Sarpsborg 08,KFUM Oslo,Norway,Eliteserien,Sarpsborg 08/ handicap,double,match,both,5,2.19,3.58,3.77,1.6,4.13,4.93,Home,,over,Sarpsborg 08/ handicap / double / 5goals,Sarpsborg 08 / 5 goals / same,Home
-2026-09-18,17:00,Falkenberg,Ostersund,Sweden,Superettan,Falkenberg/ handicap,,match,one,4goals,2.67,3.48,2.95,2.24,3.28,2.79,Away,,under,,,Home handicap
-2026-09-18,17:00,Buducnost,Petrovac,Montenegro,First League,Budućnost / low/ handicap,,match,one,2goals,5.65,1.69,4.33,2.1,3.1,3.1,Away,,over,,,Home handicap
-2026-09-18,17:00,Slavia Sofia,CSKA 1948 Sofia,Bulgaria,First League,CSKA 1948 Sofia / low/ handicap,,not match,one,4goals,5.88,2.79,2.12,4.47,3.47,1.81,Away,,under,,,Home handicap
-2026-09-18,17:30,Al Wehdat,Al Ramtha,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.46,3.78,6.03,1.46,3.78,6.03,,,,,,
-2026-09-18,18:00,MC Alger,Rouisset,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.06,17.54,10.0,1.3,4.08,10.0,,,under confirmed,,,Away handicap
-2026-09-18,18:00,Al Minaa,Duhok,Iraq,Iraqi League,Al Minaa Basra/ handicap,,not match,both,3goals,2.94,4.15,2.39,2.87,2.98,2.33,Home,,over,Duhok/ handicap / double / 3goals,Duhok / same,Away handicap
-2026-09-18,18:00,Al Talaba,Al Golan,Iraq,Iraqi League,"Al Golan, handicap/ handicap",,match,one,3goals,18.18,8.62,1.21,1.74,3.22,4.34,Home,,over,,,Away handicap
-2026-09-18,18:00,Groningen,Zwolle,Netherlands,Eredivisie,handicap /Aw/ double,,not match,both,5,1.6,5.35,5.32,1.59,4.32,4.93,Home,,over,Groningen/ double / double,Groningen / same,Away handicap
-2026-09-18,18:30,Hamrun,Marsaxlokk,Malta,Premier League,Hamrun Spartans/ double,double,not match,both,3goals,1.82,2.88,9.62,,,,,,,"Hamrun Spartans, handicap/ double / double / 3goals",Hamrun Spartans / 3goals / same,
-2026-09-18,18:30,Bayern Munich,Union Berlin,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.0,14.33,24.0,1.05,14.33,24.0,,,over,,,Away handicap
-2026-09-18,18:45,Derry City,Galway,Ireland,Premier Division,Derry City/ handicap,double,match,both,4goals,2.31,4.13,3.08,1.75,3.57,4.17,Home,under,over,Derry City/ handicap / double,Derry City,Away handicap
-2026-09-18,18:45,Dundalk,Shelbourne,Ireland,Premier Division,Dundalk/ handicap,,match,one,4goals,3.39,3.77,2.27,2.22,3.42,2.9,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
-2026-09-18,18:45,Athlone,Kerry,Ireland,First Division,Athlone Town/ handicap,,not match,both,4goals,3.25,3.41,2.51,2.21,3.33,2.88,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
-2026-09-18,18:45,Finn Harps,Longford,Ireland,First Division,handicap /H/ double,,not match,both,4goals,8.26,5.26,1.45,3.78,3.53,1.8,Home 2-handicap,,over,Longford Town/ double / double,Longford Town / same,Away handicap
-2026-09-18,18:45,Wexford,Cobh Ramblers,Ireland,First Division,Wexford/ handicap,,not match,both,4goals,3.11,4.12,2.29,2.2,3.4,2.9,Home 2-handicap,under,under confirmed,Cobh Ramblers/ handicap / double / 4goals,Cobh Ramblers / same,Away handicap
-2026-09-18,19:00,Bohemians,Drogheda,Ireland,Premier Division,Bohemians/ handicap,double,match,both,4goals,1.9,4.55,3.94,1.46,4.15,6.25,Home,,under confirmed,Bohemians/ handicap / double,Bohemians only,Away handicap
-2026-09-18,19:00,Shamrock Rovers,Waterford,Ireland,Premier Division,Shamrock Rovers/ handicap,double,match,both,4goals,1.41,5.88,8.26,1.48,4.17,5.63,Away 2-handicap,,under confirmed,Shamrock Rovers/ handicap / double / 4goals,Shamrock Rovers only,Away
-2026-09-18,19:00,Espanyol,Elche,Spain,LaLiga,Espanyol/ double,double,not match,both,5goals,2.06,3.98,3.79,1.82,3.5,4.58,Home,under,over,Espanyol/ double / double,Espanyol / same,Home
-2026-09-18,21:00,Central Cordoba,Defensa y Justicia,Argentina,Liga Profesional Argentina,"Defensa y Justicia, handicap/ double",,not match,both,2goals,9.09,2.57,2.0,2.83,2.88,2.78,Home 2-handicap,under,over,,,Home
-2026-09-18,21:00,Platense,UPNFM,Honduras,Liga Nacional,Platense/ handicap,under,not match,one,3goals,1.82,3.34,6.58,2.25,3.3,2.7,Away 2-handicap,,under,,,Home handicap
-2026-09-18,23:30,New York City,New York Red Bulls,USA,MLS,New York City/ handicap,double,match,both,5,2.16,4.5,3.18,1.77,4.0,4.03,Home,under,over,New York City/ handicap / double,New York City,Away handicap
-2026-09-18,23:30,Ceara,Novorizontino,Brazil,Serie B,handicap /H/ double,,not match,both,3goals,10.87,5.95,1.35,2.9,3.22,2.45,Home,,under confirmed,Novorizontino/ double / double,Novorizontino / same,Away handicap
-2026-09-17,00:30,Birmingham,New Mexico,USA,USL Championship,New Mexico United / low/ handicap,,match,both,4goals,5.41,3.11,2.03,8.0,4.75,1.33,Away,,,New Mexico United / low/ handicap / double / 4goals,New Mexico United / same,
-2026-09-17,01:00,Luis Angel Firpo,Alianza FC El,Salvador,Primera Division,Alianza / low/ handicap,,match,both,4goals,3.83,3.18,2.35,,,,,,,,,
-2026-09-17,13:00,Vakhsh,Regar-TadAZ,Tajikistan,Higher League,Regar-TadAZ/ double,double,not match,both,3goals,7.14,3.53,1.73,,,,,,,Regar-TadAZ/ double / double / 3goals,Regar-TadAZ / 3goals / same,
-2026-09-17,13:15,Orenburg,Krasnodar,Russia,Premier League,Krasnodar/ double,double,not match,both,4goals,8.33,6.21,1.39,4.53,3.85,1.75,Home 2-handicap,,,,,
-2026-09-17,14:00,FC Astana,Kairat Almaty,Kazakhstan,Premier League,Astana/ handicap,,not match,both,3goals,3.45,3.91,2.2,2.77,3.25,2.19,Away,,under,Kairat/ handicap / double,Kairat only,Home handicap
-2026-09-17,14:00,Tobol,Yelimay Semey,Kazakhstan,Premier League,Tobol Kostanay/ handicap,,match,one,3goals,2.84,4.57,2.33,2.01,3.37,3.05,Home,under,under confirmed,,,Away handicap
-2026-09-17,15:00,Atyrau,Ordabasy,Kazakhstan,Premier League,Ordabasy/ double,double,match,both,3goals,22.73,8.26,1.2,5.2,3.82,1.5,Home 2-handicap,,under confirmed,Ordabasy/ double / double / 3goals,Ordabasy,Away handicap
-2026-09-17,15:30,Akron Togliatti,Akhmat Grozny,Russia,Premier League,"Akhmat Grozny, handicap/ handicap",,match,both,4goals,7.58,3.01,1.87,3.12,3.37,2.28,Home 2-handicap,under,,"Akhmat Grozny, handicap/ handicap / double / 4goals",Akhmat Grozny only,
-2026-09-17,15:45,Al Karkh,Naft Missan,Iraq,Iraqi League,"Naft, handicap/ double",,match,both,3goals,4.88,4.03,1.83,2.34,2.92,2.88,Home,under,under confirmed,"Naft, handicap/ double / double / 3goals",Naft / 3goals,Away handicap
-2026-09-17,16:00,Levadia,Tammeka,Estonia,Meistriliiga,FCI Levadia/ wins,double,match,both,5goals,1.26,7.41,14.49,1.17,6.92,11.17,Home,,over,FCI Levadia/ wins / double,FCI Levadia,Home
-2026-09-17,16:00,Iberia 1999,Dila Gori,Georgia,Erovnuli Liga,Iberia 1999/ handicap,,match,one,3goals,2.51,3.05,3.65,2.08,3.33,2.98,Home,,under,,,Home
-2026-09-17,16:00,Viimsi JK,Tartu Welco,Estonia,Esiliiga,handicap /H/ handicap,,match,one,5,3.64,4.39,2.01,1.83,4.33,2.88,Home 2-handicap,under,over,,,Home
-2026-09-17,16:00,Doqarah,Al Salt,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.65,3.02,2.43,2.65,3.02,2.43,,,,,,
-2026-09-17,17:00,Betis,Getafe,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.49,3.04,5.27,1.65,3.85,5.27,,,under,,,Home handicap
-2026-09-17,17:00,Biskra,CR Belouizdad,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,4.03,2.85,1.91,4.03,2.85,1.91,,,,,,
-2026-09-17,18:00,Zeleznicar Pancevo,Crvena zvezda,Serbia,Super Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,7.5,4.5,1.4,7.5,4.5,1.4,,,over,,,Home handicap
-2026-09-17,18:00,Al Zawraa,Al Gharraf,Iraq,Iraqi League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.08,14.08,5.37,1.55,3.55,5.37,,,over,,,Away handicap
-2026-09-17,19:00,Temouchent,Kabylie,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.88,3.03,2.32,2.88,3.03,2.32,,,,,,
-2026-09-17,19:30,Malaga,Villarreal,Spain,LaLiga,Villarreal / low/ handicap,,not match,both,4goals,3.8,2.23,3.46,3.68,3.68,1.94,Home,,over,,,Home
-2026-09-17,15:00,Iberia 1999,Dila Gori,Georgia,Erovnuli Liga,Iberia 1999/ handicap,,match,one,3goals,2.51,3.05,3.65,2.01,3.27,3.18,Away,,under,,,Home handicap
-2026-09-16,13:00,Barkchi Hisor,Sardor Tursunzoda,Tajikistan,Higher League,Barkchi Hisar/ handicap,double,match,both,3goals,2.36,5.05,2.64,,,,,,,Barkchi Hisar/ handicap / double,Barkchi Hisar,
-2026-09-16,15:45,Zalgiris,Kauno Zalgiris,Lithuania,A Lyga,"Kauno Žalgiris, handicap/ double",,not match,both,3goals,6.06,4.83,1.59,,,,,,,Kauno Žalgiris/ double / double / 3goals,Kauno Žalgiris / same,
-2026-09-16,16:00,Auda,Ogre United,Latvia,Virsliga,Auda/ wins,double,match,both,4goals,1.23,8.47,15.15,1.38,5.8,8.6,Away 2-handicap,,under confirmed,Auda/ wins / double,Auda,Away
-2026-09-16,16:00,Paide,Parnu JK Vaprus,Estonia,Meistriliiga,Paide/ handicap,double,match,both,5goals,1.81,4.03,5.03,1.53,4.8,6.2,Home,,over,Paide/ handicap / double,Paide only,Home
-2026-09-16,16:00,Azam,Simba,Tanzania,Ligi Kuu Bara,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,6.9,4.44,1.59,,,,,,,,,
-2026-09-16,17:00,AIK,Mjallby,Sweden,Allsvenskan,handicap /H/ handicap,,not match,one,4goals,5.88,5.75,1.53,2.3,3.46,2.87,Home,under,,,,
-2026-09-16,17:45,Baltika,Zenit,Russia,Premier League,Zenit/ handicap,,not match,one,4goals,17.24,5.62,1.31,4.35,3.44,1.89,Home 2-handicap,,,,,
-2026-09-16,17:45,Lokomotiv Moscow,Krylya Sovetov,Russia,Premier League,Krylya Sovetov / low/ handicap,,not match,one,4goals,9.62,2.4,2.09,1.88,3.86,4.06,Home,,,,,
-2026-09-16,19:30,Barcelona,Racing Santander,Spain,LaLiga,Barcelona/ wins,double,match,both,5goals,1.12,14.29,27.78,,,,,,,Barcelona/ wins / double,Barcelona,
-2026-09-16,21:00,Coquimbo,Huachipato,Chile,Liga de Primera,Coquimbo Unido/ handicap,double,match,both,4goals,2.11,3.26,4.59,,,,,,,Coquimbo Unido/ handicap / double / 4goals,Coquimbo Unido / 4goals,
-2026-09-16,22:00,Hartford Athletic,Sporting Jax,USA,USL Championship,Hartford Athletic/ handicap,double,match,both,4goals,2.66,3.56,2.92,1.45,4.99,6.38,Home,,over,Hartford Athletic/ handicap / double / 4goals,Hartford Athletic / 4goals,Home
-2026-09-16,22:30,Botafogo RJ,Gremio,Brazil,Serie A,Botafogo/ handicap,,match,one,4goals,1.83,3.6,5.71,1.69,3.8,4.61,Home,,,,,
-2026-09-16,23:15,Once Caldas,Deportes Tolima,Colombia,Primera A,Once Caldas/ handicap,,not match,both,2goals,3.02,4.85,2.16,2.24,3.35,3.65,Home,,over,Deportes Tolima/ handicap / double,Deportes Tolima / same,Away handicap
-2026-09-16,00:00,CRB,Sport Recife,Brazil,Serie B,CRB/ handicap,,not match,both,3goals,3.01,3.64,2.54,1.93,3.7,4.25,Home,,,Sport Recife/ handicap / double,Sport Recife / same,
-2026-09-16,01:00,Puebla,Toluca,Mexico,Liga MX,"Toluca, handicap/ double",,not match,both,4goals,9.9,4.29,1.5,5.43,3.9,1.57,Home 2-handicap,,,Toluca/ double / double / 4goals,Toluca / 4goals / same,
-2026-09-16,11:30,Eskhata,Istaravshan,Tajikistan,Higher League,handicap /H/ handicap,,match,one,3goals,2.84,4.83,2.27,,,,,,,,,
-2026-09-15,16:00,Super Nova,Riga FC,Latvia,Virsliga,Riga/ double,double,match,both,4goals,47.62,21.74,1.07,8.5,5.5,1.25,Home 2-handicap,,over,Riga/ double / double / 4goals,Riga / 4goals,Away handicap
-2026-09-15,16:00,Young Africans,Geita Gold,Tanzania,Ligi Kuu Bara,Young Africans/ wins,double,match,both,3goals,1.25,5.68,40.0,,,,,,,Young Africans/ wins / double / 3goals,Young Africans / same,
-2026-09-15,17:00,Rayo Vallecano,Espanyol,Spain,LaLiga,Rayo Vallecano/ double,,not match,both,4goals,4.18,4.57,1.85,2.41,3.5,3.19,Home,,,Espanyol/ double / double,Espanyol / same,
-2026-09-15,17:00,Brage,Sandviken,Sweden,Superettan,Sandviken/ handicap,double,match,both,4goals,4.08,4.95,1.81,2.9,3.7,2.84,Home,,under confirmed,Sandviken/ handicap / double,Sandviken,Away handicap
-2026-09-15,17:00,Landskrona,Sundsvall,Sweden,Superettan,Landskrona/ wins,double,match,both,4goals,1.55,3.85,10.87,1.42,5.25,8.8,Home,,over,Landskrona/ wins / double / 4goals,Landskrona,Home
-2026-09-15,17:00,Varnamo,Oster,Sweden,Superettan,Värnamo/ handicap,under,match,one,4goals,2.61,4.02,2.72,1.81,3.9,3.83,Home,,,,,
-2026-09-15,17:00,Jezero,Bokelj,Montenegro,First League,"Bokelj, handicap/ handicap",,match,one,2goals,1.81,2.7,12.99,,,,,,,,,
-2026-09-15,18:00,Alaves,Valencia,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.02,83.33,250.0,,,,,,,,,
-2026-09-15,18:00,Ajax,Willem II,Netherlands,Eredivisie,handicap /Aw/ wins,,not match,both,5,1.32,6.94,10.0,1.09,10.35,20.14,Home,,,Ajax/ wins / double,Ajax / same,
-2026-09-15,18:30,Korona Kielce,Gornik Zabrze,Poland,Ekstraklasa,"Górnik Zabrze, handicap/ handicap",,not match,one,4goals,14.93,5.08,1.36,2.64,3.21,2.56,Home,,,,,
-2026-09-15,18:45,Falkirk,Hearts,Scotland,Premiership,Hearts/ wins,double,match,both,4goals,16.13,7.35,1.25,3.58,3.53,1.95,Home 2-handicap,,,Hearts/ wins / double / 4goals,Hearts / 4goals,
-2026-09-15,18:45,Hibernian,Kilmarnock,Scotland,Premiership,Kilmarnock/ handicap,under,not match,one,4goals,4.18,5.18,1.76,1.39,4.81,6.94,Home,,,,,
-2026-09-15,18:45,Motherwell,Aberdeen,Scotland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.06,17.54,4.07,1.8,3.65,4.07,,,,,,
-2026-09-15,19:30,Elche,Real Madrid,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,14.0,8.0,1.24,14.0,8.0,1.24,,,,,,
-2026-09-15,21:00,San Luis,Antofagasta,Chile,Primera B,San Luis FC/ handicap,,not match,both,4goals,3.03,4.48,2.24,,,,,,,Deportes Antofagasta/ handicap / double / 4goals,Deportes Antofagasta / same,
-2026-09-15,22:30,Londrina,Ponte Preta,Brazil,Serie B,Londrina/ double,double,match,both,3goals,1.65,4.65,5.56,1.35,5.6,11.0,Home,,under confirmed,Londrina/ double / double,Londrina / same,Away handicap
-2026-09-15,23:00,Indy Eleven,Brooklyn,USA,USL Championship,Indy Eleven/ handicap,,match,one,4goals,1.25,7.81,13.89,1.62,4.62,4.57,Away 2-handicap,,under confirmed,,,Away
-2026-09-14,01:00,San Diego FC,Philadelphia Union,USA,MLS,San Diego/ handicap,under,not match,one,5,1.83,5.75,3.56,2.88,3.81,2.18,Away,under,,,,
-2026-09-14,12:00,Meshakhte Tkibuli,Rustavi,Georgia,Erovnuli Liga,Rustavi/ double,double,match,both,3goals,11.36,4.24,1.48,5.6,3.8,1.73,Home 2-handicap,,under,Rustavi/ double / double / 3goals,Rustavi / 3goals,Home
-2026-09-14,13:00,Panionios,Kalamaria,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.0,333.33,14.1,1.35,5.0,14.1,,,over,,,Away handicap
-2026-09-14,15:00,Torpedo Kutaisi,Samgurali,Georgia,Erovnuli Liga,Torpedo Kutaisi/ handicap,double,match,both,3goals,1.62,5.62,4.85,2.0,3.6,3.75,Away,,under confirmed,Torpedo Kutaisi/ handicap / double,Torpedo Kutaisi / same,Away
-2026-09-14,15:00,Inter Turku,VPS,Finland,Veikkausliiga,Inter Turku/ handicap,double,not match,both,3goals,3.31,2.35,3.66,1.7,3.59,4.82,Home 2-handicap,,,VPS/ handicap / double / 3goals,Inter Turku / same,
-2026-09-14,17:00,Norrby,Varberg,Sweden,Superettan,Varberg/ handicap,double,match,both,4goals,3.46,4.63,2.02,2.84,3.48,2.3,Home 2-handicap,under,,Varberg/ handicap / double / 4goals,Varberg / 4goals,
-2026-09-14,17:00,Orebro,Nordic United,Sweden,Superettan,Örebro/ handicap,,not match,both,4goals,4.88,3.3,2.03,2.28,3.49,2.88,Home 2-handicap,under,,Nordic United/ handicap / double / 4goals,Nordic United / same,
-2026-09-14,17:00,Bodo/Glimt,Sandefjord,Norway,Eliteserien,Bodø / Glimt/ wins,double,match,both,5,1.25,6.76,18.87,1.15,7.92,13.04,Home,,,Bodø / Glimt/ wins / double / 5goals,Bodø / Glimt,
-2026-09-14,17:00,Djurgarden,GAIS,Sweden,Allsvenskan,Djurgården/ handicap,,match,one,4goals,1.48,5.56,6.85,1.53,4.17,5.63,Away 2-handicap,,,,,
-2026-09-14,17:00,Sirius,Degerfors,Sweden,Allsvenskan,Sirius/ double,double,match,both,4goals,1.59,5.0,5.88,1.41,4.54,6.84,Home,under,,Sirius/ double / double,Sirius,
-2026-09-14,17:00,Dinamo Tbilisi,Gagra,Georgia,Erovnuli Liga,Dinamo Tbilisi/ handicap,double,match,both,3goals,2.23,3.48,3.8,,,,,,,Dinamo Tbilisi/ handicap / double / 3goals,Dinamo Tbilisi only,
-2026-09-14,17:05,Ostersund,Helsingborg,Sweden,Superettan,Östersund/ handicap,double,match,both,4goals,1.72,4.76,4.78,1.87,3.5,3.95,Away 2-handicap,,,Östersund/ handicap / double,Östersund only,
-2026-09-14,18:45,Shelbourne,Drogheda,Ireland,Premier Division,Shelbourne/ handicap,,match,one,4goals,3.04,4.39,2.26,1.75,3.56,4.28,Home,,,,,
-2026-09-14,18:45,Waterford,Derry City,Ireland,Premier Division,Waterford/ handicap,under,not match,one,4goals,2.65,3.46,3.01,2.69,3.47,2.37,Away 2-handicap,under,,,,
-2026-09-14,18:45,Sligo Rovers,Galway,Ireland,Premier Division,"Galway United, handicap/ handicap",,match,both,4goals,4.42,3.97,1.92,3.1,3.42,2.15,Home 2-handicap,,,"Galway United, handicap/ handicap / double / 4goals",Galway United only,
-2026-09-14,22:30,Botafogo SP,Goias,Brazil,Serie B,Botafogo SP/ handicap,double,match,both,3goals,2.23,4.18,3.19,2.27,2.92,3.4,,,,Botafogo SP/ handicap / double / 3goals,Botafogo SP,
-2026-09-14,23:00,Bahia,Remo,Brazil,Serie A,Bahia/ handicap,double,match,both,4goals,1.81,4.31,4.65,1.47,4.8,7.7,Home,,,Bahia/ handicap / double,Bahia only,
-2026-09-14,23:30,Union La Calera,Limache,Chile,Liga de Primera,Unión La Calera/ double,,not match,both,4goals,5.81,6.06,1.51,,,,,,,Deportes Limache/ double / double,Deportes Limache / same,
-2026-09-14,23:30,Rangers,Deportes Iquique,Chile,Primera B,"Deportes Iquique, handicap/ double",,not match,both,4goals,7.63,5.24,1.47,,,,,,,Deportes Iquique/ double / double / 4goals,Deportes Iquique / same,
-2026-09-13,00:00,Santos,Cruzeiro,Brazil,Serie A,Santos/ handicap,under,not match,one,4goals,2.78,4.1,2.52,,,,,,,,,
-2026-09-13,00:30,St. Louis City,Minnesota United,USA,MLS,St. Louis City/ handicap,double,match,both,5,2.36,5.18,2.6,,,,,,,St. Louis City/ handicap / double / 5goals,St. Louis City / 5 goals / same,
-2026-09-13,00:30,FC Dallas,Portland Timbers,USA,MLS,Dallas/ handicap,,match,one,5,2.71,4.93,2.33,,,,,,,,,
-2026-09-13,01:20,Alianza,Junior,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,01:30,Real Salt Lake,New York City,USA,MLS,Real Salt Lake/ handicap,,not match,both,5,3.37,3.65,2.33,,,,,,,New York City/ handicap / double / 5goals,New York City / same,
-2026-09-13,02:00,Oakland Roots,Lexington,USA,USL Championship,Lexington / low/ handicap,,not match,one,4goals,5.41,3.97,1.78,,,,,,,,,
-2026-09-13,02:00,Orange County SC,Las Vegas Lights,USA,USL Championship,Orange County SC/ handicap,double,not match,both,4goals,1.92,3.91,4.5,,,,,,,"Orange County SC, handicap/ handicap / double",Orange County SC only,
-2026-09-13,02:00,Phoenix Rising,FC Tulsa,USA,USL Championship,Phoenix Rising/ handicap,,match,both,4goals,3.05,4.18,2.31,,,,,,,Phoenix Rising/ handicap / double / 4goals,FC Tulsa / same,
-2026-09-13,02:00,Sacramento Republic,Detroit,USA,USL Championship,Sacramento Republic/ handicap,under,match,one,4goals,2.02,4.2,3.73,,,,,,,,,
-2026-09-13,02:30,Los Angeles Galaxy,Seattle Sounders,USA,MLS,Los Angeles/ handicap,double,match,both,5,2.32,2.78,4.78,,,,,,,Los Angeles/ handicap / double / 5goals,Los Angeles only,
-2026-09-13,02:30,San Jose Earthquakes,Houston Dynamo,USA,MLS,SJ Earthquakes/ handicap,under,match,one,5,4.12,4.55,1.86,,,,,,,,,
-2026-09-13,07:30,Gimcheon Sangmu,Gangwon South,Korea,K League 1,Gangwon/ handicap,double,match,both,3goals,4.08,3.62,2.09,,,,,,,Gangwon/ handicap / double / 3goals,Gangwon / 3goals,
-2026-09-13,07:30,Gyeongnam,Seongnam South,Korea,K League 2,Gyeongnam/ handicap,,match,one,4goals,2.07,4.15,3.62,,,,,,,,,
-2026-09-13,09:30,Maardu,Tallinna Kalev,Estonia,Esiliiga,Maardu/ handicap,,not match,both,5,2.66,4.2,2.59,,,,,,,Tallinna Kalev/ handicap / double,Tallinna Kalev / same,
-2026-09-13,10:00,Isloch,FC Gomel,Belarus,Vysshaya Liga,Isloch/ handicap,,match,one,3goals,2.12,2.75,5.99,,,,,,,,,
-2026-09-13,10:00,Gwangju FC,Anyang South,Korea,K League 1,Anyang/ double,double,match,both,3goals,6.41,4.93,1.56,,,,,,,Anyang/ double / double,Anyang,
-2026-09-13,10:00,Busan,Gimhae South,Korea,K League 2,Busan IPark/ double,double,match,both,4goals,1.52,4.61,7.87,,,,,,,Busan IPark/ double / double,Busan IPark,
-2026-09-13,10:00,Suwon FC,Cheonan City South,Korea,K League 2,Suwon/ double,double,match,both,4goals,1.39,6.33,8.0,,,,,,,Suwon/ double / double / 4goals,Suwon,
-2026-09-13,11:00,Ertis Pavlodar,Okzhetpes,Kazakhstan,Premier League,handicap /H/ handicap,,not match,both,3goals,5.81,5.32,1.56,,,,,,,Okzhetpes/ handicap / double,Okzhetpes only,
-2026-09-13,11:00,Prachuap,Sukhothai,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,,,,,,,,,,,,
-2026-09-13,11:00,Wuxi Wugou,Nantong Zhiyun,China,League One,Wuxi Wugou/ handicap,under,not match,one,4goals,2.79,3.07,3.18,,,,,,,,,
-2026-09-13,11:30,Paide,Harju JK Laagri,Estonia,Meistriliiga,Paide/ handicap,double,match,both,5goals,2.36,3.61,3.36,,,,,,,Paide/ handicap / double / 5goals,Paide,
-2026-09-13,11:30,Sabah,DPMM,Malaysia,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.25,6.9,17.54,,,,,,,,,
-2026-09-13,11:30,Meizhou Hakka,Nanjing City,China,League One,Meizhou Hakka/ handicap,,match,both,4goals,2.74,3.79,2.7,,,,,,,Meizhou Hakka/ handicap / double / 4goals,Nanjing City / 4goals,
-2026-09-13,11:30,Shijiazhuang Gongfu,Shenzhen Juniors,China,League One,Shenzhen Juniors/ handicap,double,match,both,4goals,5.65,3.62,1.83,,,,,,,Shenzhen Juniors/ handicap / double / 4goals,Shenzhen Juniors only,
-2026-09-13,12:00,Dnepr Mogilev,ML Vitebsk,Belarus,Vysshaya Liga,ML Vitebsk/ wins,double,match,both,3goals,16.95,8.7,1.21,,,,,,,ML Vitebsk/ wins / double / 3goals,ML Vitebsk,
-2026-09-13,12:00,Elfsborg,Kalmar,Sweden,Allsvenskan,Elfsborg/ handicap,double,match,both,4goals,1.56,4.18,8.47,,,,,,,Elfsborg/ handicap / double / 4goals,Elfsborg only,
-2026-09-13,12:00,Hammarby,Brommapojkarna,Sweden,Allsvenskan,Hammarby/ double,double,match,both,4goals,1.12,13.16,29.41,,,,,,,Hammarby/ double / double,Hammarby / same,
-2026-09-13,12:00,Chonburi,Rayong FC,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.99,8.2,1.84,,,,,,,,,
-2026-09-13,12:00,KuPS,HJK,Finland,Veikkausliiga,KuPS/ handicap,,match,one,3goals,4.08,4.83,1.82,,,,,,,,,
-2026-09-13,12:15,Selangor,Kuala Lumpur City,Malaysia,Super League,Selangor/ double,double,match,both,4goals,1.93,5.29,3.41,,,,,,,Selangor/ double / double,Selangor,
-2026-09-13,12:30,Viking,Kristiansund,Norway,Eliteserien,Viking/ wins,double,match,both,5,1.07,22.22,47.62,,,,,,,Viking/ wins / double / 5goals,Viking / 5 goals,
-2026-09-13,13:00,Norrkoping,Oddevold,Sweden,Superettan,Norrköping/ double,double,match,both,4goals,1.62,4.41,6.37,,,,,,,Norrköping/ double / double / 4goals,Norrköping / 4goals,
-2026-09-13,13:00,Niki Volos,Olympiacos Piraeus B,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,13:00,Flenu,Meux,Belgium,First Amateur Division,Meux/ wins,double,match,both,2goals,1000.0,500.0,1.0,,,,,,,Meux/ wins / double,Meux,
-2026-09-13,13:30,RB Leipzig,Hamburger SV,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.02,55.56,,,,,,,,,,
-2026-09-13,14:00,Streymur,B36 Torshavn Faroe,Islands,Premier League,"B36, handicap/ handicap",,match,both,4goals,5.0,4.05,1.81,,,,,,,"B36, handicap/ handicap / double",B36 only,
-2026-09-13,14:00,FA Siauliai,Hegelmann,Lithuania,A Lyga,FA Šiauliai/ handicap,,match,both,3goals,4.07,4.08,1.96,,,,,,,FA Šiauliai/ handicap / double,Hegelmann,
-2026-09-13,14:00,Dila Gori,Dinamo Batumi,Georgia,Erovnuli Liga,Dila/ handicap,under,match,one,3goals,2.66,3.52,2.94,,,,,,,,,
-2026-09-13,14:00,Chrisoupolis,Pyrgos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,14:00,Kuressaare,Tammeka,Estonia,Meistriliiga,handicap /H/ handicap,,not match,both,5goals,4.2,4.31,1.89,,,,,,,Tammeka/ handicap / double / 5goals,Tammeka / same,
-2026-09-13,14:00,Kairat Almaty,Tobol,Kazakhstan,Premier League,Kairat/ wins,double,match,both,3goals,1.26,6.25,20.41,,,,,,,Kairat/ wins / double / 3goals,Kairat / same,
-2026-09-13,14:30,Ellas Syrou,Karditsa,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.44,6.1,2.35,,,,,,,,,
-2026-09-13,14:30,Malmo FF,Orgryte,Sweden,Allsvenskan,Malmö FF/ double,double,match,both,4goals,1.38,6.67,8.13,,,,,,,Malmö FF/ double / double,Malmö FF,
-2026-09-13,15:00,Moquegua,Sporting Cristal,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,15:00,HamKam,Molde,Norway,Eliteserien,HamKam/ handicap,,not match,both,5,3.66,5.18,1.87,4.5,4.1,1.65,Away,under,,Molde/ handicap / double,Molde only,
-2026-09-13,15:00,KFUM Oslo,Aalesund,Norway,Eliteserien,KFUM/ handicap,,not match,both,5,2.87,3.45,2.78,2.5,3.7,2.55,Away,,,,,
-2026-09-13,15:00,Start,Brann,Norway,Eliteserien,Brann/ double,double,match,both,5,17.54,9.9,1.19,3.9,3.9,1.8,Home 2-handicap,,,Brann/ double / double,Brann,
-2026-09-13,15:00,BATE,Naftan,Belarus,Vysshaya Liga,BATE/ handicap,,match,one,3goals,1.75,5.26,4.17,,,,,,,,,
-2026-09-13,15:00,Egersund,Kongsvinger,Norway,1st Division,handicap /H/ double,,match,both,5,6.29,4.83,1.58,,,,,,,handicap /H/ double / double,Kongsvinger,
-2026-09-13,15:00,Moss,Haugesund,Norway,1st Division,Haugesund/ double,double,match,both,5,10.75,9.8,1.24,,,,,,,Haugesund/ double / double,Haugesund,
-2026-09-13,15:00,Raufoss,Odd,Norway,1st Division,handicap /H/ double,,not match,both,5,4.2,4.76,1.81,,,,,,,Odd/ double / double,Odd / same,
-2026-09-13,15:00,Ranheim,Asane,Norway,1st Division,#N/A,,#N/A,one,5,1.39,7.04,7.14,,,,,,,,,
-2026-09-13,15:00,Sogndal,Strommen,Norway,1st Division,Sogndal/ handicap,double,match,both,5,2.44,5.08,2.54,,,,,,,Sogndal/ handicap / double,Sogndal / same,
-2026-09-13,15:00,Stromsgodset,Sandnes,Norway,1st Division,Strømsgodset/ double,double,match,both,5,1.72,4.44,5.18,,,,,,,Strømsgodset/ double / double,Strømsgodset,
-2026-09-13,15:00,Ljungskile,Falkenberg,Sweden,Superettan,Falkenberg/ handicap,double,match,both,4goals,5.43,5.68,1.56,,,,,,,Falkenberg/ handicap / double,Falkenberg,
-2026-09-13,15:00,Panserraikos,Asteras Tripolis B,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,15:30,Magallanes,D. Puerto Montt,Chile,Primera B,Magallanes/ handicap,double,match,both,4goals,2.64,4.02,2.7,1.9,3.5,3.4,Home 2-handicap,under,under confirmed,Magallanes/ handicap / double,Magallanes / same,Home 2-handicap/ under 4goals
-2026-09-13,15:30,Elversberg,Bayern Munich,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,,,,,,,,,,,,
-2026-09-13,15:45,Suduva,Zalgiris,Lithuania,A Lyga,Sūduva/ handicap,double,match,both,3goals,2.29,2.75,5.0,,,,,,,Sūduva/ handicap / double / 3goals,Sūduva / same,
-2026-09-13,16:00,Iberia 1999,Spaeri,Georgia,Erovnuli Liga,Iberia 1999/ handicap,double,match,both,3goals,2.0,3.42,4.83,1.61,3.8,4.5,Away,,under,Iberia 1999/ handicap / double / 3goals,Iberia 1999 / same,Home handicap
-2026-09-13,17:10,Din. Minsk,Dynamo Brest,Belarus,Vysshaya Liga,Minsk/ handicap,,not match,both,3goals,4.83,3.86,1.87,,,,,,,Dinamo Brest/ handicap / double / 3goals,Dinamo Brest / 3goals / same,
-2026-09-13,17:15,Fredrikstad,Sarpsborg 08,Norway,Eliteserien,Fredrikstad/ handicap,,not match,both,5,3.12,3.39,2.6,2.6,3.5,2.5,Away,,under,Sarpsborg 08/ handicap / double / 5goals,Sarpsborg 08 / 5 goals / same,Home handicap
-2026-09-13,18:00,Sport Boys,Deportivo Garcilaso,Peru,Liga 1,Sport Boys/ handicap,under,not match,one,2goals,2.69,2.35,4.93,1.75,3.7,6.0,Home 2-handicap,,under,,,Home
-2026-09-13,18:00,San Marcos de Arica,Curico Unido,Chile,Primera B,San Marcos/ handicap,double,match,both,4goals,1.91,3.25,5.92,,,,,,,San Marcos/ handicap / double / 4goals,San Marcos only,
-2026-09-13,19:00,Pereira,Bucaramanga,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-13,19:00,Mirassol,Vitoria,Brazil,Serie A,Mirassol/ handicap,under,not match,one,4goals,1.82,4.1,4.81,,,,,,,,,
-2026-09-13,20:30,Macara,Emelec,Ecuador,Liga Pro,Macará/ handicap,double,match,both,3goals,1.76,3.85,5.81,,,,,,,Macará/ handicap / double / 3goals,Macará / 3goals / same,
-2026-09-13,20:30,Flamengo RJ,Corinthians,Brazil,Serie A,Flamengo/ double,double,match,both,4goals,1.94,3.56,4.9,1.3,6.0,14.0,Home,,over,Flamengo/ double / double / 4goals,Flamengo / 4goals,Home
-2026-09-13,21:00,Juventude,Athletic Club,Brazil,Serie B,Juventude/ handicap,double,match,both,3goals,1.7,3.27,9.43,1.74,3.6,6.4,Away 2-handicap,under,under,Juventude/ handicap / double / 3goals,Juventude only,Away 2-handicap/ under 3goals
-2026-09-13,21:30,Chicago Fire,New England Revolution,USA,MLS,Chicago Fire/ handicap,,match,one,5,2.55,3.94,2.83,2.07,4.1,3.7,Home,,over,,,Home
-2026-09-13,21:30,Fortaleza,Ceara,Brazil,Serie B,Fortaleza/ handicap,double,match,both,3goals,1.72,4.02,5.88,,,,,,,Fortaleza/ handicap / double / 3goals,Fortaleza / 3goals / same,
-2026-09-13,21:30,Novorizontino,Cuiaba,Brazil,Serie B,Novorizontino/ handicap,double,match,both,3goals,2.84,3.36,2.87,,,,,,,Novorizontino/ handicap / double / 3goals,Novorizontino / 3goals / same,
-2026-09-13,22:00,Pacific FC,Cavalry,Canada,Premier League,Cavalry/ wins,double,match,both,5goals,24.39,8.77,1.18,5.2,4.4,1.67,Home 2-handicap,,over,Cavalry/ wins / double,Cavalry,Away handicap
-2026-09-13,22:30,Vancouver Whitecaps,Austin FC,USA,MLS,Vancouver Whitecaps FC/ double,double,match,both,5,1.21,8.62,16.67,1.3,6.76,10.8,Away 2-handicap,,under confirmed,Vancouver Whitecaps FC/ double / double,Vancouver Whitecaps FC,Away
-2026-09-13,23:00,Barcelona SC,Delfin,Ecuador,Liga Pro,Barcelona/ handicap,double,match,both,3goals,1.6,3.82,8.93,,,,,,,Barcelona/ handicap / double / 3goals,Barcelona / 3goals / same,
-2026-09-13,23:00,A. Italiano,O'Higgins,Chile,Liga de Primera,Audax Italiano/ handicap,,not match,both,4goals,2.62,4.48,2.53,2.76,3.5,2.74,,,under confirmed,O'Higgins/ handicap / double / 4goals,O'Higgins / same,Away handicap
-2026-09-13,20:30,Dunbeholden,Cavalier,Jamaica,National Premier League,handicap /H/ handicap,,match,both,3goals,5.85,3.83,1.76,,,,,,,handicap /H/ handicap / double / 3goals,Cavalier only,
-2026-09-13,20:30,Montego Bay,Chapelton,Jamaica,National Premier League,Montego Bay United/ double,double,match,both,3goals,1.36,5.59,11.36,,,,,,,Montego Bay United/ double / double,Montego Bay United,
-2026-09-12,00:00,Cusco,FBC Melgar,Peru,Liga 1,Cusco/ handicap,,not match,both,2goals,3.12,4.17,2.27,,,,,,,Melgar/ handicap / double,Melgar / same,
-2026-09-12,01:30,Santa Fe,Deportes Tolima,Colombia,Primera A,Independiente Santa Fe/ handicap,under,not match,one,3goals,2.64,3.76,2.82,,,,,,,,,
-2026-09-12,01:30,New Mexico,Indy Eleven,USA,USL Championship,New Mexico United/ handicap,double,match,both,4goals,1.8,3.95,5.24,,,,,,,New Mexico United/ handicap / double / 4goals,New Mexico United / 4goals / same,
-2026-09-12,02:00,Colorado Springs,San Antonio,USA,USL Championship,Colorado Springs/ handicap,,match,one,4goals,2.43,4.12,2.89,,,,,,,,,
-2026-09-12,07:30,Jeonbuk,Seoul South,Korea,K League 1,Seoul/ handicap,double,match,both,3goals,3.53,3.95,2.15,,,,,,,Seoul/ handicap / double / 3goals,Seoul / 3goals,
-2026-09-12,07:30,Ulsan HD,Incheon South,Korea,K League 1,handicap /Aw/ handicap,,match,one,3goals,2.29,4.46,2.95,,,,,,,,,
-2026-09-12,07:30,Daegu,Yongin South,Korea,K League 2,Daegu/ handicap,double,match,both,4goals,1.93,4.55,3.82,,,,,,,Daegu/ handicap / double,Daegu,
-2026-09-12,07:30,Seoul E-Land,Suwon Bluewings South,Korea,K League 2,Suwon Bluewings / low/ handicap,,not match,both,4goals,4.15,4.61,1.85,,,,,,,,,
-2026-09-12,10:00,Daejeon,Pohang South,Korea,K League 1,Pohang Steelers/ handicap,,match,both,3goals,2.23,4.0,3.31,,,,,,,Pohang Steelers/ handicap / double / 3goals,Daejeon Hana Citizen only,
-2026-09-12,10:00,Ansan Greeners,Hwaseong South,Korea,K League 2,Hwaseong/ double,double,match,both,4goals,9.62,5.0,1.44,,,,,,,Hwaseong/ double / double,Hwaseong,
-2026-09-12,11:00,Sisaket United,Ayutthaya Utd,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-12,11:00,Tianjin Jinmen Tiger,Liaoning Tieren,China,Super League,Tianjin Jinmen Tiger/ handicap,,match,one,5goals,2.76,3.86,2.64,,,,,,,,,
-2026-09-12,11:00,Ningbo Professional,Shaanxi Union,China,League One,Ningbo Professional/ handicap,,match,both,4goals,3.33,4.42,2.11,,,,,,,Ningbo Professional/ handicap / double / 4goals,Shaanxi Union / 4goals,
-2026-09-12,11:00,Suzhou Dongwu,Foshan Nanshi,China,League One,Suzhou Dongwu FC/ handicap,double,match,both,4goals,2.54,3.98,2.81,,,,,,,Suzhou Dongwu FC/ handicap / double,Suzhou Dongwu FC only,
-2026-09-12,11:00,Grobina,Jelgava,Latvia,Virsliga,handicap /H/ handicap,,not match,both,4goals,5.35,3.65,1.86,,,,,,,FS Jelgava/ handicap / double / 4goals,FS Jelgava / 4goals / same,
-2026-09-12,11:30,Levadia,Parnu JK Vaprus,Estonia,Meistriliiga,FCI Levadia/ wins,double,match,both,5goals,1.12,13.16,35.71,,,,,,,FCI Levadia/ wins / double,FCI Levadia,
-2026-09-12,11:30,Uthai Thani,Pattani,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,17.24,10.99,1.17,,,,,,,,,
-2026-09-12,11:30,Guangdong GZ-Power,Dalian K'un City,China,League One,Guangdong GZ-Power/ double,double,match,both,4goals,1.37,5.35,11.9,,,,,,,Guangdong GZ-Power/ double / double,Guangdong GZ-Power,
-2026-09-12,11:30,Guangxi Hengchen,Yanbian Longding,China,League One,Guangxi Hengchen FC/ handicap,,match,one,4goals,2.34,4.1,3.05,,,,,,,,,
-2026-09-12,11:30,Hougang,Lion City,Singapore,S.League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,8.06,10.99,1.27,,,,,,,,,
-2026-09-12,11:35,Wuhan Three Towns,Henan Songshan Longmen,China,Super League,Wuhan Three Towns/ handicap,under,not match,one,5goals,3.19,3.91,2.32,,,,,,,,,
-2026-09-12,12:00,Pathum United,Rasisalai Utd,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.04,45.45,55.56,,,,,,,,,
-2026-09-12,12:15,Melaka FC,Kuching City FC,Malaysia,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,142.86,52.63,1.03,,,,,,,,,
-2026-09-12,13:00,Yelimay Semey,Zhetysu Taldykorgan,Kazakhstan,Premier League,Yelimay Semey/ handicap,,match,one,3goals,2.62,4.52,2.51,,,,,,,,,
-2026-09-12,13:00,Marko,Athens Kallithea,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,7.52,6.9,1.39,,,,,,,,,
-2026-09-12,13:30,Dortmund,Paderborn,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.34,3.91,,,,,,,,,,
-2026-09-12,13:30,Hoffenheim,Stuttgart,Germany,Bundesliga,Hoffenheim/ handicap,under,not match,one,5,1.66,5.46,4.67,,,,,,,,,
-2026-09-12,13:30,Mainz,Eintracht Frankfurt,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,55.56,15.62,1.09,,,,,,,,,
-2026-09-12,13:30,Augsburg,Bayer Leverkusen,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5,1.81,5.0,4.02,,,,,,,,,
-2026-09-12,14:00,Lillestrom,Valerenga,Norway,Eliteserien,handicap /H/ handicap,,not match,one,5goals,2.65,4.98,2.37,,,,,,,,,
-2026-09-12,14:00,Mariehamn,TPS,Finland,Veikkausliiga,"TPS, handicap/ double",,match,both,3goals,6.1,3.73,1.76,,,,,,,"TPS, handicap/ double / double / 3goals",TPS / 3goals,
-2026-09-12,14:00,Ordabasy,FC Astana,Kazakhstan,Premier League,Ordabasy/ handicap,double,match,both,3goals,1.62,4.39,6.49,,,,,,,Ordabasy/ handicap / double,Ordabasy / same,
-2026-09-12,15:00,Al Ramtha,Al Arabi Irbid,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-12,15:00,Vitebsk,Belshina,Belarus,Vysshaya Liga,Vitebsk/ handicap,,match,one,3goals,1.29,5.78,19.61,,,,,,,,,
-2026-09-12,15:00,Kaisar Kyzylorda,Atyrau,Kazakhstan,Premier League,Atyrau / low/ handicap,,match,one,3goals,5.68,2.9,2.09,,,,,,,,,
-2026-09-12,15:00,AEL Larissa,Zakynthos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.44,4.26,2.81,,,,,,,,,
-2026-09-12,15:30,Nublense,Everton,Chile,Liga de Primera,handicap /H/ handicap,,match,one,4goals,9.09,5.24,1.43,,,,,,,,,
-2026-09-12,15:30,Los Chankas,FC Cajamarca,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-12,16:00,Rosenborg,Tromso,Norway,Eliteserien,Rosenborg/ handicap,,not match,both,5goals,2.64,4.59,2.48,,,,,,,Tromsø/ handicap / double / 5goals,Tromsø / same,
-2026-09-12,16:00,Ilves,Lahti,Finland,Veikkausliiga,Ilves/ handicap,under,not match,one,3goals,3.08,2.79,3.16,,,,,,over,,,Home handicap
-2026-09-12,16:00,Jaro,SJK,Finland,Veikkausliiga,Jaro/ handicap,under,not match,one,3goals,2.56,3.76,2.92,,,,,,,,,
-2026-09-12,16:00,AC Oulu,Gnistan,Finland,Veikkausliiga,Gnistan / low/ handicap,,match,one,3goals,4.33,3.23,2.18,,,,,,,,,
-2026-09-12,17:30,Al Salt,Al Wehdat,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,5.5,3.5,1.52,5.5,3.5,1.52,,,,,,
-2026-09-12,18:00,Cobresal,Coquimbo,Chile,Liga de Primera,Cobresal/ handicap,,not match,both,4goals,3.76,4.59,1.94,3.3,3.6,2.21,Home,under,under confirmed,Coquimbo Unido/ handicap / double,Coquimbo Unido / same,Home/ under 4goals
-2026-09-12,18:00,Comerciantes Unidos,Sport Huancayo,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,2.1,3.25,3.5,2.1,3.25,3.5,,,over,,,
-2026-09-12,18:00,Rouisset,Olympique Akbou,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,,,,,,,,,,,,
-2026-09-12,18:00,Union Rochefortoise,Onhaye,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.4,9.62,5.56,,,,,,,,,
-2026-09-12,18:30,Longford,Treaty United,Ireland,First Division,Longford Town/ handicap,double,match,both,4goals,1.92,3.73,4.72,1.87,3.5,3.85,Home,,under,Longford Town/ handicap / double / 4goals,Longford Town / same,Home
-2026-09-12,19:00,Gremio,Vasco,Brazil,Serie A,Grêmio/ handicap,,match,one,4goals,1.77,4.69,4.5,,,,,,,,,
-2026-09-12,19:00,Manta,Aucas,Ecuador,Liga Pro,"Aucas, handicap/ double",,match,both,3goals,11.36,3.24,1.66,3.33,3.2,2.35,Home 2-handicap,,under,"Aucas, handicap/ double / double / 3goals",Aucas / 3goals,Home
-2026-09-12,20:00,Chapecoense-SC,Internacional,Brazil,Serie A,Chapecoense/ handicap,,match,both,4goals,4.95,4.85,1.69,4.0,3.6,2.06,Home,under,under confirmed,Chapecoense/ handicap / double / 4goals,Internacional,Away handicap
-2026-09-12,20:00,Supra du Quebec,HFX Wanderers,Canada,Premier League,Supra du Quebec/ handicap,under,not match,one,4goals,3.51,3.62,2.28,1.88,4.11,3.95,Home,,over,,,Home
-2026-09-12,20:00,Constantine,ASO Chlef,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,1.59,3.8,8.2,1.59,3.8,8.2,,,,,,
-2026-09-12,20:15,Moquegua,Sporting Cristal,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals,4.04,3.41,1.91,4.04,3.41,1.91,,,,,,
-2026-09-12,21:30,Palmeiras,Sao Paulo,Brazil,Serie A,Palmeiras/ handicap,double,match,both,4goals,1.81,3.65,5.78,,,,,,,Palmeiras/ handicap / double / 4goals,Palmeiras only,
-2026-09-12,21:30,Guayaquil City,Mushuc Runa,Ecuador,Liga Pro,Mushuc Runa / low/ handicap,,not match,one,3goals,3.79,3.58,2.19,2.72,3.2,2.96,Home,under,under,,,Home/ under 3goals
-2026-09-12,23:00,Brooklyn,Miami FC,USA,USL Championship,Miami / low/ handicap,,not match,both,4goals,3.45,2.39,3.44,2.06,3.81,3.45,Home 2-handicap,,over,Miami/ handicap / double / 4goals,Miami / 4goals / same,Home
-2026-09-12,23:00,Hartford Athletic,Tampa Bay,USA,USL Championship,"Tampa Bay Rowdies, handicap/ handicap",,match,both,4goals,16.67,4.61,1.38,3.5,3.68,2.05,Home 2-handicap,,under,"Tampa Bay Rowdies, handicap/ handicap / double / 4goals",Tampa Bay Rowdies only,Home
-2026-09-12,23:00,Louisville City,El Paso,USA,USL Championship,El Paso Locomotive / low/ handicap,,match,one,4goals,6.13,4.63,1.61,1.83,3.98,5.0,Home,,under,,,Home
-2026-09-12,23:00,Pittsburgh,Loudoun,USA,USL Championship,Pittsburgh Riverhounds/ handicap,double,match,both,4goals,2.07,3.45,4.42,1.75,3.85,4.69,Home 2-handicap,,under,Pittsburgh Riverhounds/ handicap / double / 4goals,Pittsburgh Riverhounds / 4goals,Home
-2026-09-12,23:00,Sporting Jax,Rhode Island,USA,USL Championship,Rhode Island/ double,double,match,both,4goals,6.33,7.09,1.43,5.42,4.49,1.6,Home 2-handicap,,under confirmed,Rhode Island/ double / double,Rhode Island,Away handicap
-2026-09-12,23:00,Birmingham,Charleston,USA,USL Championship,"Charleston Battery, handicap/ handicap",,not match,both,4goals,3.47,3.33,2.43,,,,,,,Charleston Battery/ handicap / double / 4goals,Charleston Battery only,
-2026-09-12,23:30,DC United,Atlanta Utd,USA,MLS,DC United/ handicap,,match,one,5,3.41,4.12,2.15,2.28,3.9,3.15,Home,,over,,,Home
-2026-09-12,23:30,FC Cincinnati,Charlotte,USA,MLS,Cincinnati/ handicap,under,not match,one,5,2.3,5.41,2.62,2.16,4.4,3.17,Home,under,over,,,Away handicap
-2026-09-12,23:30,Inter Miami,Nashville SC,USA,MLS,Inter Miami/ handicap,,not match,both,5,7.63,4.33,1.56,2.14,4.25,3.3,Home,,over,Nashville SC/ handicap / double / 5goals,Nashville SC only,Home
-2026-09-12,23:30,Orlando City,Toronto FC,USA,MLS,Orlando City/ handicap,under,not match,one,5,2.61,3.52,3.0,1.92,4.25,3.9,Home,,over,,,Home
-2026-09-12,23:30,Botafogo RJ,Bragantino,Brazil,Serie A,Botafogo/ handicap,,not match,both,4goals,3.37,3.85,2.26,,,,,,,RB Bragantino/ handicap / double,RB Bragantino / same,
-2026-09-11,18:45,Drogheda,Sligo Rovers,Ireland,Premier Division,Drogheda United/ handicap,double,match,both,4goals,2.27,3.11,4.22,2.04,3.6,4.1,Away,,under,Drogheda United/ handicap / double / 4goals,Drogheda United / same,Home handicap
-2026-09-11,18:45,Galway,Bohemians,Ireland,Premier Division,Bohemians/ handicap,double,match,both,4goals,6.99,5.62,1.47,4.63,4.14,1.8,Home 2-handicap,,under confirmed,Bohemians/ handicap / double,Bohemians only,Away handicap
-2026-09-11,18:45,Shelbourne,Derry City,Ireland,Premier Division,Shelbourne/ handicap,under,match,one,4goals,3.44,4.1,2.15,2.44,3.6,3.1,Home,,under confirmed,,,Away handicap
-2026-09-11,18:45,Waterford,Dundalk,Ireland,Premier Division,handicap /H/ handicap,,not match,both,4goals,2.74,4.15,2.53,2.47,3.95,2.92,Home,,over,Dundalk/ handicap / double,Dundalk / same,Home
-2026-09-11,18:45,Wexford,Finn Harps,Ireland,First Division,Wexford/ handicap,double,match,both,4goals,2.25,3.73,3.47,1.43,5.0,8.6,Home,,over,Wexford/ handicap / double / 4goals,Wexford / 4goals / same,Home
-2026-09-11,18:45,Cork City,Cobh Ramblers,Ireland,First Division,Cork City/ double,double,match,both,4goals,1.44,5.95,7.19,1.52,4.8,6.4,Away 2-handicap,under,under confirmed,Cork City/ double / double / 4goals,Cork City,Away
-2026-09-11,23:15,Jaguares de Cordoba,Fortaleza,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,,,,,,,,,,,,
+date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,val_H,val_D,val_A,decision,signal,ou_result,pred1,pred2,pred3
+2026-09-30,18:00,RWDM Brussels,Union Rochefortoise,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.52,2.92,3.0,2.0,3.5,3.0,+31.6,+19.9,,,,over,,,Home handicap
+2026-09-30,21:00,San Felipe,San Luis,Chile,Primera B,"San Luis FC, handicap/ handicap",,not match,one,4goals,3.46,2.24,3.79,3.0,3.25,2.1,-13.3,+45.1,-44.6,Home,,under,,,Home
+2026-09-30,23:00,Brooklyn,Detroit,USA,USL Championship,"Detroit City, handicap/ double",,not match,both,4goals,5.85,3.06,1.99,3.25,3.25,2.0,-44.4,+6.2,+0.5,Home 2-handicap,,under,Detroit City/ double / double / 4goals,Detroit City / 4goals / same,Home
+2026-09-30,23:00,Miami FC,Sporting Jax,USA,USL Championship,Miami/ handicap,double,match,both,4goals,1.72,5.24,4.41,1.61,4.0,4.1,-6.4,-23.7,-7.0,Home,,under confirmed,Miami/ handicap / double,Miami only,Away handicap
+2026-09-30,23:30,Rhode Island,Indy Eleven,USA,USL Championship,Rhode Island/ handicap,,match,one,4goals,1.52,4.35,9.09,1.85,3.5,3.5,+21.7,-19.5,-61.5,Away 2-handicap,,under,,,Home handicap
+2026-09-29,11:00,Wuxi Wugou,Ningbo Professional,China,League One,Wuxi Wugou/ handicap,,match,one,4goals,3.23,3.06,2.76,2.1,3.1,3.2,-35.0,+1.3,+15.9,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
+2026-09-29,22:30,Botafogo SP,Ponte Preta,Brazil,Serie B,Botafogo SP/ double,double,match,both,3goals,1.23,8.55,13.89,1.23,6.5,10.17,0.0,-24.0,-26.8,Away 2-handicap,,under confirmed,Botafogo SP/ double / double / 3goals,Botafogo SP / 3goals,Away
+2026-09-24,01:00,Luis Angel Firpo,Cacahuatique El,Salvador,Primera Division,Firpo / low/ handicap,,not match,both,4goals,2.56,3.31,3.25,,,,,,,,,,Firpo/ handicap / double / 4goals,Firpo / 4goals / same,
+2026-09-24,01:00,Alianza FC,Fuerte San Francisco El,Salvador,Primera Division,Alianza/ wins,double,match,both,4goals,1.4,4.78,12.82,1.25,5.3,8.0,-10.7,+10.9,-37.6,Home,,over,Alianza/ wins / double / 4goals,Alianza / 4goals,Home
+2026-09-23,16:00,Bregalnica Stip,FK Skopje North,Macedonia,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.1,10.75,5.25,1.45,4.0,5.25,+31.8,-62.8,,,,under,,,Home handicap
+2026-09-23,16:00,Birmingham,Brooklyn,USA,USL Championship,Birmingham City/ handicap,double,match,both,4goals,1.95,4.48,3.82,1.73,3.75,3.75,-11.3,-16.3,-1.8,Away,,over,Birmingham City/ handicap / double,Birmingham City / same,Home handicap
+2026-09-22,01:00,Arnett Gardens,Dunbeholden,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.02,17.0,26.0,1.02,17.0,26.0,,,,,,,,,
+2026-09-22,16:00,Biskra,Saoura,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.55,2.78,2.77,2.55,2.78,2.77,,,,,,over,,,
+2026-09-21,13:00,Pyrgos,AEL Larissa,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,3.7,3.15,1.89,3.7,3.15,1.89,,,,,,,,,
+2026-09-21,14:00,Struga,Arsimi North,Macedonia,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.05,20.0,,,,,,,,,,,,,
+2026-09-21,14:00,Panthrakikos,Niki Volos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.11,10.0,1.8,4.33,3.4,1.8,+290.1,-66.0,,,,over,,,Home handicap
+2026-09-21,15:00,Rustavi,Iberia 1999,Georgia,Erovnuli Liga,Rustavi/ handicap,,not match,one,3goals,1.91,3.88,4.59,,,,,,,,,,,,
+2026-09-21,17:00,Spaeri,Dila Gori,Georgia,Erovnuli Liga,Spaeri/ handicap,,not match,both,3goals,3.21,4.17,2.23,2.9,3.15,2.18,-9.7,-24.5,-2.2,Away,,under confirmed,Dila/ handicap / double / 3goals,Dila / same,Away
+2026-09-21,18:00,Petrolul,Csikszereda M. Ciuc,Romania,Liga I,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.49,2.92,3.92,,,,,,,,,,,,
+2026-09-21,19:00,Manta,Orense,Ecuador,Liga Pro,"Orense, handicap/ handicap",,not match,both,3goals,5.18,2.81,2.22,2.6,3.0,2.8,-49.8,+6.8,+26.1,Home 2-handicap,under,under,Orense/ handicap / double / 3goals,Orense only,Home
+2026-09-21,22:30,Criciuma,Operario-PR,Brazil,Serie B,Criciúma/ handicap,double,match,both,3goals,2.63,3.16,3.29,1.67,3.53,5.37,-36.5,+11.7,+63.2,Home,,under,Criciúma/ handicap / double / 3goals,Criciúma / 3goals / same,Home
+2026-09-20,00:00,Emelec,Libertad,Ecuador,Liga Pro,Emelec/ handicap,under,not match,one,3goals,2.74,3.14,3.16,1.19,5.3,17.5,-56.6,+68.8,+453.8,Home,,under,,,Home
+2026-09-20,00:00,Sao Paulo,Internacional,Brazil,Serie A,São Paulo/ handicap,,match,one,4goals,2.01,3.76,4.24,1.28,4.6,14.0,-36.3,+22.3,+230.2,Home,,,,,
+2026-09-20,01:00,Colorado Springs,New Mexico,USA,USL Championship,Colorado Springs/ handicap,,not match,both,4goals,3.28,4.46,2.12,,,,,,,,,,New Mexico United/ handicap / double,New Mexico United / same,
+2026-09-20,02:00,Phoenix Rising,El Paso,USA,USL Championship,Phoenix Rising/ handicap,,not match,both,4goals,4.78,4.42,1.77,2.1,3.5,2.9,-56.1,-20.8,+63.8,Home,under,over,El Paso Locomotive/ handicap / double,El Paso Locomotive / same,Home
+2026-09-20,02:30,Las Vegas Lights,Hartford Athletic,USA,USL Championship,Hartford Athletic / low/ handicap,,match,one,4goals,4.63,2.49,2.62,2.05,3.6,2.9,-55.7,+44.6,+10.7,Home 2-handicap,under,over,,,Home
+2026-09-20,07:30,Jeonbuk,Gwangju FC South,Korea,K League 1,Jeonbuk Motors/ wins,double,match,both,3goals,1.11,13.16,41.67,1.38,4.45,6.58,+24.3,-66.2,-84.2,Away 2-handicap,,under confirmed,Jeonbuk Motors/ wins / double / 3goals,Jeonbuk Motors,Away
+2026-09-20,07:30,Ansan Greeners,Cheongju South,Korea,K League 2,Chungbuk Cheongju/ handicap,,match,one,4goals,4.85,4.42,1.76,3.5,3.4,1.85,-27.8,-23.1,+5.1,Home 2-handicap,,under confirmed,,,Away handicap
+2026-09-20,07:30,Yongin,Gyeongnam South,Korea,K League 2,Gyeongnam / low/ handicap,,match,one,4goals,2.62,3.4,3.08,2.2,3.1,2.9,-16.0,-8.8,-5.8,Away,,under,,,Home handicap
+2026-09-20,08:00,Gamba Osaka,Vissel Kobe,Japan,J1 League,Vissel Kobe/ wins,double,match,both,5goals,12.82,3.46,1.58,3.4,3.2,2.19,-73.5,-7.5,+38.6,Home 2-handicap,,under,Vissel Kobe/ wins / double / 5goals,Vissel Kobe / same,Home
+2026-09-20,08:00,Machida,Kashiwa Reysol,Japan,J1 League,Machida Zelvia/ handicap,double,match,both,5goals,2.51,3.98,2.85,2.52,3.23,2.7,+0.4,-18.8,-5.3,Away 2-handicap,under,under confirmed,Machida Zelvia/ handicap / double,Machida Zelvia only,Away
+2026-09-20,10:00,Kudrivka,Kolos Kovalivka,Ukraine,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,3.6,3.18,1.92,3.6,3.18,1.92,,,,,,under,,,Home handicap
+2026-09-20,10:00,Incheon,Daejeon South,Korea,K League 1,Daejeon Hana Citizen/ handicap,double,match,both,3goals,3.22,3.95,2.3,2.77,3.23,2.31,-14.0,-18.2,+0.4,Home 2-handicap,,under confirmed,Daejeon Hana Citizen/ handicap / double,Daejeon Hana Citizen / same,Away handicap
+2026-09-20,10:00,Pohang,Seoul South,Korea,K League 1,Seoul/ double,double,match,both,3goals,14.71,3.5,1.55,4.12,3.37,1.79,-72.0,-3.7,+15.5,Home 2-handicap,,under,Seoul/ double / double / 3goals,Seoul,Home
+2026-09-20,10:00,Seongnam,Hwaseong South,Korea,K League 2,Hwaseong / low/ handicap,,match,both,4goals,4.57,2.71,2.42,2.63,3.1,2.4,-42.5,+14.4,-0.8,Away,,under,Hwaseong / low/ handicap / double / 4goals,Hwaseong,Home handicap
+2026-09-20,10:15,Piast Gliwice,Pogon Szczecin,Poland,Ekstraklasa,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.29,3.42,2.82,2.29,3.42,2.82,,,,,,over,,,Home handicap
+2026-09-20,10:15,Feyenoord,Utrecht,Netherlands,Eredivisie,handicap /Aw/ double,,not match,both,5 goals,1.61,5.81,4.83,1.28,6.03,9.5,-20.5,+3.8,+96.7,Home,,under confirmed,Feyenoord/ double / double,Feyenoord / same,Away handicap
+2026-09-20,11:00,Hradec Kralove,Teplice Czech,Republic,Czech Liga,Hradec Králové/ handicap,,match,one,4goals,2.16,3.98,3.48,1.76,3.47,4.4,-18.5,-12.8,+26.4,Home,under,under confirmed,,,Home/ under 4goals
+2026-09-20,11:00,Ogre United,Super Nova,Latvia,Virsliga,Super Nova/ handicap,double,match,both,4goals,8.55,4.81,1.48,2.87,3.42,2.09,-66.4,-28.9,+41.2,Home 2-handicap,,under,Super Nova/ handicap / double,Super Nova only,Home
+2026-09-20,11:00,Sundsvall,Ljungskile,Sweden,Superettan,Ljungskile/ double,double,match,both,4goals,6.85,5.03,1.53,3.38,3.55,1.88,-50.7,-29.4,+22.9,Home 2-handicap,,over,Ljungskile/ double / double / 4goals,Ljungskile,Away handicap
+2026-09-20,11:00,Chonburi,Buriram,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,7.46,10.87,1.29,4.9,3.82,1.53,-34.3,-64.9,+18.6,Home 2-handicap,,over,,,Away handicap
+2026-09-20,11:00,Rayong FC,Ratchaburi,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.18,6.41,1.89,3.43,3.43,1.89,+190.7,-46.5,,,,under,,,Home handicap
+2026-09-20,11:00,Celtic,Rangers,Scotland,Premiership,"Celtic, handicap/ double",,match,both,3goals,1.72,3.13,9.9,2.15,3.65,3.03,+25.0,+16.6,-69.4,Away 2-handicap,under,over,"Celtic, handicap/ double / double / 3goals",Celtic / 3goals,Home handicap
+2026-09-20,11:15,Hegelmann,Suduva,Lithuania,A Lyga,"Sūduva, handicap/ double",,match,both,3goals,4.69,4.57,1.76,,,,,,,,,,"Sūduva, handicap/ double / double / 3goals",Sūduva / 3goals,
+2026-09-20,11:30,Tammeka,Kalju,Estonia,Meistriliiga,handicap /H/ handicap,,match,both,5goals,7.75,3.24,1.78,3.9,3.8,1.67,-49.7,+17.3,-6.2,Away,,over,handicap /H/ handicap / double / 5goals,Nõmme Kalju only,Home handicap
+2026-09-20,11:30,Sukhothai,Port MTI FC,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,10.0,9.26,1.26,4.73,3.85,1.54,-52.7,-58.4,+22.2,Home 2-handicap,,under confirmed,,,Away handicap
+2026-09-20,11:45,Athens Kallithea,Panserraikos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.16,7.19,3.12,2.35,3.0,3.12,+102.6,-58.3,,,,over,,,Home handicap
+2026-09-20,12:00,Getafe,Malaga,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.34,4.61,26.32,2.01,3.08,4.32,+50.0,-33.2,-83.6,Away 2-handicap,,under,,,Home handicap
+2026-09-20,12:00,Baranovici,FC Gomel,Belarus,Vysshaya Liga,"Gomel, handicap/ double",,match,both,3goals,6.02,4.42,1.64,4.38,3.4,1.85,-27.2,-23.1,+12.8,Home 2-handicap,,under confirmed,"Gomel, handicap/ double / double / 3goals",Gomel,Away handicap
+2026-09-20,12:00,Sonderjyske,Randers FC,Denmark,Superliga,Randers/ double,double,match,both,4goals,11.63,4.95,1.41,2.77,3.48,2.38,-76.2,-29.7,+68.8,Home 2-handicap,,under,Randers/ double / double / 4goals,Randers,Home
+2026-09-20,12:00,Djurgarden,Elfsborg,Sweden,Allsvenskan,Djurgården/ handicap,double,match,both,4goals,1.9,4.29,4.13,1.54,4.02,5.93,-18.9,-6.3,+43.6,Home,,over,Djurgården/ handicap / double / 4goals,Djurgården only,Home
+2026-09-20,12:00,Halmstad,AIK,Sweden,Allsvenskan,AIK/ double,double,match,both,4goals,18.87,7.19,1.24,3.32,3.62,2.07,-82.4,-49.7,+66.9,Home 2-handicap,,under,AIK/ double / double,AIK,Home
+2026-09-20,12:00,Kalmar,Hacken,Sweden,Allsvenskan,Kalmar/ handicap,,match,both,4goals,4.18,4.15,1.92,2.78,3.43,2.42,-33.5,-17.3,+26.0,Home 2-handicap,under,over,Kalmar/ handicap / double,Häcken,Home
+2026-09-20,12:00,Vaduz,Thun,Switzerland,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.27,11.11,8.2,2.33,3.95,2.58,+83.5,-64.4,-68.5,Away,,over,,,Away
+2026-09-20,12:00,Ararat,Syunik,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,5.75,2.75,2.16,1.85,3.47,3.55,-67.8,+26.2,+64.4,Home 2-handicap,,over,,,Home
+2026-09-20,12:00,Bangkok Utd,Pathum United,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.95,3.3,3.3,1.95,3.3,3.3,,,,,,,,,
+2026-09-20,12:30,Valerenga,Fredrikstad,Norway,Eliteserien,Vålerenga/ handicap,under,not match,one,5 goals,2.53,4.57,2.59,1.95,3.73,3.5,-22.9,-18.4,+35.1,Home,under,under confirmed,,,Away handicap
+2026-09-20,12:30,Karpaty Lviv,Veres-Rivne,Ukraine,Premier League,"Karpaty Lviv, handicap/ double",,match,both,2goals or less,3.07,1.96,6.06,1.35,4.17,7.25,-56.0,+112.8,+19.6,Home 2-handicap,,under,,,Home
+2026-09-20,12:30,Hartberg,LASK,Austria,Bundesliga,LASK/ wins,double,match,both,4goals,58.82,20.0,1.07,9.5,5.43,1.29,-83.8,-72.9,+20.6,Home 2-handicap,,over,LASK/ wins / double,LASK,Away handicap
+2026-09-20,12:30,Ried,Wolfsberger AC,Austria,Bundesliga,Ried / low/ handicap,,match,both,4goals,3.68,2.15,3.82,1.9,3.8,3.6,-48.4,+76.7,-5.8,Away,,over,,4goals / same,Home handicap
+2026-09-20,12:30,AZ Alkmaar,Telstar,Netherlands,Eredivisie,AZ/ wins,double,match,both,5 goals,1.62,3.3,12.5,1.22,6.58,11.5,-24.7,+99.4,-8.0,Away,,over,AZ/ wins / double / 5goals,AZ,Home handicap
+2026-09-20,12:30,Twente,PSV,Netherlands,Eredivisie,PSV/ handicap,,match,one,5 goals,1.69,3.62,7.69,2.89,3.93,2.15,+71.0,+8.6,-72.0,Away 2-handicap,,over,,,Home handicap
+2026-09-20,13:00,Sigma Olomouc,Sparta Prague Czech,Republic,Czech Liga,Sigma Olomouc/ handicap,double,match,both,4goals,1.51,6.06,5.78,3.15,3.47,2.09,+108.6,-42.7,-63.8,Away,,under confirmed,Sigma Olomouc/ handicap / double,Sigma Olomouc / same,Away
+2026-09-20,13:00,Tukums 2000,Grobina,Latvia,Virsliga,Tukums/ handicap,double,match,both,4goals,1.42,5.43,8.93,2.29,3.25,2.65,+61.3,-40.1,-70.3,Away 2-handicap,,under confirmed,Tukums/ handicap / double,Tukums only,Away
+2026-09-20,13:00,FA Siauliai,Kauno Zalgiris,Lithuania,A Lyga,Kauno Žalgiris/ wins,double,match,both,3goals,41.67,12.99,1.11,8.17,5.6,1.22,-80.4,-56.9,+9.9,Home 2-handicap,,under confirmed,Kauno Žalgiris/ wins / double,Kauno Žalgiris,Away handicap
+2026-09-20,13:00,Helsingborg,Norrby,Sweden,Superettan,Helsingborg/ handicap,,not match,one,4goals,2.2,3.69,3.64,2.02,3.45,3.07,-8.2,-6.5,-15.7,Home,,under,,,Home
+2026-09-20,13:30,Bayer Leverkusen,RB Leipzig,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.01,200.0,3.25,1.94,4.17,3.25,+92.1,-97.9,,,,over,,,Away handicap
+2026-09-20,14:00,Gremio,Palmeiras,Brazil,Serie A,handicap /H/ double,,match,both,4goals,7.04,5.15,1.51,4.2,3.6,1.85,-40.3,-30.1,+22.5,Home 2-handicap,,under confirmed,handicap /H/ double / double / 4goals,Palmeiras / 4goals,Away handicap
+2026-09-20,14:00,Ponte Preta,CRB,Brazil,Serie B,CRB/ double,double,match,both,3goals,7.52,5.26,1.48,10.0,5.78,1.34,+33.0,+9.9,-9.5,Away,,,CRB/ double / double,CRB,
+2026-09-20,14:00,Otrant,Jezero,Montenegro,First League,Otrant-Olympic/ handicap,double,not match,both,2goals or less,1.74,3.53,7.09,1.8,3.25,4.0,+3.4,-7.9,-43.6,Away 2-handicap,,under,Otrant-Olympic / low/ handicap / double / 2goals,Otrant-Olympic / 2goals or less / same,Home handicap
+2026-09-20,14:00,Dynamo Brest,Dnepr Mogilev,Belarus,Vysshaya Liga,Dinamo Brest/ double,double,match,both,3goals,1.44,5.32,8.47,1.43,4.4,7.21,-0.7,-17.3,-14.9,Home,,over,Dinamo Brest/ double / double / 3goals,Dinamo Brest / 3goals,Away handicap
+2026-09-20,14:00,Real Sireti,Milsami,Moldova,Super Liga,handicap /H/ handicap,,not match,both,4goals,3.97,2.6,2.75,5.0,3.7,1.55,+25.9,+42.3,-43.6,Away 2-handicap,,under,Milsami/ handicap / double / 4goals,Milsami / 4goals / same,Home handicap
+2026-09-20,14:00,Shirak Gyumri,Ararat-Armenia,Armenia,Premier League,handicap /H/ handicap,,match,one,4goals,6.25,6.76,1.45,5.83,4.03,1.43,-6.7,-40.4,-1.4,Away,,under confirmed,,,Away
+2026-09-20,14:00,Asteras Tripolis B,Kalamaria,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.91,3.2,4.2,1.91,3.2,4.2,,,,,,over,,,
+2026-09-20,14:00,Olympiacos Piraeus B,Marko,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,5.0,3.3,1.75,5.0,3.3,1.75,,,,,,,,,
+2026-09-20,14:30,Estrela,Academico Viseu,Portugal,Primeira Liga,handicap /Aw/ handicap,,match,both,4goals,2.51,4.76,2.56,2.17,3.32,3.33,-13.5,-30.3,+30.1,Home,under,under confirmed,handicap /Aw/ handicap / double,Estrela,Home/ under 4goals
+2026-09-20,14:30,Vitoria Guimaraes,Moreirense,Portugal,Primeira Liga,Vitória Guimarães / low/ handicap,,match,one,4goals,2.91,1.77,10.99,1.52,3.87,6.83,-47.8,+118.6,-37.9,Away,,under,,,Home handicap
+2026-09-20,14:30,Degerfors,Hammarby,Sweden,Allsvenskan,Hammarby/ double,double,match,both,4goals,5.29,4.18,1.75,7.83,5.4,1.33,+48.0,+29.2,-24.0,Away,,under,Hammarby/ double / double,Hammarby,Home handicap
+2026-09-20,14:30,Mjallby,GAIS,Sweden,Allsvenskan,Mjällby/ handicap,,not match,both,4goals,3.72,3.55,2.23,2.63,3.53,2.47,-29.3,-0.6,+10.8,Home 2-handicap,under,under,GAIS/ handicap / double / 4goals,GAIS only,Home 2-handicap/ under 4goals
+2026-09-20,14:30,Basel,St. Gallen,Switzerland,Super League,handicap /Aw/ handicap,,not match,both,5 goals,2.47,4.22,2.79,2.42,3.9,2.52,-2.0,-7.6,-9.7,Home,,under,Basel/ handicap / double,Basel / same,Home
+2026-09-20,14:30,Lausanne,Lugano,Switzerland,Super League,Lugano/ wins,double,match,both,5 goals,11.9,7.04,1.29,3.93,3.73,1.84,-67.0,-47.0,+42.6,Home 2-handicap,,under confirmed,Lugano/ wins / double / 5goals,Lugano,Away handicap
+2026-09-20,15:00,Rijeka,Hajduk Split,Croatia,HNL,Rijeka/ double,,match,both,5 goals,6.49,7.04,1.42,2.01,3.22,3.2,-69.0,-54.3,+125.4,Home,,under confirmed,Rijeka/ double / double / 5goals,Hajduk Split / 5 goals,Away handicap
+2026-09-20,15:00,Tromso,HamKam,Norway,Eliteserien,Tromsø/ double,double,match,both,5 goals,1.5,4.67,8.26,1.48,4.5,5.92,-1.3,-3.6,-28.3,Home,,under,Tromsø/ double / double,Tromsø / same,Home
+2026-09-20,15:00,Viking,Lillestrom,Norway,Eliteserien,Viking/ double,double,match,both,5 goals,1.66,4.88,5.21,1.39,4.83,6.58,-16.3,-1.0,+26.3,Home,,over,Viking/ double / double,Viking / same,Home
+2026-09-20,15:00,Sandefjord,Start,Norway,Eliteserien,handicap /H/ handicap,,match,one,5 goals,3.15,2.99,2.87,1.99,3.62,3.47,-36.8,+21.1,+20.9,Home 2-handicap,,over,,,Home
+2026-09-20,15:00,Skalica,Podbrezova,Slovakia,1. Liga,Skalica/ handicap,,match,both,5 goals,2.57,5.92,2.27,3.28,3.47,2.04,+27.6,-41.4,-10.1,Away,under,under confirmed,Skalica/ handicap / double / 5goals,Podbrezová / 5 goals,Away
+2026-09-20,15:00,Shakhtar Donetsk,LNZ Cherkasy,Ukraine,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.23,5.29,5.07,1.56,3.63,5.07,+26.8,-31.4,,,,under,,,Home handicap
+2026-09-20,15:00,Haugesund,Strommen,Norway,1st Division,Haugesund/ wins,double,match,both,5 goals,1.4,6.58,7.52,1.3,5.47,7.58,-7.1,-16.9,+0.8,Home 2-handicap,under,over,Haugesund/ wins / double,Haugesund,Away handicap
+2026-09-20,15:00,Lyn,Ranheim,Norway,1st Division,handicap /H/ handicap,,not match,one,5 goals,3.47,5.68,1.87,1.63,4.42,4.05,-53.0,-22.2,+116.6,Home,,over,,,Away handicap
+2026-09-20,15:00,Odd,Egersund,Norway,1st Division,Odd/ handicap,double,match,both,5 goals,1.87,4.41,4.2,1.79,4.0,3.65,-4.3,-9.3,-13.1,Home,,over,Odd/ handicap / double,Odd / same,Home
+2026-09-20,15:00,Raufoss,Stromsgodset,Norway,1st Division,Strømsgodset/ wins,double,match,both,5 goals,9.52,6.9,1.33,7.33,5.73,1.29,-23.0,-17.0,-3.0,Away,,under,Strømsgodset/ wins / double,Strømsgodset,Home handicap
+2026-09-20,15:00,Sandnes,Moss,Norway,1st Division,handicap /H/ handicap,,match,one,5 goals,2.91,4.67,2.26,2.16,3.65,2.96,-25.8,-21.8,+31.0,Home,under,under confirmed,,,Away handicap
+2026-09-20,15:00,Salzburg,Sturm Graz,Austria,Bundesliga,Salzburg/ double,double,match,both,4goals,1.35,6.45,9.52,1.63,4.25,4.45,+20.7,-34.1,-53.3,Away 2-handicap,,over,Salzburg/ double / double / 4goals,Salzburg,Home handicap
+2026-09-20,15:30,Jagiellonia,Legia,Poland,Ekstraklasa,"Legia Warszawa, handicap/ double",,match,both,4goals,6.1,3.45,1.83,2.88,3.4,2.26,-52.8,-1.4,+23.5,Home 2-handicap,,under,"Legia Warszawa, handicap/ double / double / 4goals",Legia Warszawa / 4goals / same,Home
+2026-09-20,15:30,Schalke,Elversberg,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.99,3.7,3.47,1.99,3.7,3.47,,,,,,,,,
+2026-09-20,16:00,Hibernians,Floriana,Malta,Premier League,Floriana/ handicap,double,not match,both,3goals,10.1,5.65,1.38,3.65,3.53,1.8,-63.9,-37.5,+30.4,Home 2-handicap,,over,Floriana/ handicap / double,Floriana / same,Away handicap
+2026-09-20,16:00,Flora,Parnu JK Vaprus,Estonia,Meistriliiga,Flora/ double,double,match,both,5goals,1.46,5.78,7.04,1.49,5.1,5.89,+2.1,-11.8,-16.3,Away 2-handicap,under,under,Flora/ double / double,Flora,Home handicap
+2026-09-20,16:00,Viborg,Nordsjaelland,Denmark,Superliga,Viborg/ handicap,under,not match,one,4goals,1.68,4.2,5.99,2.79,3.67,2.26,+66.1,-12.6,-62.3,Away,under,,,,
+2026-09-20,16:00,Dinamo Batumi,Torpedo Kutaisi,Georgia,Erovnuli Liga,Dinamo Batumi/ handicap,under,not match,one,3goals,2.94,4.12,2.4,2.07,3.55,3.35,-29.6,-13.8,+39.6,Home,under,under confirmed,,,Home/ under 3goals
+2026-09-20,16:30,Villarreal,Levante,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.81,2.23,6.21,1.54,4.88,6.21,-14.9,+118.8,,,,,,,
+2026-09-20,17:00,Santa Clara,Braga,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.2,9.26,16.67,3.59,3.1,2.1,+199.2,-66.5,-87.4,Away,,,,,
+2026-09-20,17:00,Estoril,Casa Pia,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,4.59,1.28,4.64,1.7,3.65,4.64,-63.0,+185.2,,,,,,,
+2026-09-20,17:00,Crvena zvezda,Radnicki Nis,Serbia,Super Liga,Crvena zvezda/ wins,double,match,both,3goals,1.54,3.51,14.93,,,,,,,,,,Crvena zvezda/ wins / double / 3goals,Crvena zvezda,
+2026-09-20,17:00,Bokelj,Mladost DG,Montenegro,First League,Bokelj/ handicap,,not match,one,2goals or less,1.42,4.42,13.89,,,,,,,,,,,,
+2026-09-20,17:15,Brann,Bodo/Glimt,Norway,Eliteserien,handicap /H/ double,,match,both,5 goals,10.75,7.3,1.3,4.39,4.47,1.61,-59.2,-38.8,+23.8,Home 2-handicap,,,handicap /H/ double / double,Bodø / Glimt,
+2026-09-20,17:30,Levski Sofia,Ludogorets,Bulgaria,First League,Levski Sofia/ double,double,match,both,4goals,1.35,5.13,15.38,,,,,,,,,,Levski Sofia/ double / double / 4goals,Levski Sofia / 4goals,
+2026-09-20,17:30,Dinamo Bucuresti,Farul Constanta,Romania,Liga I,Dinamo Bucureşti/ handicap,double,match,both,3goals,2.39,4.39,2.83,,,,,,,,,,Dinamo Bucureşti/ handicap / double,Dinamo Bucureşti only,
+2026-09-20,17:30,Paderborn,Hoffenheim,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,4.62,4.57,1.76,4.62,4.57,1.76,,,,,,over,,,Home handicap
+2026-09-20,18:15,Lech Poznan,Radomiak Radom,Poland,Ekstraklasa,Lech Poznań/ double,double,not match,both,4goals,1.13,9.17,125.0,1.29,5.52,7.86,+14.2,-39.8,-93.7,Away 2-handicap,,,"Lech Poznań, handicap/ double / double / 4goals",Lech Poznań / 4goals / same,
+2026-09-20,19:00,Corinthians,Fluminense,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,3.57,3.45,2.33,2.2,3.2,3.8,-38.4,-7.2,+63.1,Home,,,Fluminense/ handicap / double / 4goals,Fluminense / 4goals / same,
+2026-09-20,19:00,Vitoria,Cruzeiro,Brazil,Serie A,Vitória/ handicap,under,not match,one,4goals,2.02,3.58,4.42,2.91,3.23,2.38,+44.1,-9.8,-46.2,Away 2-handicap,under,,,,
+2026-09-20,19:00,Valencia,Real Sociedad,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,2.82,3.49,2.67,2.82,3.49,2.67,,,,,,,,,
+2026-09-20,19:30,FC Porto,Benfica,Portugal,Primeira Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.67,3.31,2.49,2.67,3.31,2.49,,,,,,,,,
+2026-09-20,20:30,Chapelton,Molynes,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-20,20:30,Montego Bay,Tru-Juice,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-20,20:30,Mount Pleasant,Racing United,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-20,20:30,Treasure Beach,Tivoli,Jamaica,National Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-20,21:00,Alianza FC,Municipal Limeno El,Salvador,Primera Division,Alianza/ double,double,match,both,4goals,1.45,5.38,8.06,,,,,,,,,,Alianza/ double / double,Alianza,
+2026-09-20,21:00,Platense Municipal,Aguila El,Salvador,Primera Division,#N/A,,#N/A,one,4goals,1.74,3.5,7.25,,,,,,,,,,,,
+2026-09-20,21:00,Indy Eleven,Oakland Roots,USA,USL Championship,Indy Eleven/ handicap,,match,one,4goals,1.79,4.39,4.67,,,,,,,,,,,,
+2026-09-20,21:30,Flamengo RJ,Bragantino,Brazil,Serie A,Flamengo/ double,double,match,both,4goals,1.92,3.52,5.1,1.39,5.26,9.0,-27.6,+49.4,+76.5,Home,,,Flamengo/ double / double / 4goals,Flamengo,
+2026-09-20,21:30,Londrina,Fortaleza,Brazil,Serie B,Londrina/ handicap,under,not match,one,3goals,2.78,2.99,3.27,3.0,3.2,2.62,+7.9,+7.0,-19.9,Away 2-handicap,under,,,,
+2026-09-20,23:00,Sacramento Republic,San Antonio,USA,USL Championship,Sacramento Republic/ handicap,double,match,both,4goals,2.0,3.82,4.22,,,,,,,,,,Sacramento Republic/ handicap / double / 4goals,Sacramento Republic / 4goals / same,
+2026-09-19,09:00,Avispa Fukuoka,Sanfrecce Hiroshima,Japan,J1 League,"Sanfrecce Hiroshima, handicap/ double",,match,both,5goals,4.05,4.55,1.88,38.0,6.62,1.11,+838.3,+45.5,-41.0,Away,,,"Sanfrecce Hiroshima, handicap/ double / double",Sanfrecce Hiroshima,
+2026-09-19,09:00,Kawasaki Frontale,Kashima Antlers,Japan,J1 League,Kawasaki Frontale/ handicap,double,match,both,5goals,1.51,7.94,4.69,2.55,2.69,3.12,+68.9,-66.1,-33.5,Away,,,Kawasaki Frontale/ handicap / double / 5goals,Kawasaki Frontale / 5goals / same,
+2026-09-19,09:30,Urawa Reds,Verdy,Japan,J1 League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,1.04,12.75,38.5,1.04,12.75,38.5,,,,,,,,,
+2026-09-19,09:30,V-Varen Nagasaki,Cerezo Osaka,Japan,J1 League,V-Varen Nagasaki/ handicap,under,not match,one,5goals,1.11,12.99,43.48,1.57,3.55,6.0,+41.4,-72.7,-86.2,Away 2-handicap,,,,,
+2026-09-19,10:00,Okayama,Kyoto,Japan,J1 League,Fagiano Okayama/ double,double,match,both,5goals,1.73,3.57,7.14,3.0,3.4,2.3,+73.4,-4.8,-67.8,Away,,,Fagiano Okayama/ double / double / 5goals,Fagiano Okayama / 5goals,
+2026-09-19,10:00,FC Tokyo,Nagoya Grampus,Japan,J1 League,Tokyo/ wins,double,match,both,5goals,1.26,6.67,18.18,1.63,3.6,5.12,+29.4,-46.0,-71.8,Away 2-handicap,,,Tokyo/ wins / double,Tokyo,
+2026-09-19,10:00,Anyang,Ulsan HD South,Korea,K League 1,Ulsan HD/ handicap,double,match,both,3goals,4.72,4.35,1.79,3.73,3.38,1.92,-21.0,-22.3,+7.3,Home 2-handicap,,under,Ulsan HD/ handicap / double,Ulsan HD,Home
+2026-09-19,10:00,Seoul E-Land,Daegu South,Korea,K League 2,Seoul E-Land/ handicap,double,match,both,4goals,2.52,4.78,2.54,2.6,3.4,2.6,+3.2,-28.9,+2.4,,,under confirmed,Seoul E-Land/ handicap / double,Seoul E-Land / same,Away handicap
+2026-09-19,11:00,Isloch,Neman,Belarus,Vysshaya Liga,Isloch/ handicap,double,match,both,3goals,1.9,3.26,5.95,2.18,3.2,3.6,+14.7,-1.8,-39.5,Away 2-handicap,under,under,Isloch/ handicap / double / 3goals,Isloch only,Home handicap
+2026-09-19,11:00,Dunav Ruse,Botev Vratsa,Bulgaria,First League,handicap /H/ handicap,,not match,one,4goals,5.75,4.18,1.71,3.2,3.27,2.26,-44.3,-21.8,+32.2,Home 2-handicap,,over,,,Away handicap
+2026-09-19,11:00,Nordic United,Landskrona,Sweden,Superettan,Landskrona/ handicap,double,not match,both,4goals,4.0,4.61,1.88,2.41,3.2,2.62,-39.8,-30.6,+39.4,Home 2-handicap,,under confirmed,Landskrona/ handicap / double / 4goals,Landskrona / same,Away handicap
+2026-09-19,11:00,Oster,Norrkoping,Sweden,Superettan,Norrköping/ double,double,match,both,4goals,7.3,3.72,1.68,4.03,3.82,1.65,-44.8,+2.7,-1.8,Away,,over,Norrköping/ double / double / 4goals,Norrköping / 4goals,Home handicap
+2026-09-19,11:00,Rasisalai Utd,Lamphun Warrior,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.75,3.2,2.27,2.75,3.2,2.27,,,,,,over,,,
+2026-09-19,11:00,Shaanxi Union,Suzhou Dongwu,China,League One,Shaanxi Union/ handicap,double,match,both,4goals,1.54,4.44,7.94,1.65,3.75,4.32,+7.1,-15.5,-45.6,Away 2-handicap,,under,Shaanxi Union/ handicap / double / 4goals,Shaanxi Union only,Home handicap
+2026-09-19,11:00,Shenzhen Juniors,Changchun Yatai,China,League One,Shenzhen Juniors/ handicap,double,match,both,4goals,1.77,4.46,4.74,1.5,3.9,5.25,-15.3,-12.6,+10.8,Home 2-handicap,under,over,Shenzhen Juniors/ handicap / double,Shenzhen Juniors only,Away handicap
+2026-09-19,11:15,Banga,Dziugas Telsiai,Lithuania,A Lyga,handicap /H/ handicap,,match,one,3goals,2.87,3.83,2.56,1.86,3.28,3.53,-35.2,-14.4,+37.9,Home,under,over,,,Home
+2026-09-19,11:30,Pattani,Prachuap,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,3.25,3.1,2.1,3.25,3.1,2.1,,,,,,over,,,
+2026-09-19,11:30,Young Lions,Geylang,Singapore,S.League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,5.17,4.25,1.45,5.17,4.25,1.45,,,,,,over,,,
+2026-09-19,11:30,Nanjing City,Wuxi Wugou,China,League One,handicap /H/ handicap,,match,both,4goals,3.88,3.85,2.08,2.23,3.1,2.95,-42.5,-19.5,+41.8,Home 2-handicap,under,over,handicap /H/ handicap / double / 4goals,Wuxi Wugou / 4goals,Away handicap
+2026-09-19,11:30,Meizhou Hakka,Shijiazhuang Gongfu,China,League One,Shijiazhuang Gongfu/ handicap,double,match,both,4goals,4.15,4.12,1.94,3.57,3.3,1.89,-14.0,-19.9,-2.6,Away,,under confirmed,Shijiazhuang Gongfu/ handicap / double / 4goals,Shijiazhuang Gongfu,Away
+2026-09-19,12:00,Osasuna,Rayo Vallecano,Spain,LaLiga,handicap /H/ handicap,,not match,both,5goals,3.28,2.59,3.25,2.52,3.33,2.82,-23.2,+28.6,-13.2,Away,,under,Rayo Vallecano/ handicap / double / 5goals,Rayo Vallecano only,Home handicap
+2026-09-19,12:00,Alashkert,Pyunik Yerevan,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.15,7.69,,,,,,,,,,,,,
+2026-09-19,12:00,TPS,Ilves,Finland,Veikkausliiga,TPS/ handicap,,match,one,3goals,1.65,5.18,4.98,2.63,3.55,2.41,+59.4,-31.5,-51.6,Away,under,,,,
+2026-09-19,12:00,Chiangrai Utd,Sisaket United,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.07,14.49,4.22,1.76,3.15,4.22,+64.5,-78.3,,,,under confirmed,,,Away handicap
+2026-09-19,12:30,FK Zorya Luhansk,Dyn. Kyiv,Ukraine,Premier League,"Dynamo Kyiv, handicap/ double",,match,both,2goals or less,6.62,6.33,1.45,,,,,,,,,,,Dynamo Kyiv only,
+2026-09-19,13:00,Artis Brno,Liberec Czech,Republic,Czech Liga,Slovan Liberec/ wins,double,match,both,4goals,500.0,90.91,1.01,4.88,3.73,1.63,-99.0,-95.9,+61.4,Home 2-handicap,,under confirmed,Slovan Liberec/ wins / double / 4goals,Slovan Liberec,Away handicap
+2026-09-19,13:00,FK Pardubice,Bohemians Czech,Republic,Czech Liga,"Bohemians 1905, handicap/ double",,not match,both,4goals,7.09,4.67,1.55,2.0,3.5,3.4,-71.8,-25.1,+119.4,Home,,under,Bohemians 1905/ double / double / 4goals,Bohemians 1905 / same,Home
+2026-09-19,13:00,Elva,FC Tallinn,Estonia,Esiliiga,Elva/ handicap,double,match,both,5 goals,1.74,4.2,5.32,1.56,4.27,4.1,-10.3,+1.7,-22.9,Home,,over,Elva/ handicap / double,Elva only,Home
+2026-09-19,13:00,Politehnica UTM,Petrocub,Moldova,Super Liga,Politehnica UTM/ handicap,under,not match,one,4goals,2.49,2.85,4.02,4.0,3.8,1.67,+60.6,+33.3,-58.5,Away,,over,,,Home handicap
+2026-09-19,13:00,Oddevold,Varnamo,Sweden,Superettan,Oddevold/ handicap,double,match,both,4goals,1.69,5.15,4.63,2.14,3.32,2.93,+26.6,-35.5,-36.7,Away 2-handicap,,under confirmed,Oddevold/ handicap / double,Oddevold,Away
+2026-09-19,13:00,Varberg,Brage,Sweden,Superettan,Varberg/ handicap,double,not match,both,4goals,1.81,4.33,4.63,1.6,3.88,4.42,-11.6,-10.4,-4.5,Away,,under,Varberg/ handicap / double,Varberg only,Home handicap
+2026-09-19,13:00,Jelgava,Riga FC,Latvia,Virsliga,Riga/ wins,double,match,both,4goals,52.63,19.61,1.08,6.83,4.75,1.32,-87.0,-75.8,+22.2,Home 2-handicap,,over,Riga/ wins / double,Riga,Away handicap
+2026-09-19,13:00,Karditsa,Panionios,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,3.8,3.0,2.1,3.8,3.0,2.1,,,,,,over,,,
+2026-09-19,13:00,Zakynthos,Ellas Syrou,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.5,3.2,2.8,2.5,3.2,2.8,,,,,,,,,
+2026-09-19,13:30,Eintracht Frankfurt,Freiburg,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,2.47,3.73,2.55,2.47,3.73,2.55,,,,,,under,,,Home handicap
+2026-09-19,13:30,Werder Bremen,Augsburg,Germany,Bundesliga,handicap /H/ double,,match,both,5 goals,5.56,6.41,1.51,2.3,3.77,2.75,-58.6,-41.2,+82.1,Home,under,over,handicap /H/ double / double,Augsburg / same,Away handicap
+2026-09-19,13:30,Septemvri Sofia,Botev Plovdiv,Bulgaria,First League,handicap /H/ handicap,,not match,both,4goals,4.39,4.81,1.77,4.03,3.43,1.92,-8.2,-28.7,+8.5,Home,under,under confirmed,Botev Plovdiv/ handicap / double / 4goals,Botev Plovdiv only,Away handicap
+2026-09-19,14:00,Slavia Mozyr,Naftan,Belarus,Vysshaya Liga,Slavia/ double,double,match,both,3goals,1.43,6.49,6.9,1.35,5.4,8.45,-5.6,-16.8,+22.5,Home,,under confirmed,Slavia/ double / double / 3goals,Slavia / 3goals,Away handicap
+2026-09-19,14:00,Bangor FC,Portadown Northern,Ireland,Premiership,Portadown/ handicap,,match,one,3goals,3.14,4.61,2.15,2.7,3.3,2.25,-14.0,-28.4,+4.7,Home 2-handicap,,under confirmed,,,Away handicap
+2026-09-19,14:00,Carrick Rangers,Larne Northern,Ireland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,4.2,3.7,1.67,4.2,3.7,1.67,,,,,,under,,,Home handicap
+2026-09-19,14:00,Cliftonville,Glentoran Northern,Ireland,Premiership,handicap /Aw/ handicap,,match,one,3goals,1.69,4.88,4.95,3.1,3.4,2.0,+83.4,-30.3,-59.6,Away,under,under confirmed,,,Away/ under 3goals
+2026-09-19,14:00,Dungannon,Ballymena Northern,Ireland,Premiership,Ballymena United/ handicap,under,not match,one,3goals,2.74,4.42,2.44,2.05,3.4,3.0,-25.2,-23.1,+23.0,Home 2-handicap,under,under confirmed,,,Away handicap
+2026-09-19,14:00,Linfield,Crusaders Northern,Ireland,Premiership,Linfield/ handicap,double,match,both,3goals,1.48,5.29,7.3,1.25,5.0,8.5,-15.5,-5.5,+16.4,Home,under,under,Linfield/ handicap / double / 3goals,Linfield only,Home/ under 3goals
+2026-09-19,14:00,Dundee FC,Motherwell,Scotland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.82,4.52,4.37,2.89,3.43,2.29,+58.8,-24.1,-47.6,Away,under,under confirmed,,,Away/ under 4goals
+2026-09-19,14:00,Hibernian,Aberdeen,Scotland,Premiership,Aberdeen/ handicap,,match,one,4goals,4.74,5.21,1.68,1.73,3.78,4.37,-63.5,-27.4,+160.1,Home,,under confirmed,,,Away handicap
+2026-09-19,14:00,St Johnstone,Falkirk,Scotland,Premiership,St. Johnstone/ handicap,,match,one,4goals,1.28,7.69,11.36,2.08,3.35,3.38,+62.5,-56.4,-70.2,Away 2-handicap,,under confirmed,,,Away
+2026-09-19,14:00,St. Mirren,Dundee Utd,Scotland,Premiership,St. Mirren / low/ handicap,,not match,one,4goals,4.31,3.27,2.16,2.28,3.57,2.85,-47.1,+9.2,+31.9,Home 2-handicap,under,over,,,Home
+2026-09-19,14:00,Kristiansund,Rosenborg,Norway,Eliteserien,Kristiansund/ handicap,under,not match,one,5 goals,2.77,3.51,2.82,5.53,4.47,1.51,+99.6,+27.4,-46.5,Away,,over,,,Home handicap
+2026-09-19,14:00,Gagra,Meshakhte Tkibuli,Georgia,Erovnuli Liga,Gagra/ handicap,double,match,both,3goals,2.48,3.33,3.38,1.8,3.4,3.8,-27.4,+2.1,+12.4,Home 2-handicap,under,under,Gagra/ handicap / double / 3goals,Gagra / 3goals,Home 2-handicap/ under 3goals
+2026-09-19,14:00,Vikingur,07 Vestur Sorvagur Faroe,Islands,Premier League,Víkingur/ double,double,match,both,4goals,2.0,3.07,5.78,1.3,5.0,6.5,-35.0,+62.9,+12.5,Home 2-handicap,,over,Víkingur/ double / double / 4goals,Víkingur,Home
+2026-09-19,14:00,Asane,Bryne,Norway,1st Division,#N/A,,#N/A,both,5 goals,2.78,3.73,2.69,3.8,3.7,1.82,+36.7,-0.8,-32.3,Away,,under,,,Home handicap
+2026-09-19,14:00,VPS,KuPS,Finland,Veikkausliiga,handicap /H/ handicap,,match,both,3goals,6.02,4.35,1.66,3.36,3.33,2.08,-44.2,-23.4,+25.3,Home 2-handicap,,,handicap /H/ handicap / double / 3goals,KuPS / 3goals,
+2026-09-19,14:30,Gil Vicente,Maritimo,Portugal,Primeira Liga,Gil Vicente / low/ handicap,,match,one,4goals,1.7,3.29,9.26,1.99,3.3,3.85,+17.1,+0.3,-58.4,Away 2-handicap,,under,,,Home handicap
+2026-09-19,14:30,Nacional,Famalicao,Portugal,Primeira Liga,Famalicão / low/ handicap,,match,one,4goals,2.14,4.41,3.27,3.72,3.38,2.03,+73.8,-23.4,-37.9,Away,,under confirmed,,,Away
+2026-09-19,14:30,Den Haag,Cambuur,Netherlands,Eredivisie,handicap /Aw/ handicap,,match,one,5 goals,1.68,6.06,4.18,1.93,3.78,3.6,+14.9,-37.6,-13.9,Away,,over,,,Away
+2026-09-19,14:30,HB Torshavn,AB Argir Faroe,Islands,Premier League,HB/ double,double,match,both,4goals,1.59,4.27,7.19,1.35,4.7,6.0,-15.1,+10.1,-16.6,Home,,over,HB/ double / double / 4goals,HB / 4goals / same,Home
+2026-09-19,15:00,Olympique Akbou,USM Alger,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.45,2.75,2.87,2.45,2.75,2.87,,,,,,over,,,
+2026-09-19,15:00,Ben Aknoun,El Biar,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.07,14.93,,,,,,,,,,,,,
+2026-09-19,15:00,Constantine,Biskra,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.01,125.0,2.88,2.27,3.15,2.88,+124.8,-97.5,,,,over,,,Away handicap
+2026-09-19,15:00,Kabylie,ASO Chlef,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.07,16.13,,,,,,,,,,,,,
+2026-09-19,15:00,CR Belouizdad,Khenchela,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-19,15:00,MC Alger,Temouchent,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.01,166.67,,,,,,,,,,,,,
+2026-09-19,15:00,Rouisset,USM Alger,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.45,2.75,2.87,2.45,2.75,2.87,,,,,,over,,,
+2026-09-19,15:00,Saoura,Olympique Akbou,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-19,15:00,Varazdin,Osijek,Croatia,HNL,Varaždin/ handicap,,match,one,5 goals,1.81,3.51,6.13,1.88,3.32,3.4,+3.9,-5.4,-44.5,Away 2-handicap,,under,,,Home handicap
+2026-09-19,15:00,Novi Pazar,Zemun,Serbia,Super Liga,Novi Pazar/ double,double,match,both,3goals,1.41,4.83,11.76,1.35,4.5,7.42,-4.3,-6.8,-36.9,Home,,under,Novi Pazar/ double / double / 3goals,Novi Pazar / 3goals,Home
+2026-09-19,15:00,Vojvodina,IMT Novi Beograd,Serbia,Super Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.46,3.0,3.85,1.64,3.85,4.42,-33.3,+28.3,+14.8,Home 2-handicap,,over,,,Home
+2026-09-19,15:00,Sandviken,Orebro,Sweden,Superettan,Sandviken/ handicap,double,match,both,4goals,1.88,4.76,3.88,2.15,3.48,2.79,+14.4,-26.9,-28.1,Away 2-handicap,,under confirmed,Sandviken/ handicap / double / 4goals,Sandviken only,Away
+2026-09-19,15:00,Epitsentr,Livyi Bereg,Ukraine,Premier League,Epitsentr/ handicap,double,match,both,2goals or less,4.41,1.62,6.37,,,,,,,,,,Epitsentr/ handicap / double / 2goals,Epitsentr / 2goals or less,
+2026-09-19,15:00,BKMA,Sardarapat,Armenia,Premier League,Sardarapat / low/ handicap,,match,one,4goals,9.62,4.41,1.5,2.5,3.2,2.45,-74.0,-27.4,+63.3,Home 2-handicap,,under,,,Home
+2026-09-19,15:30,GKS Katowice,Cracovia,Poland,Ekstraklasa,GKS Katowice/ handicap,,not match,one,4goals,1.07,18.87,100.0,2.19,3.42,3.0,+104.7,-81.9,-97.0,Away,,under confirmed,,,Away
+2026-09-19,15:30,Orgryte,Sirius,Sweden,Allsvenskan,Sirius/ wins,double,match,both,4goals,16.67,11.36,1.17,5.83,4.63,1.46,-65.0,-59.2,+24.8,Home 2-handicap,,over,Sirius/ wins / double,Sirius,Away handicap
+2026-09-19,15:45,Ghaz Al Shamal,Newroz,Iraq,Iraqi League,"Newroz, handicap/ double",,match,both,3goals,100.0,7.75,1.16,3.2,3.0,2.15,-96.8,-61.3,+85.3,Home 2-handicap,,over,"Newroz, handicap/ double / double / 3goals",Newroz / 3goals,Home
+2026-09-19,15:45,Al Quwa Al Jawiya,Diyala,Iraq,Iraqi League,handicap /H/ handicap,,match,one,3goals,3.94,3.38,2.23,1.72,3.35,4.35,-56.3,-0.9,+95.1,Home,,under,,,Home
+2026-09-19,16:00,Slovacko,Ostrava Czech,Republic,Czech Liga,Slovácko/ handicap,,match,one,4goals,2.32,2.6,5.41,2.4,3.33,2.73,+3.4,+28.1,-49.5,Away 2-handicap,under,under,,,Away 2-handicap/ under 4goals
+2026-09-19,16:00,Molde,Aalesund,Norway,Eliteserien,Molde/ double,double,match,both,5 goals,1.52,5.38,6.49,1.35,5.67,6.83,-11.2,+5.4,+5.2,Home 2-handicap,under,over,Molde/ double / double,Molde,Home
+2026-09-19,16:00,Luzern,Grasshoppers,Switzerland,Super League,Luzern/ handicap,,not match,one,5 goals,2.13,4.12,3.46,1.65,4.3,4.35,-22.5,+4.4,+25.7,Home,,,,,
+2026-09-19,16:00,Young Boys,Servette,Switzerland,Super League,Young Boys/ double,double,match,both,5 goals,1.99,5.15,3.3,1.55,4.6,4.93,-22.1,-10.7,+49.4,Home,,under confirmed,Young Boys/ double / double,Young Boys,Away handicap
+2026-09-19,16:00,Sion,Zurich,Switzerland,Super League,Sion/ double,double,match,both,5 goals,1.19,10.75,15.15,1.44,4.92,5.97,+21.0,-54.2,-60.6,Away 2-handicap,,over,Sion/ double / double,Sion,Away
+2026-09-19,16:00,Zimbru Chisinau,Dacia Buiucani,Moldova,Super Liga,Zimbru/ handicap,,match,one,4goals,3.14,3.72,2.42,1.3,4.5,7.5,-58.6,+21.0,+209.9,Home,,under,,,Home
+2026-09-19,16:00,Samgurali,Dinamo Tbilisi,Georgia,Erovnuli Liga,"Dinamo Tbilisi, handicap/ handicap",,match,both,3goals,5.68,4.61,1.65,3.4,3.5,1.9,-40.1,-24.1,+15.2,Home 2-handicap,,over,"Dinamo Tbilisi, handicap/ handicap / double",Dinamo Tbilisi only,Away handicap
+2026-09-19,16:00,Shabab Al Ordon,Al Hussein,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,8.4,4.5,1.38,8.4,4.5,1.38,,,,,,,,,
+2026-09-19,16:30,Celta Vigo,Racing Santander,Spain,LaLiga,Racing de Santander / low/ handicap,,not match,both,5goals,4.05,3.51,2.14,,,,,,,,,,,5goals / same,
+2026-09-19,16:30,Stuttgart,Dortmund,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.34,9.01,6.94,2.52,4.27,2.78,+88.1,-52.6,-59.9,Away,under,over,,,Away
+2026-09-19,16:45,Sparta Rotterdam,Heerenveen,Netherlands,Eredivisie,Heerenveen/ handicap,,not match,both,5 goals,1.77,5.15,4.17,2.39,3.73,2.63,+35.0,-27.6,-36.9,Away 2-handicap,under,,Sparta Rotterdam/ handicap / double / 5goals,Sparta Rotterdam / 5 goals / same,
+2026-09-19,16:45,Kilmarnock,Hearts,Scotland,Premiership,Hearts/ wins,double,match,both,4goals,142.86,40.0,1.03,4.47,3.95,1.68,-96.9,-90.1,+63.1,Home 2-handicap,,,Hearts/ wins / double,Hearts,
+2026-09-19,17:00,Alverca,Rio Ave,Portugal,Primeira Liga,Alverca/ double,double,not match,both,4goals,1.77,4.02,5.35,1.88,3.46,3.91,+6.2,-13.9,-26.9,Away 2-handicap,,,Alverca/ double / double,Alverca / same,
+2026-09-19,17:00,Din. Minsk,BATE,Belarus,Vysshaya Liga,Minsk/ handicap,double,match,both,3goals,1.83,3.07,7.75,1.48,4.25,6.67,-19.1,+38.4,-13.9,Away,,under,Minsk/ handicap / double / 3goals,Minsk only,Home handicap
+2026-09-19,17:00,Radnik,Partizan,Serbia,Super Liga,handicap /H/ handicap,,match,one,3goals,3.62,4.5,1.99,,,,,,,,,,,,
+2026-09-19,17:00,Coleraine,Limavady Northern,Ireland,Premiership,Coleraine/ wins,double,match,both,3goals,1.15,11.11,23.81,,,,,,,,,,Coleraine/ wins / double,Coleraine,
+2026-09-19,17:00,Arsenal Tivat,Sutjeska,Montenegro,First League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,12.5,1.09,,,,,,,,,,,,,
+2026-09-19,17:30,Grazer AK,Austria Vienna,Austria,Bundesliga,Grazer AK/ handicap,,match,one,4goals,1.72,3.56,7.35,2.62,3.23,2.54,+52.3,-9.3,-65.4,Away 2-handicap,under,,,,
+2026-09-19,18:00,Ajax,Excelsior,Netherlands,Eredivisie,Excelsior/ handicap,under,not match,one,5 goals,4.93,5.13,1.66,1.21,6.84,10.57,-75.5,+33.3,+536.7,Home,,,,,
+2026-09-19,18:00,Al-Karma,Zakho,Iraq,Iraqi League,Al-Karma/ double,double,match,both,3goals,1.13,11.63,35.71,,,,,,,,,,Al-Karma/ double / double / 3goals,Al-Karma / 3goals,
+2026-09-19,18:00,ES Setif,Constantine,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-19,18:00,Vardar,Shkendija Haracine North,Macedonia,First League,Vardar Skopje/ handicap,,match,both,4goals,8.47,4.78,1.49,,,,,,,,,,Vardar Skopje/ handicap / double,Shkendija,
+2026-09-19,18:00,Istra 1961,Gorica,Croatia,HNL,Istra 1961/ wins,double,match,both,5 goals,1.34,5.99,11.9,,,,,,,,,,Istra 1961/ wins / double,Istra 1961 / same,
+2026-09-19,18:00,Meux,RWDM Brussels,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,2.56,3.14,3.42,,,,,,,,,,,,
+2026-09-19,18:15,Motor Lublin,Gornik Zabrze,Poland,Ekstraklasa,Górnik Zabrze/ double,double,not match,both,4goals,62.5,14.49,1.09,3.15,3.49,2.09,-95.0,-75.9,+91.7,Home 2-handicap,,,,,
+2026-09-19,18:30,Al Shorta,Al Kahraba,Iraq,Iraqi League,Al Shorta/ handicap,double,match,both,3goals,2.31,2.18,9.17,,,,,,,,,,Al Shorta/ handicap / double / 3goals,Al Shorta only,
+2026-09-19,18:30,Komarno,Slovan Bratislava,Slovakia,1. Liga,Slovan Bratislava/ wins,double,match,both,5 goals,40.0,6.58,1.22,,,,,,,,,,Slovan Bratislava/ wins / double / 5goals,Slovan Bratislava / 5 goals,
+2026-09-19,18:30,Gzira,Mosta,Malta,Premier League,Gzira United/ handicap,,match,one,3goals,1.1,15.38,40.0,,,,,,,,,,,,
+2026-09-19,19:00,Willem II,Sittard,Netherlands,Eredivisie,Fortuna Sittard/ double,double,match,both,5 goals,6.62,6.67,1.43,2.53,3.63,2.6,-61.8,-45.6,+81.8,Home,under,under confirmed,Fortuna Sittard/ double / double,Fortuna Sittard / same,Away handicap
+2026-09-19,19:00,Sevilla,Barcelona,Spain,LaLiga,Barcelona/ handicap,double,match,both,5goals,125.0,38.46,1.04,9.83,6.5,1.25,-92.1,-83.1,+20.2,Home 2-handicap,,over,Barcelona/ handicap / double,Barcelona only,Away handicap
+2026-09-19,19:30,Sport Recife,Juventude,Brazil,Serie B,Sport Recife/ handicap,under,not match,one,3goals,2.79,3.19,3.03,2.48,3.03,2.97,-11.1,-5.0,-2.0,Away,,under,,,Home handicap
+2026-09-19,19:30,Sporting CP,Arouca,Portugal,Primeira Liga,Sporting CP/ handicap,,match,one,4goals,1.53,3.55,15.15,1.18,7.33,13.0,-22.9,+106.5,-14.2,Away,,over,,,Home handicap
+2026-09-19,20:00,Mirassol,Botafogo RJ,Brazil,Serie A,Mirassol/ handicap,,not match,both,4goals,3.66,4.61,1.96,2.05,3.57,3.48,-44.0,-22.6,+77.6,Home,,under confirmed,Botafogo/ handicap / double,Botafogo / same,Away handicap
+2026-09-19,21:00,Cacahuatique,FAS El,Salvador,Primera Division,FAS/ double,double,match,both,4goals,10.53,6.21,1.34,3.7,3.7,1.7,-64.9,-40.4,+26.9,Home 2-handicap,,,FAS/ double / double,FAS,
+2026-09-19,21:30,Remo,Santos,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,3.51,4.48,2.03,2.83,3.22,2.52,-19.4,-28.1,+24.1,Home,under,under confirmed,Santos/ handicap / double,Santos / same,Away handicap
+2026-09-19,21:30,Athletic Club,Botafogo SP,Brazil,Serie B,Athletic Club MG/ handicap,double,match,both,3goals,2.63,2.66,4.1,2.23,3.1,3.4,-15.2,+16.5,-17.1,Home,,over,Athletic Club MG/ handicap / double / 3goals,Athletic Club MG / 3goals / same,Home
+2026-09-19,21:30,Guayaquil City,Leones del Norte,Ecuador,Liga Pro,Leones del Norte / low/ handicap,,not match,one,3goals,2.94,3.06,3.0,2.25,3.1,3.1,-23.5,+1.3,+3.3,Home 2-handicap,under,under,,,Home
+2026-09-19,23:00,Charleston,Monterey Bay,USA,USL Championship,Charleston Battery/ double,double,match,both,4goals,1.09,16.67,40.0,1.4,4.2,6.0,+28.4,-74.8,-85.0,Away 2-handicap,,over,Charleston Battery/ double / double,Charleston Battery / same,Away
+2026-09-19,23:00,Detroit,Pittsburgh,USA,USL Championship,Detroit City/ handicap,double,match,both,4goals,2.15,2.75,5.88,2.1,3.0,3.4,-2.3,+9.1,-42.2,Home,,over,Detroit City/ handicap / double / 4goals,Detroit City / 4goals / same,Home
+2026-09-19,23:00,Lexington,Orange County SC,USA,USL Championship,handicap /H/ handicap,,not match,one,4goals,3.6,4.24,2.06,1.53,3.8,5.0,-57.5,-10.4,+142.7,Home,,over,,,Away handicap
+2026-09-19,23:00,Louisville City,Loudoun,USA,USL Championship,Louisville City/ handicap,double,match,both,4goals,2.02,3.56,4.48,1.4,4.33,6.0,-30.7,+21.6,+33.9,Home,,over,Louisville City/ handicap / double / 4goals,Louisville City only,Home
+2026-09-19,23:00,Brooklyn,FC Tulsa,USA,USL Championship,"FC Tulsa, handicap/ double",,match,both,4goals,4.44,3.39,2.08,2.45,3.5,2.38,-44.8,+3.2,+14.4,Home 2-handicap,under,under,"FC Tulsa, handicap/ double / double / 4goals",FC Tulsa / 4goals,Home
+2026-09-19,23:30,Rhode Island,Miami FC,USA,USL Championship,Rhode Island/ double,double,match,both,4goals,1.48,4.5,9.9,1.38,4.33,6.25,-6.8,-3.8,-36.9,Home,,over,Rhode Island/ double / double / 4goals,Rhode Island / 4goals,Home
+2026-09-19,23:30,Tampa Bay,Birmingham,USA,USL Championship,Tampa Bay Rowdies/ handicap,double,match,both,4goals,2.06,5.56,2.99,1.36,4.75,6.25,-34.0,-14.6,+109.0,Home,,over,Tampa Bay Rowdies/ handicap / double / 4goals,Tampa Bay Rowdies only,Away handicap
+2026-09-19,23:30,Vasco,Coritiba,Brazil,Serie A,handicap /H/ handicap,,not match,both,4goals,5.0,4.59,1.72,1.47,4.2,7.67,-70.6,-8.5,+345.9,Home,,under confirmed,Coritiba/ handicap / double,Coritiba / same,Away handicap
+2026-09-19,00:30,Aucas,Macara,Ecuador,Liga Pro,Macará / low/ handicap,,match,one,3goals,3.69,3.92,2.11,2.6,2.25,3.85,-29.5,-42.6,+82.5,Home,,,,,
+2026-09-19,07:30,Bucheon FC 1995,Gimcheon Sangmu South,Korea,K League 1,handicap /Aw/ handicap,,not match,both,3goals,2.82,3.37,2.87,2.98,3.18,2.19,+5.7,-5.6,-23.7,Away 2-handicap,under,under,Bucheon 1995/ handicap / double / 3goals,Bucheon 1995 / 3goals / same,Home handicap
+2026-09-19,07:30,Jeonnam,Suwon FC South,Korea,K League 2,"Suwon, handicap/ double",,match,both,4goals,3.62,4.26,2.04,3.6,3.5,1.8,-0.6,-17.8,-11.8,Home,,over,"Suwon, handicap/ double / double",Suwon,Away handicap
+2026-09-19,19:00,Manta,Orense,Ecuador,Liga Pro,"Orense, handicap/ handicap",,not match,both,3goals,5.18,2.81,2.22,,,,,,,,,,Orense/ handicap / double / 3goals,Orense only,
+2026-09-18,10:00,Yanbian Longding,Guangdong,GZ,Power China - League One,handicap /H/ handicap,,match,both,4goals,4.26,3.82,1.99,3.65,3.47,1.83,-14.3,-9.2,-8.0,Away,,under,handicap /H/ handicap / double / 4goals,Guangdong GZ-Power only,Home handicap
+2026-09-18,11:00,Dalian K'un City,Ningbo Professional,China,League One,Dalian K'un City FC/ handicap,,not match,both,4goals,3.19,3.45,2.52,1.9,3.5,3.4,-40.4,+1.4,+34.9,Home 2-handicap,under,under,Ningbo Professional/ handicap / double / 4goals,Ningbo Professional / 4goals / same,Home 2-handicap/ under 4goals
+2026-09-18,11:30,Nantong Zhiyun,Guangxi Hengchen,China,League One,Nantong Zhiyun/ handicap,,match,one,4goals,1.97,3.82,4.33,1.95,3.2,3.6,-1.0,-16.2,-16.9,Home,,under,,,Home
+2026-09-18,11:35,Zhejiang Professional,Wuhan Three Towns,China,Super League,Zhejiang/ handicap,double,match,both,5goals,2.44,5.03,2.56,1.97,4.03,3.27,-19.3,-19.9,+27.7,Home,under,under confirmed,Zhejiang/ handicap / double,Zhejiang / same,Away handicap
+2026-09-18,12:00,Ayutthaya Utd,Uthai Thani,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,3.41,5.92,1.86,2.4,2.98,2.7,-29.6,-49.7,+45.2,Home,,over,,,Away handicap
+2026-09-18,12:30,Polissya Zhytomyr,Kryvbas,Ukraine,Premier League,Polissya/ handicap,,match,one,2goals or less,2.92,4.76,2.24,,,,,,,,,,,,
+2026-09-18,13:30,Belshina,FC Minsk,Belarus,Vysshaya Liga,"Minsk, handicap/ handicap",,match,both,3goals,2.84,3.73,2.63,4.24,3.5,1.87,+49.3,-6.2,-28.9,Away,,over,"Minsk, handicap/ handicap / double",Minsk only,Away
+2026-09-18,14:00,FC Gandzasar,Urartu,Armenia,Premier League,Gandzasar/ double,,match,both,4goals,7.35,5.29,1.48,3.5,3.7,1.8,-52.4,-30.1,+21.6,Home 2-handicap,,under confirmed,Gandzasar/ double / double,Urartu,Away handicap
+2026-09-18,14:00,Kyzylzhar,Kaisar Kyzylorda,Kazakhstan,Premier League,Kyzyl-Zhar/ handicap,under,not match,one,3goals,2.44,3.91,2.99,2.06,3.15,3.15,-15.6,-19.4,+5.4,Home 2-handicap,under,under confirmed,,,Away handicap
+2026-09-18,14:00,Shkendija,Bashkimi North,Macedonia,First League,Shkendija/ wins,double,match,both,4goals,1.18,9.9,18.52,1.04,13.0,34.0,-11.9,+31.3,+83.6,Home,,under confirmed,Shkendija/ wins / double,Shkendija,Away handicap
+2026-09-18,14:00,Sileks,Tikves North,Macedonia,First League,handicap /H/ double,,match,both,4goals,16.39,10.53,1.18,,,,,,,,,,handicap /H/ double / double,Tikvesh / same,
+2026-09-18,15:00,Khenchela,Ben Aknoun,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.03,3.02,3.42,2.03,3.02,3.42,,,,,,over,,,
+2026-09-18,15:00,UTA Arad,Sepsi Sf. Gheorghe,Romania,Liga I,UTA Arad/ handicap,,match,one,3goals,2.12,3.09,4.88,,,,,,,,,,,,
+2026-09-18,15:00,Al Arabi Irbid,Al Jazeera Amman,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,3.37,3.22,1.96,3.37,3.22,1.96,,,,,,over,,,
+2026-09-18,15:00,Lahti,Jaro,Finland,Veikkausliiga,Lahti/ double,double,match,both,3goals,1.22,7.52,21.28,1.53,3.97,5.43,+25.4,-47.2,-74.5,Away 2-handicap,,over,Lahti/ double / double / 3goals,Lahti / 3goals / same,Home handicap
+2026-09-18,15:00,SJK,Mariehamn,Finland,Veikkausliiga,SJK/ handicap,double,match,both,3goals,1.61,4.95,5.68,1.72,3.65,4.17,+6.8,-26.3,-26.6,Away 2-handicap,,under confirmed,SJK/ handicap / double / 3goals,SJK only,Away
+2026-09-18,15:00,Aktobe,Ulytau,Kazakhstan,Premier League,Aktobe/ handicap,,match,one,3goals,1.65,3.82,7.52,1.49,3.98,5.07,-9.7,+4.2,-32.6,Home,,under,,,Home
+2026-09-18,15:45,Karbala,Erbil,Iraq,Iraqi League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,4.73,3.52,1.6,4.73,3.52,1.6,,,,,,under,,,Home handicap
+2026-09-18,15:45,Al Mosul,Al Naft,Iraq,Iraqi League,Al Mosul/ handicap,under,not match,one,3goals,2.34,3.48,3.51,2.33,2.95,2.92,-0.4,-15.2,-16.8,Home,,over,,,Home
+2026-09-18,16:00,Zabbar,Birkirkara,Malta,Premier League,Birkirkara/ handicap,double,match,both,3goals,6.58,3.77,1.72,,,,,,,,,,Birkirkara/ handicap / double / 3goals,Birkirkara only,
+2026-09-18,16:00,Harju JK Laagri,Kuressaare,Estonia,Meistriliiga,Laagri/ handicap,double,match,both,5goals,2.44,3.92,2.98,1.96,3.62,3.12,-19.7,-7.7,+4.7,Home 2-handicap,under,under,Laagri/ handicap / double,Laagri / same,Home
+2026-09-18,16:00,Noah,Van,Armenia,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.01,76.92,,,,,,,,,,,,,
+2026-09-18,16:00,AC Oulu,Inter Turku,Finland,Veikkausliiga,Inter Turku / low/ handicap,,match,both,3goals,6.33,3.62,1.77,4.12,3.35,1.79,-34.9,-7.5,+1.1,Home 2-handicap,,under,Inter Turku / low/ handicap / double / 3goals,Inter Turku / 3goals,Home
+2026-09-18,16:00,Gnistan,HJK,Finland,Veikkausliiga,Gnistan/ handicap,under,not match,one,3goals,5.49,5.78,1.55,3.73,3.77,1.8,-32.1,-34.8,+16.1,Home 2-handicap,,under confirmed,,,Away handicap
+2026-09-18,17:00,Sarpsborg 08,KFUM Oslo,Norway,Eliteserien,Sarpsborg 08/ handicap,double,match,both,5 goals,2.19,3.58,3.77,1.6,4.13,4.93,-26.9,+15.4,+30.8,Home,,over,Sarpsborg 08/ handicap / double / 5goals,Sarpsborg 08 / 5 goals / same,Home
+2026-09-18,17:00,Falkenberg,Ostersund,Sweden,Superettan,Falkenberg/ handicap,,match,one,4goals,2.67,3.48,2.95,2.24,3.28,2.79,-16.1,-5.7,-5.4,Away,,under,,,Home handicap
+2026-09-18,17:00,Buducnost,Petrovac,Montenegro,First League,Budućnost / low/ handicap,,match,one,2goals or less,5.65,1.69,4.33,2.1,3.1,3.1,-62.8,+83.4,-28.4,Away,,over,,,Home handicap
+2026-09-18,17:00,Slavia Sofia,CSKA 1948 Sofia,Bulgaria,First League,CSKA 1948 Sofia / low/ handicap,,not match,one,4goals,5.88,2.79,2.12,4.47,3.47,1.81,-24.0,+24.4,-14.6,Away,,under,,,Home handicap
+2026-09-18,17:30,Al Wehdat,Al Ramtha,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.46,3.78,6.03,1.46,3.78,6.03,,,,,,,,,
+2026-09-18,18:00,MC Alger,Rouisset,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.06,17.54,10.0,1.3,4.08,10.0,+22.6,-76.7,,,,under confirmed,,,Away handicap
+2026-09-18,18:00,Al Minaa,Duhok,Iraq,Iraqi League,Al Minaa Basra/ handicap,,not match,both,3goals,2.94,4.15,2.39,2.87,2.98,2.33,-2.4,-28.2,-2.5,Home,,over,Duhok/ handicap / double / 3goals,Duhok / same,Away handicap
+2026-09-18,18:00,Al Talaba,Al Golan,Iraq,Iraqi League,"Al Golan, handicap/ handicap",,match,one,3goals,18.18,8.62,1.21,1.74,3.22,4.34,-90.4,-62.6,+258.7,Home,,over,,,Away handicap
+2026-09-18,18:00,Groningen,Zwolle,Netherlands,Eredivisie,handicap /Aw/ double,,not match,both,5 goals,1.6,5.35,5.32,1.59,4.32,4.93,-0.6,-19.3,-7.3,Home,,over,Groningen/ double / double,Groningen / same,Away handicap
+2026-09-18,18:30,Hamrun,Marsaxlokk,Malta,Premier League,Hamrun Spartans/ double,double,not match,both,3goals,1.82,2.88,9.62,,,,,,,,,,"Hamrun Spartans, handicap/ double / double / 3goals",Hamrun Spartans / 3goals / same,
+2026-09-18,18:30,Bayern Munich,Union Berlin,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.0,14.33,24.0,1.05,14.33,24.0,+5.0,,,,,over,,,Away handicap
+2026-09-18,18:45,Derry City,Galway,Ireland,Premier Division,Derry City/ handicap,double,match,both,4goals,2.31,4.13,3.08,1.75,3.57,4.17,-24.2,-13.6,+35.4,Home,under,over,Derry City/ handicap / double,Derry City,Away handicap
+2026-09-18,18:45,Dundalk,Shelbourne,Ireland,Premier Division,Dundalk/ handicap,,match,one,4goals,3.39,3.77,2.27,2.22,3.42,2.9,-34.5,-9.3,+27.8,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
+2026-09-18,18:45,Athlone,Kerry,Ireland,First Division,Athlone Town/ handicap,,not match,both,4goals,3.25,3.41,2.51,2.21,3.33,2.88,-32.0,-2.3,+14.7,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
+2026-09-18,18:45,Finn Harps,Longford,Ireland,First Division,handicap /H/ double,,not match,both,4goals,8.26,5.26,1.45,3.78,3.53,1.8,-54.2,-32.9,+24.1,Home 2-handicap,,over,Longford Town/ double / double,Longford Town / same,Away handicap
+2026-09-18,18:45,Wexford,Cobh Ramblers,Ireland,First Division,Wexford/ handicap,,not match,both,4goals,3.11,4.12,2.29,2.2,3.4,2.9,-29.3,-17.5,+26.6,Home 2-handicap,under,under confirmed,Cobh Ramblers/ handicap / double / 4goals,Cobh Ramblers / same,Away handicap
+2026-09-18,19:00,Bohemians,Drogheda,Ireland,Premier Division,Bohemians/ handicap,double,match,both,4goals,1.9,4.55,3.94,1.46,4.15,6.25,-23.2,-8.8,+58.6,Home,,under confirmed,Bohemians/ handicap / double,Bohemians only,Away handicap
+2026-09-18,19:00,Shamrock Rovers,Waterford,Ireland,Premier Division,Shamrock Rovers/ handicap,double,match,both,4goals,1.41,5.88,8.26,1.48,4.17,5.63,+5.0,-29.1,-31.8,Away 2-handicap,,under confirmed,Shamrock Rovers/ handicap / double / 4goals,Shamrock Rovers only,Away
+2026-09-18,19:00,Espanyol,Elche,Spain,LaLiga,Espanyol/ double,double,not match,both,5goals,2.06,3.98,3.79,1.82,3.5,4.58,-11.7,-12.1,+20.8,Home,under,over,Espanyol/ double / double,Espanyol / same,Home
+2026-09-18,21:00,Central Cordoba,Defensa y Justicia,Argentina,Liga Profesional Argentina,"Defensa y Justicia, handicap/ double",,not match,both,2goals or less,9.09,2.57,2.0,2.83,2.88,2.78,-68.9,+12.1,+39.0,Home 2-handicap,under,over,,,Home
+2026-09-18,21:00,Platense,UPNFM,Honduras,Liga Nacional,Platense/ handicap,under,not match,one,3goals,1.82,3.34,6.58,2.25,3.3,2.7,+23.6,-1.2,-59.0,Away 2-handicap,,under,,,Home handicap
+2026-09-18,23:30,New York City,New York Red Bulls,USA,MLS,New York City/ handicap,double,match,both,5 goals,2.16,4.5,3.18,1.77,4.0,4.03,-18.1,-11.1,+26.7,Home,under,over,New York City/ handicap / double,New York City,Away handicap
+2026-09-18,23:30,Ceara,Novorizontino,Brazil,Serie B,handicap /H/ double,,not match,both,3goals,10.87,5.95,1.35,2.9,3.22,2.45,-73.3,-45.9,+81.5,Home,,under confirmed,Novorizontino/ double / double,Novorizontino / same,Away handicap
+2026-09-17,00:30,Birmingham,New Mexico,USA,USL Championship,New Mexico United / low/ handicap,,match,both,4goals,5.41,3.11,2.03,8.0,4.75,1.33,+47.9,+52.7,-34.5,Away,,,New Mexico United / low/ handicap / double / 4goals,New Mexico United / same,
+2026-09-17,01:00,Luis Angel Firpo,Alianza FC El,Salvador,Primera Division,Alianza / low/ handicap,,match,both,4goals,3.83,3.18,2.35,,,,,,,,,,,,
+2026-09-17,13:00,Vakhsh,Regar-TadAZ,Tajikistan,Higher League,Regar-TadAZ/ double,double,not match,both,3goals,7.14,3.53,1.73,,,,,,,,,,Regar-TadAZ/ double / double / 3goals,Regar-TadAZ / 3goals / same,
+2026-09-17,13:15,Orenburg,Krasnodar,Russia,Premier League,Krasnodar/ double,double,not match,both,4goals,8.33,6.21,1.39,4.53,3.85,1.75,-45.6,-38.0,+25.9,Home 2-handicap,,,,,
+2026-09-17,14:00,FC Astana,Kairat Almaty,Kazakhstan,Premier League,Astana/ handicap,,not match,both,3goals,3.45,3.91,2.2,2.77,3.25,2.19,-19.7,-16.9,-0.5,Away,,under,Kairat/ handicap / double,Kairat only,Home handicap
+2026-09-17,14:00,Tobol,Yelimay Semey,Kazakhstan,Premier League,Tobol Kostanay/ handicap,,match,one,3goals,2.84,4.57,2.33,2.01,3.37,3.05,-29.2,-26.3,+30.9,Home,under,under confirmed,,,Away handicap
+2026-09-17,15:00,Atyrau,Ordabasy,Kazakhstan,Premier League,Ordabasy/ double,double,match,both,3goals,22.73,8.26,1.2,5.2,3.82,1.5,-77.1,-53.8,+25.0,Home 2-handicap,,under confirmed,Ordabasy/ double / double / 3goals,Ordabasy,Away handicap
+2026-09-17,15:30,Akron Togliatti,Akhmat Grozny,Russia,Premier League,"Akhmat Grozny, handicap/ handicap",,match,both,4goals,7.58,3.01,1.87,3.12,3.37,2.28,-58.8,+12.0,+21.9,Home 2-handicap,under,,"Akhmat Grozny, handicap/ handicap / double / 4goals",Akhmat Grozny only,
+2026-09-17,15:45,Al Karkh,Naft Missan,Iraq,Iraqi League,"Naft, handicap/ double",,match,both,3goals,4.88,4.03,1.83,2.34,2.92,2.88,-52.0,-27.5,+57.4,Home,under,under confirmed,"Naft, handicap/ double / double / 3goals",Naft / 3goals,Away handicap
+2026-09-17,16:00,Levadia,Tammeka,Estonia,Meistriliiga,FCI Levadia/ wins,double,match,both,5goals,1.26,7.41,14.49,1.17,6.92,11.17,-7.1,-6.6,-22.9,Home,,over,FCI Levadia/ wins / double,FCI Levadia,Home
+2026-09-17,16:00,Iberia 1999,Dila Gori,Georgia,Erovnuli Liga,Iberia 1999/ handicap,,match,one,3goals,2.51,3.05,3.65,2.08,3.33,2.98,-17.1,+9.2,-18.4,Home,,under,,,Home
+2026-09-17,16:00,Viimsi JK,Tartu Welco,Estonia,Esiliiga,handicap /H/ handicap,,match,one,5 goals,3.64,4.39,2.01,1.83,4.33,2.88,-49.7,-1.4,+43.3,Home 2-handicap,under,over,,,Home
+2026-09-17,16:00,Doqarah,Al Salt,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.65,3.02,2.43,2.65,3.02,2.43,,,,,,,,,
+2026-09-17,17:00,Betis,Getafe,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.49,3.04,5.27,1.65,3.85,5.27,+10.7,+26.6,,,,under,,,Home handicap
+2026-09-17,17:00,Biskra,CR Belouizdad,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,4.03,2.85,1.91,4.03,2.85,1.91,,,,,,,,,
+2026-09-17,18:00,Zeleznicar Pancevo,Crvena zvezda,Serbia,Super Liga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,7.5,4.5,1.4,7.5,4.5,1.4,,,,,,over,,,Home handicap
+2026-09-17,18:00,Al Zawraa,Al Gharraf,Iraq,Iraqi League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.08,14.08,5.37,1.55,3.55,5.37,+43.5,-74.8,,,,over,,,Away handicap
+2026-09-17,19:00,Temouchent,Kabylie,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.88,3.03,2.32,2.88,3.03,2.32,,,,,,,,,
+2026-09-17,19:30,Malaga,Villarreal,Spain,LaLiga,Villarreal / low/ handicap,,not match,both,4goals,3.8,2.23,3.46,3.68,3.68,1.94,-3.2,+65.0,-43.9,Home,,over,,,Home
+2026-09-17,15:00,Iberia 1999,Dila Gori,Georgia,Erovnuli Liga,Iberia 1999/ handicap,,match,one,3goals,2.51,3.05,3.65,2.01,3.27,3.18,-19.9,+7.2,-12.9,Away,,under,,,Home handicap
+2026-09-16,13:00,Barkchi Hisor,Sardor Tursunzoda,Tajikistan,Higher League,Barkchi Hisar/ handicap,double,match,both,3goals,2.36,5.05,2.64,,,,,,,,,,Barkchi Hisar/ handicap / double,Barkchi Hisar,
+2026-09-16,15:45,Zalgiris,Kauno Zalgiris,Lithuania,A Lyga,"Kauno Žalgiris, handicap/ double",,not match,both,3goals,6.06,4.83,1.59,,,,,,,,,,Kauno Žalgiris/ double / double / 3goals,Kauno Žalgiris / same,
+2026-09-16,16:00,Auda,Ogre United,Latvia,Virsliga,Auda/ wins,double,match,both,4goals,1.23,8.47,15.15,1.38,5.8,8.6,+12.2,-31.5,-43.2,Away 2-handicap,,under confirmed,Auda/ wins / double,Auda,Away
+2026-09-16,16:00,Paide,Parnu JK Vaprus,Estonia,Meistriliiga,Paide/ handicap,double,match,both,5goals,1.81,4.03,5.03,1.53,4.8,6.2,-15.5,+19.1,+23.3,Home,,over,Paide/ handicap / double,Paide only,Home
+2026-09-16,16:00,Azam,Simba,Tanzania,Ligi Kuu Bara,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,6.9,4.44,1.59,,,,,,,,,,,,
+2026-09-16,17:00,AIK,Mjallby,Sweden,Allsvenskan,handicap /H/ handicap,,not match,one,4goals,5.88,5.75,1.53,2.3,3.46,2.87,-60.9,-39.8,+87.6,Home,under,,,,
+2026-09-16,17:45,Baltika,Zenit,Russia,Premier League,Zenit/ handicap,,not match,one,4goals,17.24,5.62,1.31,4.35,3.44,1.89,-74.8,-38.8,+44.3,Home 2-handicap,,,,,
+2026-09-16,17:45,Lokomotiv Moscow,Krylya Sovetov,Russia,Premier League,Krylya Sovetov / low/ handicap,,not match,one,4goals,9.62,2.4,2.09,1.88,3.86,4.06,-80.5,+60.8,+94.3,Home,,,,,
+2026-09-16,19:30,Barcelona,Racing Santander,Spain,LaLiga,Barcelona/ wins,double,match,both,5goals,1.12,14.29,27.78,,,,,,,,,,Barcelona/ wins / double,Barcelona,
+2026-09-16,21:00,Coquimbo,Huachipato,Chile,Liga de Primera,Coquimbo Unido/ handicap,double,match,both,4goals,2.11,3.26,4.59,,,,,,,,,,Coquimbo Unido/ handicap / double / 4goals,Coquimbo Unido / 4goals,
+2026-09-16,22:00,Hartford Athletic,Sporting Jax,USA,USL Championship,Hartford Athletic/ handicap,double,match,both,4goals,2.66,3.56,2.92,1.45,4.99,6.38,-45.5,+40.2,+118.5,Home,,over,Hartford Athletic/ handicap / double / 4goals,Hartford Athletic / 4goals,Home
+2026-09-16,22:30,Botafogo RJ,Gremio,Brazil,Serie A,Botafogo/ handicap,,match,one,4goals,1.83,3.6,5.71,1.69,3.8,4.61,-7.7,+5.6,-19.3,Home,,,,,
+2026-09-16,23:15,Once Caldas,Deportes Tolima,Colombia,Primera A,Once Caldas/ handicap,,not match,both,2goals or less,3.02,4.85,2.16,2.24,3.35,3.65,-25.8,-30.9,+69.0,Home,,over,Deportes Tolima/ handicap / double,Deportes Tolima / same,Away handicap
+2026-09-16,00:00,CRB,Sport Recife,Brazil,Serie B,CRB/ handicap,,not match,both,3goals,3.01,3.64,2.54,1.93,3.7,4.25,-35.9,+1.6,+67.3,Home,,,Sport Recife/ handicap / double,Sport Recife / same,
+2026-09-16,01:00,Puebla,Toluca,Mexico,Liga MX,"Toluca, handicap/ double",,not match,both,4goals,9.9,4.29,1.5,5.43,3.9,1.57,-45.2,-9.1,+4.7,Home 2-handicap,,,Toluca/ double / double / 4goals,Toluca / 4goals / same,
+2026-09-16,11:30,Eskhata,Istaravshan,Tajikistan,Higher League,handicap /H/ handicap,,match,one,3goals,2.84,4.83,2.27,,,,,,,,,,,,
+2026-09-15,16:00,Super Nova,Riga FC,Latvia,Virsliga,Riga/ double,double,match,both,4goals,47.62,21.74,1.07,8.5,5.5,1.25,-82.2,-74.7,+16.8,Home 2-handicap,,over,Riga/ double / double / 4goals,Riga / 4goals,Away handicap
+2026-09-15,16:00,Young Africans,Geita Gold,Tanzania,Ligi Kuu Bara,Young Africans/ wins,double,match,both,3goals,1.25,5.68,40.0,,,,,,,,,,Young Africans/ wins / double / 3goals,Young Africans / same,
+2026-09-15,17:00,Rayo Vallecano,Espanyol,Spain,LaLiga,Rayo Vallecano/ double,,not match,both,4goals,4.18,4.57,1.85,2.41,3.5,3.19,-42.3,-23.4,+72.4,Home,,,Espanyol/ double / double,Espanyol / same,
+2026-09-15,17:00,Brage,Sandviken,Sweden,Superettan,Sandviken/ handicap,double,match,both,4goals,4.08,4.95,1.81,2.9,3.7,2.84,-28.9,-25.3,+56.9,Home,,under confirmed,Sandviken/ handicap / double,Sandviken,Away handicap
+2026-09-15,17:00,Landskrona,Sundsvall,Sweden,Superettan,Landskrona/ wins,double,match,both,4goals,1.55,3.85,10.87,1.42,5.25,8.8,-8.4,+36.4,-19.0,Home,,over,Landskrona/ wins / double / 4goals,Landskrona,Home
+2026-09-15,17:00,Varnamo,Oster,Sweden,Superettan,Värnamo/ handicap,under,match,one,4goals,2.61,4.02,2.72,1.81,3.9,3.83,-30.7,-3.0,+40.8,Home,,,,,
+2026-09-15,17:00,Jezero,Bokelj,Montenegro,First League,"Bokelj, handicap/ handicap",,match,one,2goals or less,1.81,2.7,12.99,,,,,,,,,,,,
+2026-09-15,18:00,Alaves,Valencia,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.02,83.33,250.0,,,,,,,,,,,,
+2026-09-15,18:00,Ajax,Willem II,Netherlands,Eredivisie,handicap /Aw/ wins,,not match,both,5 goals,1.32,6.94,10.0,1.09,10.35,20.14,-17.4,+49.1,+101.4,Home,,,Ajax/ wins / double,Ajax / same,
+2026-09-15,18:30,Korona Kielce,Gornik Zabrze,Poland,Ekstraklasa,"Górnik Zabrze, handicap/ handicap",,not match,one,4goals,14.93,5.08,1.36,2.64,3.21,2.56,-82.3,-36.8,+88.2,Home,,,,,
+2026-09-15,18:45,Falkirk,Hearts,Scotland,Premiership,Hearts/ wins,double,match,both,4goals,16.13,7.35,1.25,3.58,3.53,1.95,-77.8,-52.0,+56.0,Home 2-handicap,,,Hearts/ wins / double / 4goals,Hearts / 4goals,
+2026-09-15,18:45,Hibernian,Kilmarnock,Scotland,Premiership,Kilmarnock/ handicap,under,not match,one,4goals,4.18,5.18,1.76,1.39,4.81,6.94,-66.7,-7.1,+294.3,Home,,,,,
+2026-09-15,18:45,Motherwell,Aberdeen,Scotland,Premiership,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.06,17.54,4.07,1.8,3.65,4.07,+69.8,-79.2,,,,,,,
+2026-09-15,19:30,Elche,Real Madrid,Spain,LaLiga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,14.0,8.0,1.24,14.0,8.0,1.24,,,,,,,,,
+2026-09-15,21:00,San Luis,Antofagasta,Chile,Primera B,San Luis FC/ handicap,,not match,both,4goals,3.03,4.48,2.24,,,,,,,,,,Deportes Antofagasta/ handicap / double / 4goals,Deportes Antofagasta / same,
+2026-09-15,22:30,Londrina,Ponte Preta,Brazil,Serie B,Londrina/ double,double,match,both,3goals,1.65,4.65,5.56,1.35,5.6,11.0,-18.2,+20.4,+97.8,Home,,under confirmed,Londrina/ double / double,Londrina / same,Away handicap
+2026-09-15,23:00,Indy Eleven,Brooklyn,USA,USL Championship,Indy Eleven/ handicap,,match,one,4goals,1.25,7.81,13.89,1.62,4.62,4.57,+29.6,-40.8,-67.1,Away 2-handicap,,under confirmed,,,Away
+2026-09-14,01:00,San Diego FC,Philadelphia Union,USA,MLS,San Diego/ handicap,under,not match,one,5 goals,1.83,5.75,3.56,2.88,3.81,2.18,+57.4,-33.7,-38.8,Away,under,,,,
+2026-09-14,12:00,Meshakhte Tkibuli,Rustavi,Georgia,Erovnuli Liga,Rustavi/ double,double,match,both,3goals,11.36,4.24,1.48,5.6,3.8,1.73,-50.7,-10.4,+16.9,Home 2-handicap,,under,Rustavi/ double / double / 3goals,Rustavi / 3goals,Home
+2026-09-14,13:00,Panionios,Kalamaria,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.0,333.33,14.1,1.35,5.0,14.1,+35.0,-98.5,,,,over,,,Away handicap
+2026-09-14,15:00,Torpedo Kutaisi,Samgurali,Georgia,Erovnuli Liga,Torpedo Kutaisi/ handicap,double,match,both,3goals,1.62,5.62,4.85,2.0,3.6,3.75,+23.5,-35.9,-22.7,Away,,under confirmed,Torpedo Kutaisi/ handicap / double,Torpedo Kutaisi / same,Away
+2026-09-14,15:00,Inter Turku,VPS,Finland,Veikkausliiga,Inter Turku/ handicap,double,not match,both,3goals,3.31,2.35,3.66,1.7,3.59,4.82,-48.6,+52.8,+31.7,Home 2-handicap,,,VPS/ handicap / double / 3goals,Inter Turku / same,
+2026-09-14,17:00,Norrby,Varberg,Sweden,Superettan,Varberg/ handicap,double,match,both,4goals,3.46,4.63,2.02,2.84,3.48,2.3,-17.9,-24.8,+13.9,Home 2-handicap,under,,Varberg/ handicap / double / 4goals,Varberg / 4goals,
+2026-09-14,17:00,Orebro,Nordic United,Sweden,Superettan,Örebro/ handicap,,not match,both,4goals,4.88,3.3,2.03,2.28,3.49,2.88,-53.3,+5.8,+41.9,Home 2-handicap,under,,Nordic United/ handicap / double / 4goals,Nordic United / same,
+2026-09-14,17:00,Bodo/Glimt,Sandefjord,Norway,Eliteserien,Bodø / Glimt/ wins,double,match,both,5 goals,1.25,6.76,18.87,1.15,7.92,13.04,-8.0,+17.2,-30.9,Home,,,Bodø / Glimt/ wins / double / 5goals,Bodø / Glimt,
+2026-09-14,17:00,Djurgarden,GAIS,Sweden,Allsvenskan,Djurgården/ handicap,,match,one,4goals,1.48,5.56,6.85,1.53,4.17,5.63,+3.4,-25.0,-17.8,Away 2-handicap,,,,,
+2026-09-14,17:00,Sirius,Degerfors,Sweden,Allsvenskan,Sirius/ double,double,match,both,4goals,1.59,5.0,5.88,1.41,4.54,6.84,-11.3,-9.2,+16.3,Home,under,,Sirius/ double / double,Sirius,
+2026-09-14,17:00,Dinamo Tbilisi,Gagra,Georgia,Erovnuli Liga,Dinamo Tbilisi/ handicap,double,match,both,3goals,2.23,3.48,3.8,,,,,,,,,,Dinamo Tbilisi/ handicap / double / 3goals,Dinamo Tbilisi only,
+2026-09-14,17:05,Ostersund,Helsingborg,Sweden,Superettan,Östersund/ handicap,double,match,both,4goals,1.72,4.76,4.78,1.87,3.5,3.95,+8.7,-26.5,-17.4,Away 2-handicap,,,Östersund/ handicap / double,Östersund only,
+2026-09-14,18:45,Shelbourne,Drogheda,Ireland,Premier Division,Shelbourne/ handicap,,match,one,4goals,3.04,4.39,2.26,1.75,3.56,4.28,-42.4,-18.9,+89.4,Home,,,,,
+2026-09-14,18:45,Waterford,Derry City,Ireland,Premier Division,Waterford/ handicap,under,not match,one,4goals,2.65,3.46,3.01,2.69,3.47,2.37,+1.5,+0.3,-21.3,Away 2-handicap,under,,,,
+2026-09-14,18:45,Sligo Rovers,Galway,Ireland,Premier Division,"Galway United, handicap/ handicap",,match,both,4goals,4.42,3.97,1.92,3.1,3.42,2.15,-29.9,-13.9,+12.0,Home 2-handicap,,,"Galway United, handicap/ handicap / double / 4goals",Galway United only,
+2026-09-14,22:30,Botafogo SP,Goias,Brazil,Serie B,Botafogo SP/ handicap,double,match,both,3goals,2.23,4.18,3.19,2.27,2.92,3.4,+1.8,-30.1,+6.6,,,,Botafogo SP/ handicap / double / 3goals,Botafogo SP,
+2026-09-14,23:00,Bahia,Remo,Brazil,Serie A,Bahia/ handicap,double,match,both,4goals,1.81,4.31,4.65,1.47,4.8,7.7,-18.8,+11.4,+65.6,Home,,,Bahia/ handicap / double,Bahia only,
+2026-09-14,23:30,Union La Calera,Limache,Chile,Liga de Primera,Unión La Calera/ double,,not match,both,4goals,5.81,6.06,1.51,,,,,,,,,,Deportes Limache/ double / double,Deportes Limache / same,
+2026-09-14,23:30,Rangers,Deportes Iquique,Chile,Primera B,"Deportes Iquique, handicap/ double",,not match,both,4goals,7.63,5.24,1.47,,,,,,,,,,Deportes Iquique/ double / double / 4goals,Deportes Iquique / same,
+2026-09-13,00:00,Santos,Cruzeiro,Brazil,Serie A,Santos/ handicap,under,not match,one,4goals,2.78,4.1,2.52,,,,,,,,,,,,
+2026-09-13,00:30,St. Louis City,Minnesota United,USA,MLS,St. Louis City/ handicap,double,match,both,5 goals,2.36,5.18,2.6,,,,,,,,,,St. Louis City/ handicap / double / 5goals,St. Louis City / 5 goals / same,
+2026-09-13,00:30,FC Dallas,Portland Timbers,USA,MLS,Dallas/ handicap,,match,one,5 goals,2.71,4.93,2.33,,,,,,,,,,,,
+2026-09-13,01:20,Alianza,Junior,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,01:30,Real Salt Lake,New York City,USA,MLS,Real Salt Lake/ handicap,,not match,both,5 goals,3.37,3.65,2.33,,,,,,,,,,New York City/ handicap / double / 5goals,New York City / same,
+2026-09-13,02:00,Oakland Roots,Lexington,USA,USL Championship,Lexington / low/ handicap,,not match,one,4goals,5.41,3.97,1.78,,,,,,,,,,,,
+2026-09-13,02:00,Orange County SC,Las Vegas Lights,USA,USL Championship,Orange County SC/ handicap,double,not match,both,4goals,1.92,3.91,4.5,,,,,,,,,,"Orange County SC, handicap/ handicap / double",Orange County SC only,
+2026-09-13,02:00,Phoenix Rising,FC Tulsa,USA,USL Championship,Phoenix Rising/ handicap,,match,both,4goals,3.05,4.18,2.31,,,,,,,,,,Phoenix Rising/ handicap / double / 4goals,FC Tulsa / same,
+2026-09-13,02:00,Sacramento Republic,Detroit,USA,USL Championship,Sacramento Republic/ handicap,under,match,one,4goals,2.02,4.2,3.73,,,,,,,,,,,,
+2026-09-13,02:30,Los Angeles Galaxy,Seattle Sounders,USA,MLS,Los Angeles/ handicap,double,match,both,5 goals,2.32,2.78,4.78,,,,,,,,,,Los Angeles/ handicap / double / 5goals,Los Angeles only,
+2026-09-13,02:30,San Jose Earthquakes,Houston Dynamo,USA,MLS,SJ Earthquakes/ handicap,under,match,one,5 goals,4.12,4.55,1.86,,,,,,,,,,,,
+2026-09-13,07:30,Gimcheon Sangmu,Gangwon South,Korea,K League 1,Gangwon/ handicap,double,match,both,3goals,4.08,3.62,2.09,,,,,,,,,,Gangwon/ handicap / double / 3goals,Gangwon / 3goals,
+2026-09-13,07:30,Gyeongnam,Seongnam South,Korea,K League 2,Gyeongnam/ handicap,,match,one,4goals,2.07,4.15,3.62,,,,,,,,,,,,
+2026-09-13,09:30,Maardu,Tallinna Kalev,Estonia,Esiliiga,Maardu/ handicap,,not match,both,5 goals,2.66,4.2,2.59,,,,,,,,,,Tallinna Kalev/ handicap / double,Tallinna Kalev / same,
+2026-09-13,10:00,Isloch,FC Gomel,Belarus,Vysshaya Liga,Isloch/ handicap,,match,one,3goals,2.12,2.75,5.99,,,,,,,,,,,,
+2026-09-13,10:00,Gwangju FC,Anyang South,Korea,K League 1,Anyang/ double,double,match,both,3goals,6.41,4.93,1.56,,,,,,,,,,Anyang/ double / double,Anyang,
+2026-09-13,10:00,Busan,Gimhae South,Korea,K League 2,Busan IPark/ double,double,match,both,4goals,1.52,4.61,7.87,,,,,,,,,,Busan IPark/ double / double,Busan IPark,
+2026-09-13,10:00,Suwon FC,Cheonan City South,Korea,K League 2,Suwon/ double,double,match,both,4goals,1.39,6.33,8.0,,,,,,,,,,Suwon/ double / double / 4goals,Suwon,
+2026-09-13,11:00,Ertis Pavlodar,Okzhetpes,Kazakhstan,Premier League,handicap /H/ handicap,,not match,both,3goals,5.81,5.32,1.56,,,,,,,,,,Okzhetpes/ handicap / double,Okzhetpes only,
+2026-09-13,11:00,Prachuap,Sukhothai,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,,,,,,,,,,,,,,,
+2026-09-13,11:00,Wuxi Wugou,Nantong Zhiyun,China,League One,Wuxi Wugou/ handicap,under,not match,one,4goals,2.79,3.07,3.18,,,,,,,,,,,,
+2026-09-13,11:30,Paide,Harju JK Laagri,Estonia,Meistriliiga,Paide/ handicap,double,match,both,5goals,2.36,3.61,3.36,,,,,,,,,,Paide/ handicap / double / 5goals,Paide,
+2026-09-13,11:30,Sabah,DPMM,Malaysia,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.25,6.9,17.54,,,,,,,,,,,,
+2026-09-13,11:30,Meizhou Hakka,Nanjing City,China,League One,Meizhou Hakka/ handicap,,match,both,4goals,2.74,3.79,2.7,,,,,,,,,,Meizhou Hakka/ handicap / double / 4goals,Nanjing City / 4goals,
+2026-09-13,11:30,Shijiazhuang Gongfu,Shenzhen Juniors,China,League One,Shenzhen Juniors/ handicap,double,match,both,4goals,5.65,3.62,1.83,,,,,,,,,,Shenzhen Juniors/ handicap / double / 4goals,Shenzhen Juniors only,
+2026-09-13,12:00,Dnepr Mogilev,ML Vitebsk,Belarus,Vysshaya Liga,ML Vitebsk/ wins,double,match,both,3goals,16.95,8.7,1.21,,,,,,,,,,ML Vitebsk/ wins / double / 3goals,ML Vitebsk,
+2026-09-13,12:00,Elfsborg,Kalmar,Sweden,Allsvenskan,Elfsborg/ handicap,double,match,both,4goals,1.56,4.18,8.47,,,,,,,,,,Elfsborg/ handicap / double / 4goals,Elfsborg only,
+2026-09-13,12:00,Hammarby,Brommapojkarna,Sweden,Allsvenskan,Hammarby/ double,double,match,both,4goals,1.12,13.16,29.41,,,,,,,,,,Hammarby/ double / double,Hammarby / same,
+2026-09-13,12:00,Chonburi,Rayong FC,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,2.99,8.2,1.84,,,,,,,,,,,,
+2026-09-13,12:00,KuPS,HJK,Finland,Veikkausliiga,KuPS/ handicap,,match,one,3goals,4.08,4.83,1.82,,,,,,,,,,,,
+2026-09-13,12:15,Selangor,Kuala Lumpur City,Malaysia,Super League,Selangor/ double,double,match,both,4goals,1.93,5.29,3.41,,,,,,,,,,Selangor/ double / double,Selangor,
+2026-09-13,12:30,Viking,Kristiansund,Norway,Eliteserien,Viking/ wins,double,match,both,5 goals,1.07,22.22,47.62,,,,,,,,,,Viking/ wins / double / 5goals,Viking / 5 goals,
+2026-09-13,13:00,Norrkoping,Oddevold,Sweden,Superettan,Norrköping/ double,double,match,both,4goals,1.62,4.41,6.37,,,,,,,,,,Norrköping/ double / double / 4goals,Norrköping / 4goals,
+2026-09-13,13:00,Niki Volos,Olympiacos Piraeus B,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,13:00,Flenu,Meux,Belgium,First Amateur Division,Meux/ wins,double,match,both,2goals or less,1000.0,500.0,1.0,,,,,,,,,,Meux/ wins / double,Meux,
+2026-09-13,13:30,RB Leipzig,Hamburger SV,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.02,55.56,,,,,,,,,,,,,
+2026-09-13,14:00,Streymur,B36 Torshavn Faroe,Islands,Premier League,"B36, handicap/ handicap",,match,both,4goals,5.0,4.05,1.81,,,,,,,,,,"B36, handicap/ handicap / double",B36 only,
+2026-09-13,14:00,FA Siauliai,Hegelmann,Lithuania,A Lyga,FA Šiauliai/ handicap,,match,both,3goals,4.07,4.08,1.96,,,,,,,,,,FA Šiauliai/ handicap / double,Hegelmann,
+2026-09-13,14:00,Dila Gori,Dinamo Batumi,Georgia,Erovnuli Liga,Dila/ handicap,under,match,one,3goals,2.66,3.52,2.94,,,,,,,,,,,,
+2026-09-13,14:00,Chrisoupolis,Pyrgos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,14:00,Kuressaare,Tammeka,Estonia,Meistriliiga,handicap /H/ handicap,,not match,both,5goals,4.2,4.31,1.89,,,,,,,,,,Tammeka/ handicap / double / 5goals,Tammeka / same,
+2026-09-13,14:00,Kairat Almaty,Tobol,Kazakhstan,Premier League,Kairat/ wins,double,match,both,3goals,1.26,6.25,20.41,,,,,,,,,,Kairat/ wins / double / 3goals,Kairat / same,
+2026-09-13,14:30,Ellas Syrou,Karditsa,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.44,6.1,2.35,,,,,,,,,,,,
+2026-09-13,14:30,Malmo FF,Orgryte,Sweden,Allsvenskan,Malmö FF/ double,double,match,both,4goals,1.38,6.67,8.13,,,,,,,,,,Malmö FF/ double / double,Malmö FF,
+2026-09-13,15:00,Moquegua,Sporting Cristal,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,15:00,HamKam,Molde,Norway,Eliteserien,HamKam/ handicap,,not match,both,5 goals,3.66,5.18,1.87,4.5,4.1,1.65,+23.0,-20.8,-11.8,Away,under,,Molde/ handicap / double,Molde only,
+2026-09-13,15:00,KFUM Oslo,Aalesund,Norway,Eliteserien,KFUM/ handicap,,not match,both,5 goals,2.87,3.45,2.78,2.5,3.7,2.55,-12.9,+7.2,-8.3,Away,,,,,
+2026-09-13,15:00,Start,Brann,Norway,Eliteserien,Brann/ double,double,match,both,5 goals,17.54,9.9,1.19,3.9,3.9,1.8,-77.8,-60.6,+51.3,Home 2-handicap,,,Brann/ double / double,Brann,
+2026-09-13,15:00,BATE,Naftan,Belarus,Vysshaya Liga,BATE/ handicap,,match,one,3goals,1.75,5.26,4.17,,,,,,,,,,,,
+2026-09-13,15:00,Egersund,Kongsvinger,Norway,1st Division,handicap /H/ double,,match,both,5 goals,6.29,4.83,1.58,,,,,,,,,,handicap /H/ double / double,Kongsvinger,
+2026-09-13,15:00,Moss,Haugesund,Norway,1st Division,Haugesund/ double,double,match,both,5 goals,10.75,9.8,1.24,,,,,,,,,,Haugesund/ double / double,Haugesund,
+2026-09-13,15:00,Raufoss,Odd,Norway,1st Division,handicap /H/ double,,not match,both,5 goals,4.2,4.76,1.81,,,,,,,,,,Odd/ double / double,Odd / same,
+2026-09-13,15:00,Ranheim,Asane,Norway,1st Division,#N/A,,#N/A,one,5 goals,1.39,7.04,7.14,,,,,,,,,,,,
+2026-09-13,15:00,Sogndal,Strommen,Norway,1st Division,Sogndal/ handicap,double,match,both,5 goals,2.44,5.08,2.54,,,,,,,,,,Sogndal/ handicap / double,Sogndal / same,
+2026-09-13,15:00,Stromsgodset,Sandnes,Norway,1st Division,Strømsgodset/ double,double,match,both,5 goals,1.72,4.44,5.18,,,,,,,,,,Strømsgodset/ double / double,Strømsgodset,
+2026-09-13,15:00,Ljungskile,Falkenberg,Sweden,Superettan,Falkenberg/ handicap,double,match,both,4goals,5.43,5.68,1.56,,,,,,,,,,Falkenberg/ handicap / double,Falkenberg,
+2026-09-13,15:00,Panserraikos,Asteras Tripolis B,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,15:30,Magallanes,D. Puerto Montt,Chile,Primera B,Magallanes/ handicap,double,match,both,4goals,2.64,4.02,2.7,1.9,3.5,3.4,-28.0,-12.9,+25.9,Home 2-handicap,under,under confirmed,Magallanes/ handicap / double,Magallanes / same,Home 2-handicap/ under 4goals
+2026-09-13,15:30,Elversberg,Bayern Munich,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,,,,,,,,,,,,,,,
+2026-09-13,15:45,Suduva,Zalgiris,Lithuania,A Lyga,Sūduva/ handicap,double,match,both,3goals,2.29,2.75,5.0,,,,,,,,,,Sūduva/ handicap / double / 3goals,Sūduva / same,
+2026-09-13,16:00,Iberia 1999,Spaeri,Georgia,Erovnuli Liga,Iberia 1999/ handicap,double,match,both,3goals,2.0,3.42,4.83,1.61,3.8,4.5,-19.5,+11.1,-6.8,Away,,under,Iberia 1999/ handicap / double / 3goals,Iberia 1999 / same,Home handicap
+2026-09-13,17:10,Din. Minsk,Dynamo Brest,Belarus,Vysshaya Liga,Minsk/ handicap,,not match,both,3goals,4.83,3.86,1.87,,,,,,,,,,Dinamo Brest/ handicap / double / 3goals,Dinamo Brest / 3goals / same,
+2026-09-13,17:15,Fredrikstad,Sarpsborg 08,Norway,Eliteserien,Fredrikstad/ handicap,,not match,both,5 goals,3.12,3.39,2.6,2.6,3.5,2.5,-16.7,+3.2,-3.8,Away,,under,Sarpsborg 08/ handicap / double / 5goals,Sarpsborg 08 / 5 goals / same,Home handicap
+2026-09-13,18:00,Sport Boys,Deportivo Garcilaso,Peru,Liga 1,Sport Boys/ handicap,under,not match,one,2goals or less,2.69,2.35,4.93,1.75,3.7,6.0,-34.9,+57.4,+21.7,Home 2-handicap,,under,,,Home
+2026-09-13,18:00,San Marcos de Arica,Curico Unido,Chile,Primera B,San Marcos/ handicap,double,match,both,4goals,1.91,3.25,5.92,,,,,,,,,,San Marcos/ handicap / double / 4goals,San Marcos only,
+2026-09-13,19:00,Pereira,Bucaramanga,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-13,19:00,Mirassol,Vitoria,Brazil,Serie A,Mirassol/ handicap,under,not match,one,4goals,1.82,4.1,4.81,,,,,,,,,,,,
+2026-09-13,20:30,Macara,Emelec,Ecuador,Liga Pro,Macará/ handicap,double,match,both,3goals,1.76,3.85,5.81,,,,,,,,,,Macará/ handicap / double / 3goals,Macará / 3goals / same,
+2026-09-13,20:30,Flamengo RJ,Corinthians,Brazil,Serie A,Flamengo/ double,double,match,both,4goals,1.94,3.56,4.9,1.3,6.0,14.0,-33.0,+68.5,+185.7,Home,,over,Flamengo/ double / double / 4goals,Flamengo / 4goals,Home
+2026-09-13,21:00,Juventude,Athletic Club,Brazil,Serie B,Juventude/ handicap,double,match,both,3goals,1.7,3.27,9.43,1.74,3.6,6.4,+2.4,+10.1,-32.1,Away 2-handicap,under,under,Juventude/ handicap / double / 3goals,Juventude only,Away 2-handicap/ under 3goals
+2026-09-13,21:30,Chicago Fire,New England Revolution,USA,MLS,Chicago Fire/ handicap,,match,one,5 goals,2.55,3.94,2.83,2.07,4.1,3.7,-18.8,+4.1,+30.7,Home,,over,,,Home
+2026-09-13,21:30,Fortaleza,Ceara,Brazil,Serie B,Fortaleza/ handicap,double,match,both,3goals,1.72,4.02,5.88,,,,,,,,,,Fortaleza/ handicap / double / 3goals,Fortaleza / 3goals / same,
+2026-09-13,21:30,Novorizontino,Cuiaba,Brazil,Serie B,Novorizontino/ handicap,double,match,both,3goals,2.84,3.36,2.87,,,,,,,,,,Novorizontino/ handicap / double / 3goals,Novorizontino / 3goals / same,
+2026-09-13,22:00,Pacific FC,Cavalry,Canada,Premier League,Cavalry/ wins,double,match,both,5goals,24.39,8.77,1.18,5.2,4.4,1.67,-78.7,-49.8,+41.5,Home 2-handicap,,over,Cavalry/ wins / double,Cavalry,Away handicap
+2026-09-13,22:30,Vancouver Whitecaps,Austin FC,USA,MLS,Vancouver Whitecaps FC/ double,double,match,both,5 goals,1.21,8.62,16.67,1.3,6.76,10.8,+7.4,-21.6,-35.2,Away 2-handicap,,under confirmed,Vancouver Whitecaps FC/ double / double,Vancouver Whitecaps FC,Away
+2026-09-13,23:00,Barcelona SC,Delfin,Ecuador,Liga Pro,Barcelona/ handicap,double,match,both,3goals,1.6,3.82,8.93,,,,,,,,,,Barcelona/ handicap / double / 3goals,Barcelona / 3goals / same,
+2026-09-13,23:00,A. Italiano,O'Higgins,Chile,Liga de Primera,Audax Italiano/ handicap,,not match,both,4goals,2.62,4.48,2.53,2.76,3.5,2.74,+5.3,-21.9,+8.3,,,under confirmed,O'Higgins/ handicap / double / 4goals,O'Higgins / same,Away handicap
+2026-09-13,20:30,Dunbeholden,Cavalier,Jamaica,National Premier League,handicap /H/ handicap,,match,both,3goals,5.85,3.83,1.76,,,,,,,,,,handicap /H/ handicap / double / 3goals,Cavalier only,
+2026-09-13,20:30,Montego Bay,Chapelton,Jamaica,National Premier League,Montego Bay United/ double,double,match,both,3goals,1.36,5.59,11.36,,,,,,,,,,Montego Bay United/ double / double,Montego Bay United,
+2026-09-12,00:00,Cusco,FBC Melgar,Peru,Liga 1,Cusco/ handicap,,not match,both,2goals or less,3.12,4.17,2.27,,,,,,,,,,Melgar/ handicap / double,Melgar / same,
+2026-09-12,01:30,Santa Fe,Deportes Tolima,Colombia,Primera A,Independiente Santa Fe/ handicap,under,not match,one,3goals,2.64,3.76,2.82,,,,,,,,,,,,
+2026-09-12,01:30,New Mexico,Indy Eleven,USA,USL Championship,New Mexico United/ handicap,double,match,both,4goals,1.8,3.95,5.24,,,,,,,,,,New Mexico United/ handicap / double / 4goals,New Mexico United / 4goals / same,
+2026-09-12,02:00,Colorado Springs,San Antonio,USA,USL Championship,Colorado Springs/ handicap,,match,one,4goals,2.43,4.12,2.89,,,,,,,,,,,,
+2026-09-12,07:30,Jeonbuk,Seoul South,Korea,K League 1,Seoul/ handicap,double,match,both,3goals,3.53,3.95,2.15,,,,,,,,,,Seoul/ handicap / double / 3goals,Seoul / 3goals,
+2026-09-12,07:30,Ulsan HD,Incheon South,Korea,K League 1,handicap /Aw/ handicap,,match,one,3goals,2.29,4.46,2.95,,,,,,,,,,,,
+2026-09-12,07:30,Daegu,Yongin South,Korea,K League 2,Daegu/ handicap,double,match,both,4goals,1.93,4.55,3.82,,,,,,,,,,Daegu/ handicap / double,Daegu,
+2026-09-12,07:30,Seoul E-Land,Suwon Bluewings South,Korea,K League 2,Suwon Bluewings / low/ handicap,,not match,both,4goals,4.15,4.61,1.85,,,,,,,,,,,,
+2026-09-12,10:00,Daejeon,Pohang South,Korea,K League 1,Pohang Steelers/ handicap,,match,both,3goals,2.23,4.0,3.31,,,,,,,,,,Pohang Steelers/ handicap / double / 3goals,Daejeon Hana Citizen only,
+2026-09-12,10:00,Ansan Greeners,Hwaseong South,Korea,K League 2,Hwaseong/ double,double,match,both,4goals,9.62,5.0,1.44,,,,,,,,,,Hwaseong/ double / double,Hwaseong,
+2026-09-12,11:00,Sisaket United,Ayutthaya Utd,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-12,11:00,Tianjin Jinmen Tiger,Liaoning Tieren,China,Super League,Tianjin Jinmen Tiger/ handicap,,match,one,5goals,2.76,3.86,2.64,,,,,,,,,,,,
+2026-09-12,11:00,Ningbo Professional,Shaanxi Union,China,League One,Ningbo Professional/ handicap,,match,both,4goals,3.33,4.42,2.11,,,,,,,,,,Ningbo Professional/ handicap / double / 4goals,Shaanxi Union / 4goals,
+2026-09-12,11:00,Suzhou Dongwu,Foshan Nanshi,China,League One,Suzhou Dongwu FC/ handicap,double,match,both,4goals,2.54,3.98,2.81,,,,,,,,,,Suzhou Dongwu FC/ handicap / double,Suzhou Dongwu FC only,
+2026-09-12,11:00,Grobina,Jelgava,Latvia,Virsliga,handicap /H/ handicap,,not match,both,4goals,5.35,3.65,1.86,,,,,,,,,,FS Jelgava/ handicap / double / 4goals,FS Jelgava / 4goals / same,
+2026-09-12,11:30,Levadia,Parnu JK Vaprus,Estonia,Meistriliiga,FCI Levadia/ wins,double,match,both,5goals,1.12,13.16,35.71,,,,,,,,,,FCI Levadia/ wins / double,FCI Levadia,
+2026-09-12,11:30,Uthai Thani,Pattani,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,17.24,10.99,1.17,,,,,,,,,,,,
+2026-09-12,11:30,Guangdong GZ-Power,Dalian K'un City,China,League One,Guangdong GZ-Power/ double,double,match,both,4goals,1.37,5.35,11.9,,,,,,,,,,Guangdong GZ-Power/ double / double,Guangdong GZ-Power,
+2026-09-12,11:30,Guangxi Hengchen,Yanbian Longding,China,League One,Guangxi Hengchen FC/ handicap,,match,one,4goals,2.34,4.1,3.05,,,,,,,,,,,,
+2026-09-12,11:30,Hougang,Lion City,Singapore,S.League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,8.06,10.99,1.27,,,,,,,,,,,,
+2026-09-12,11:35,Wuhan Three Towns,Henan Songshan Longmen,China,Super League,Wuhan Three Towns/ handicap,under,not match,one,5goals,3.19,3.91,2.32,,,,,,,,,,,,
+2026-09-12,12:00,Pathum United,Rasisalai Utd,Thailand,League 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.04,45.45,55.56,,,,,,,,,,,,
+2026-09-12,12:15,Melaka FC,Kuching City FC,Malaysia,Super League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5goals,142.86,52.63,1.03,,,,,,,,,,,,
+2026-09-12,13:00,Yelimay Semey,Zhetysu Taldykorgan,Kazakhstan,Premier League,Yelimay Semey/ handicap,,match,one,3goals,2.62,4.52,2.51,,,,,,,,,,,,
+2026-09-12,13:00,Marko,Athens Kallithea,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,7.52,6.9,1.39,,,,,,,,,,,,
+2026-09-12,13:30,Dortmund,Paderborn,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.34,3.91,,,,,,,,,,,,,
+2026-09-12,13:30,Hoffenheim,Stuttgart,Germany,Bundesliga,Hoffenheim/ handicap,under,not match,one,5 goals,1.66,5.46,4.67,,,,,,,,,,,,
+2026-09-12,13:30,Mainz,Eintracht Frankfurt,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,55.56,15.62,1.09,,,,,,,,,,,,
+2026-09-12,13:30,Augsburg,Bayer Leverkusen,Germany,Bundesliga,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,5 goals,1.81,5.0,4.02,,,,,,,,,,,,
+2026-09-12,14:00,Lillestrom,Valerenga,Norway,Eliteserien,handicap /H/ handicap,,not match,one,5goals,2.65,4.98,2.37,,,,,,,,,,,,
+2026-09-12,14:00,Mariehamn,TPS,Finland,Veikkausliiga,"TPS, handicap/ double",,match,both,3goals,6.1,3.73,1.76,,,,,,,,,,"TPS, handicap/ double / double / 3goals",TPS / 3goals,
+2026-09-12,14:00,Ordabasy,FC Astana,Kazakhstan,Premier League,Ordabasy/ handicap,double,match,both,3goals,1.62,4.39,6.49,,,,,,,,,,Ordabasy/ handicap / double,Ordabasy / same,
+2026-09-12,15:00,Al Ramtha,Al Arabi Irbid,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-12,15:00,Vitebsk,Belshina,Belarus,Vysshaya Liga,Vitebsk/ handicap,,match,one,3goals,1.29,5.78,19.61,,,,,,,,,,,,
+2026-09-12,15:00,Kaisar Kyzylorda,Atyrau,Kazakhstan,Premier League,Atyrau / low/ handicap,,match,one,3goals,5.68,2.9,2.09,,,,,,,,,,,,
+2026-09-12,15:00,AEL Larissa,Zakynthos,Greece,Super League 2,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.44,4.26,2.81,,,,,,,,,,,,
+2026-09-12,15:30,Nublense,Everton,Chile,Liga de Primera,handicap /H/ handicap,,match,one,4goals,9.09,5.24,1.43,,,,,,,,,,,,
+2026-09-12,15:30,Los Chankas,FC Cajamarca,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-12,16:00,Rosenborg,Tromso,Norway,Eliteserien,Rosenborg/ handicap,,not match,both,5goals,2.64,4.59,2.48,,,,,,,,,,Tromsø/ handicap / double / 5goals,Tromsø / same,
+2026-09-12,16:00,Ilves,Lahti,Finland,Veikkausliiga,Ilves/ handicap,under,not match,one,3goals,3.08,2.79,3.16,,,,,,,,,over,,,Home handicap
+2026-09-12,16:00,Jaro,SJK,Finland,Veikkausliiga,Jaro/ handicap,under,not match,one,3goals,2.56,3.76,2.92,,,,,,,,,,,,
+2026-09-12,16:00,AC Oulu,Gnistan,Finland,Veikkausliiga,Gnistan / low/ handicap,,match,one,3goals,4.33,3.23,2.18,,,,,,,,,,,,
+2026-09-12,17:30,Al Salt,Al Wehdat,Jordan,League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,5.5,3.5,1.52,5.5,3.5,1.52,,,,,,,,,
+2026-09-12,18:00,Cobresal,Coquimbo,Chile,Liga de Primera,Cobresal/ handicap,,not match,both,4goals,3.76,4.59,1.94,3.3,3.6,2.21,-12.2,-21.6,+13.9,Home,under,under confirmed,Coquimbo Unido/ handicap / double,Coquimbo Unido / same,Home/ under 4goals
+2026-09-12,18:00,Comerciantes Unidos,Sport Huancayo,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,2.1,3.25,3.5,2.1,3.25,3.5,,,,,,over,,,
+2026-09-12,18:00,Rouisset,Olympique Akbou,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-09-12,18:00,Union Rochefortoise,Onhaye,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.4,9.62,5.56,,,,,,,,,,,,
+2026-09-12,18:30,Longford,Treaty United,Ireland,First Division,Longford Town/ handicap,double,match,both,4goals,1.92,3.73,4.72,1.87,3.5,3.85,-2.6,-6.2,-18.4,Home,,under,Longford Town/ handicap / double / 4goals,Longford Town / same,Home
+2026-09-12,19:00,Gremio,Vasco,Brazil,Serie A,Grêmio/ handicap,,match,one,4goals,1.77,4.69,4.5,,,,,,,,,,,,
+2026-09-12,19:00,Manta,Aucas,Ecuador,Liga Pro,"Aucas, handicap/ double",,match,both,3goals,11.36,3.24,1.66,3.33,3.2,2.35,-70.7,-1.2,+41.6,Home 2-handicap,,under,"Aucas, handicap/ double / double / 3goals",Aucas / 3goals,Home
+2026-09-12,20:00,Chapecoense-SC,Internacional,Brazil,Serie A,Chapecoense/ handicap,,match,both,4goals,4.95,4.85,1.69,4.0,3.6,2.06,-19.2,-25.8,+21.9,Home,under,under confirmed,Chapecoense/ handicap / double / 4goals,Internacional,Away handicap
+2026-09-12,20:00,Supra du Quebec,HFX Wanderers,Canada,Premier League,Supra du Quebec/ handicap,under,not match,one,4goals,3.51,3.62,2.28,1.88,4.11,3.95,-46.4,+13.5,+73.2,Home,,over,,,Home
+2026-09-12,20:00,Constantine,ASO Chlef,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.59,3.8,8.2,1.59,3.8,8.2,,,,,,,,,
+2026-09-12,20:15,Moquegua,Sporting Cristal,Peru,Liga 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,4.04,3.41,1.91,4.04,3.41,1.91,,,,,,,,,
+2026-09-12,21:30,Palmeiras,Sao Paulo,Brazil,Serie A,Palmeiras/ handicap,double,match,both,4goals,1.81,3.65,5.78,,,,,,,,,,Palmeiras/ handicap / double / 4goals,Palmeiras only,
+2026-09-12,21:30,Guayaquil City,Mushuc Runa,Ecuador,Liga Pro,Mushuc Runa / low/ handicap,,not match,one,3goals,3.79,3.58,2.19,2.72,3.2,2.96,-28.2,-10.6,+35.2,Home,under,under,,,Home/ under 3goals
+2026-09-12,23:00,Brooklyn,Miami FC,USA,USL Championship,Miami / low/ handicap,,not match,both,4goals,3.45,2.39,3.44,2.06,3.81,3.45,-40.3,+59.4,+0.3,Home 2-handicap,,over,Miami/ handicap / double / 4goals,Miami / 4goals / same,Home
+2026-09-12,23:00,Hartford Athletic,Tampa Bay,USA,USL Championship,"Tampa Bay Rowdies, handicap/ handicap",,match,both,4goals,16.67,4.61,1.38,3.5,3.68,2.05,-79.0,-20.2,+48.6,Home 2-handicap,,under,"Tampa Bay Rowdies, handicap/ handicap / double / 4goals",Tampa Bay Rowdies only,Home
+2026-09-12,23:00,Louisville City,El Paso,USA,USL Championship,El Paso Locomotive / low/ handicap,,match,one,4goals,6.13,4.63,1.61,1.83,3.98,5.0,-70.1,-14.0,+210.6,Home,,under,,,Home
+2026-09-12,23:00,Pittsburgh,Loudoun,USA,USL Championship,Pittsburgh Riverhounds/ handicap,double,match,both,4goals,2.07,3.45,4.42,1.75,3.85,4.69,-15.5,+11.6,+6.1,Home 2-handicap,,under,Pittsburgh Riverhounds/ handicap / double / 4goals,Pittsburgh Riverhounds / 4goals,Home
+2026-09-12,23:00,Sporting Jax,Rhode Island,USA,USL Championship,Rhode Island/ double,double,match,both,4goals,6.33,7.09,1.43,5.42,4.49,1.6,-14.4,-36.7,+11.9,Home 2-handicap,,under confirmed,Rhode Island/ double / double,Rhode Island,Away handicap
+2026-09-12,23:00,Birmingham,Charleston,USA,USL Championship,"Charleston Battery, handicap/ handicap",,not match,both,4goals,3.47,3.33,2.43,,,,,,,,,,Charleston Battery/ handicap / double / 4goals,Charleston Battery only,
+2026-09-12,23:30,DC United,Atlanta Utd,USA,MLS,DC United/ handicap,,match,one,5 goals,3.41,4.12,2.15,2.28,3.9,3.15,-33.1,-5.3,+46.5,Home,,over,,,Home
+2026-09-12,23:30,FC Cincinnati,Charlotte,USA,MLS,Cincinnati/ handicap,under,not match,one,5 goals,2.3,5.41,2.62,2.16,4.4,3.17,-6.1,-18.7,+21.0,Home,under,over,,,Away handicap
+2026-09-12,23:30,Inter Miami,Nashville SC,USA,MLS,Inter Miami/ handicap,,not match,both,5 goals,7.63,4.33,1.56,2.14,4.25,3.3,-72.0,-1.8,+111.5,Home,,over,Nashville SC/ handicap / double / 5goals,Nashville SC only,Home
+2026-09-12,23:30,Orlando City,Toronto FC,USA,MLS,Orlando City/ handicap,under,not match,one,5 goals,2.61,3.52,3.0,1.92,4.25,3.9,-26.4,+20.7,+30.0,Home,,over,,,Home
+2026-09-12,23:30,Botafogo RJ,Bragantino,Brazil,Serie A,Botafogo/ handicap,,not match,both,4goals,3.37,3.85,2.26,,,,,,,,,,RB Bragantino/ handicap / double,RB Bragantino / same,
+2026-09-11,18:45,Drogheda,Sligo Rovers,Ireland,Premier Division,Drogheda United/ handicap,double,match,both,4goals,2.27,3.11,4.22,2.04,3.6,4.1,-10.1,+15.8,-2.8,Away,,under,Drogheda United/ handicap / double / 4goals,Drogheda United / same,Home handicap
+2026-09-11,18:45,Galway,Bohemians,Ireland,Premier Division,Bohemians/ handicap,double,match,both,4goals,6.99,5.62,1.47,4.63,4.14,1.8,-33.8,-26.3,+22.4,Home 2-handicap,,under confirmed,Bohemians/ handicap / double,Bohemians only,Away handicap
+2026-09-11,18:45,Shelbourne,Derry City,Ireland,Premier Division,Shelbourne/ handicap,under,match,one,4goals,3.44,4.1,2.15,2.44,3.6,3.1,-29.1,-12.2,+44.2,Home,,under confirmed,,,Away handicap
+2026-09-11,18:45,Waterford,Dundalk,Ireland,Premier Division,handicap /H/ handicap,,not match,both,4goals,2.74,4.15,2.53,2.47,3.95,2.92,-9.9,-4.8,+15.4,Home,,over,Dundalk/ handicap / double,Dundalk / same,Home
+2026-09-11,18:45,Wexford,Finn Harps,Ireland,First Division,Wexford/ handicap,double,match,both,4goals,2.25,3.73,3.47,1.43,5.0,8.6,-36.4,+34.0,+147.8,Home,,over,Wexford/ handicap / double / 4goals,Wexford / 4goals / same,Home
+2026-09-11,18:45,Cork City,Cobh Ramblers,Ireland,First Division,Cork City/ double,double,match,both,4goals,1.44,5.95,7.19,1.52,4.8,6.4,+5.6,-19.3,-11.0,Away 2-handicap,under,under confirmed,Cork City/ double / double / 4goals,Cork City,Away
+2026-09-11,23:15,Jaguares de Cordoba,Fortaleza,Colombia,Primera A,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,,,,,,,,,,,,,,,
