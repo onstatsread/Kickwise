@@ -146,7 +146,7 @@ def _fetch_day(key, d):
     import json, urllib.request
     items, offset = [], 0
     while True:
-        url = f"https://api.goal-api.com/v1/results/date/{d}?limit=100&offset={offset}"
+        url = f"https://api.goal-api.com/v1/results?from={d}&to={d}&limit=500&offset={offset}"
         req = urllib.request.Request(url, headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
         try:
             js = json.loads(urllib.request.urlopen(req).read().decode())
@@ -157,13 +157,13 @@ def _fetch_day(key, d):
             data = data.get("results") or data.get("fixtures") or []
         items += data
         pg = js.get("pagination") or {}
-        if not data or not pg.get("hasMore"):
+        if not data or not pg.get("hasMore") or offset > 20000:
             break
         offset += len(data)
     return items
 
 def scores(pred_csv, out_csv):
-    """Fill final scores from GOAL API: GET /results/date/{date}."""
+    """Fill final scores from GOAL API: GET /results?from=D&to=D (paged)."""
     import json, os, urllib.request, difflib
     key = os.environ["GOAL_API_KEY"]
     preds = list(csv.DictReader(open(pred_csv, encoding="utf-8")))
@@ -174,14 +174,7 @@ def scores(pred_csv, out_csv):
             cache[d] = _fetch_day(key, d)
             print(f"{d}: {len(cache[d])} results from API")
         best, best_r = None, 0.0
-        from datetime import date as _d, timedelta as _td
-        pool = list(cache[d])
-        for delta in (-1, 1):  # late kickoffs can land on the neighbouring date
-            dd = (_d.fromisoformat(d) + _td(days=delta)).isoformat()
-            if dd not in cache:
-                cache[dd] = _fetch_day(key, dd)
-                print(f"{dd}: {len(cache[dd])} results from API")
-            pool += cache[dd]
+        pool = cache[d]
         for m in pool:
             def names(side):
                 v = m.get(side + "Team")
