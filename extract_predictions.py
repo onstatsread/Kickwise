@@ -6,6 +6,7 @@ Usage:
   python extract_predictions.py fetch <post-url> predictions.csv   (appends)
   python extract_predictions.py crawl https://kickwisepredictions.blogspot.com all_predictions.csv
   GOAL_API_KEY=xxx python extract_predictions.py scores all_predictions.csv scores.csv
+  python extract_predictions.py filters analysis.csv
   python extract_predictions.py analyze analysis.csv
   python extract_predictions.py parse post.html predictions.csv
   python extract_predictions.py merge predictions.csv scores.csv analysis.csv
@@ -47,13 +48,16 @@ def parse(text):
             "B120": grab(r"B120:\s*(.*?)\s*\|\s*C120", first),
             "C120": grab(r"C120:\s*(.*?)\s*(?:D64|$)", first).rstrip("| "),
             "D64": grab(r"D64:\s*(.*?)\s*\|", first),
-            "B46": grab(r"B46:\s*(\S+)", first),
+            "B46": grab(r"B46:\s*(.*)$", first),
             "odds_H": grab(r"Odds: Home ([\d.]+)", block),
             "odds_D": grab(r"Odds: .*?Draw ([\d.]+)", block),
             "odds_A": grab(r"Odds: .*?Away ([\d.]+)", block),
             "mkt_H": grab(r"Market Odds: Home ([\d.]+)", block),
             "mkt_D": grab(r"Market Odds: .*?Draw ([\d.]+)", block),
             "mkt_A": grab(r"Market Odds: .*?Away ([\d.]+)", block),
+            "val_H": grab(r"Value: Home ([-+]?[\d.]+)%", block),
+            "val_D": grab(r"Value: Home [-+]?[\d.]+% \| +Draw ([-+]?[\d.]+)%", block),
+            "val_A": grab(r"Value: Home [-+]?[\d.]+% \| +Draw [-+]?[\d.]+% \| +Away ([-+]?[\d.]+)%", block),
             "decision": grab(r"DECISION:\s*(.*?)\s*(?:⚽|📈|🧭|O/U|Result:|$)", block),
             "signal": grab(r"Signal:\s*(\w+)", block),
             "ou_result": grab(r"Result:\s*([\w ]+?)\s*(?:🧭|PREDICTION|$)", block),
@@ -168,8 +172,17 @@ def scores(pred_csv, out_csv):
     key = os.environ["GOAL_API_KEY"]
     preds = list(csv.DictReader(open(pred_csv, encoding="utf-8")))
     cache, out, missed, shown = {}, [], 0, False
+    import os
+    have = {}
+    if os.path.exists(out_csv):
+        for x in csv.DictReader(open(out_csv, encoding="utf-8")):
+            have[(x["date"], x["home"], x["away"])] = x
     for r in preds:
         d = r["date"]
+        old = have.get((d, r["home"], r["away"]))
+        if old:  # already scored earlier: keep it, no API call
+            out.append({k: old[k] for k in ("date", "home", "away", "hg", "ag")})
+            continue
         if d not in cache:
             cache[d] = _fetch_day(key, d)
             print(f"{d}: {len(cache[d])} results from API")
@@ -250,6 +263,128 @@ def probe(date, needle=""):
                 if needle.lower() in blob:
                     print(f"FOUND under {dd}:", {k: m.get(k) for k in ("homeTeam", "awayTeam", "kickoffUtc", "matchStatus")}, "| score fields:", _score(m))
 
+def _f(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+def _pass_extra(h, a):
+    """passes_double_chance_extra_filter AND passes_dominance_ratio_filter."""
+    if h is None or a is None or h > 65 or a > 65 or h == 0 or a == 0 or (h > 0) == (a > 0):
+        return False
+    pos, neg = (h, a) if h > 0 else (a, h)
+    ratio = pos / abs(neg)
+    return ratio <= 1.7 and ratio < 1
+
+def stream_blog2(r):
+    odds = [_f(r[k]) for k in ("odds_H", "odds_D", "odds_A", "mkt_H", "mkt_D", "mkt_A")]
+    if any(o is None or o < 1.45 for o in odds): return None
+    if r["ou_result"] not in ("under", "under confirmed"): return None
+    if "away" not in r["pred3"].lower(): return None
+    v = [_f(r[k]) for k in ("val_H", "val_D", "val_A")]
+    if any(x is not None and abs(x) >= 98 for x in v): return None
+    return "Away"
+
+def stream_dc1(r):
+    oh, od, oa = (_f(r[k]) for k in ("odds_H", "odds_D", "odds_A"))
+    vh, vd, va = (_f(r[k]) for k in ("val_H", "val_D", "val_A"))
+    if None in (oh, od, oa, vh, vd, va) or max(oh, od, oa) > 15: return None
+    hq, aq = vh < -40, va < -40
+    if hq == aq: return None
+    side = "home" if hq else "away"
+    if abs(vh if hq else va) <= abs(vd): return None
+    sel, opp = (_f(r["mkt_H"]), _f(r["mkt_A"])) if hq else (_f(r["mkt_A"]), _f(r["mkt_H"]))
+    if not sel or not opp: return None
+    ratio = abs(vh if hq else va) / ((sel / opp) * 10)
+    lab = "Home" if hq else "Away"
+    label = f"{lab} 3-handicap" if ratio <= 2.4 else f"{lab} 2-handicap" if ratio <= 5 else f"{lab} win or draw"
+    return label if _pass_extra(vh, va) else None
+
+def stream_dc2(r):
+    oh, oa = _f(r["odds_H"]), _f(r["odds_A"])
+    vh, va = _f(r["val_H"]), _f(r["val_A"])
+    if None in (oh, oa, vh, va) or not (1.5 <= oh <= 4) or not (1.5 <= oa <= 4): return None
+    if vh == 0 or va == 0 or (vh < 0) == (va < 0): return None
+    dec = r["decision"] or ""
+    lab = dec if (("home" if vh < 0 else "away") in dec.lower()) else None
+    return lab if lab and _pass_extra(vh, va) else None
+
+def stream_dc3(r):
+    oh, od, oa = (_f(r[k]) for k in ("odds_H", "odds_D", "odds_A"))
+    vh, va = _f(r["val_H"]), _f(r["val_A"])
+    if None in (oh, od, oa) or max(oh, od, oa) > 15: return None
+    dec = (r["decision"] or "").lower()
+    side = "home" if "home" in dec else "away" if "away" in dec else None
+    if not side: return None
+    text = " ".join((r["pred1"], r["pred2"], r["pred3"])).lower()
+    if side not in text: return None
+    sel, opp = (oh, oa) if side == "home" else (oa, oh)
+    label = side.capitalize() if sel < opp else f"{side.capitalize()} 2-handicap"
+    return label if _pass_extra(vh, va) else None
+
+def _grade(label, hg, ag):
+    l = label.lower()
+    margin = (hg - ag) if "home" in l else (ag - hg)
+    n = 3 if "3-handicap" in l else 2 if "2-handicap" in l else None
+    if n:  # assumed +N handicap: win if you lose by less than N, push at exactly N
+        return "win" if margin > -n else "push" if margin == -n else "loss"
+    if "win or draw" in l:
+        return "win" if margin >= 0 else "loss"
+    return "win" if margin > 0 else "loss"  # bare Home / Away = straight win
+
+def filters(path):
+    rows = [r for r in csv.DictReader(open(path, encoding="utf-8"))]
+    seen, uniq = set(), []
+    for r in rows:
+        for c in ("val_H", "val_D", "val_A"):
+            r.setdefault(c, "")
+        k = (r["date"], r["home"], r["away"])
+        if k not in seen: seen.add(k); uniq.append(r)
+    scored = [r for r in uniq if r.get("hg") not in (None, "")]
+    print(f"{len(scored)} scored matches\n")
+    if not any(r.get("val_H") for r in scored):
+        print("NOTE: no val_H/val_D/val_A columns, so streams 2-4 can't run. Re-run crawl+merge with the new script.\n")
+    base_h = sum(int(r["hg"]) >= int(r["ag"]) for r in scored) / len(scored)
+    base_a = sum(int(r["ag"]) >= int(r["hg"]) for r in scored) / len(scored)
+    print(f"Baseline: home not-lose {base_h:.0%}, away not-lose {base_a:.0%}\n")
+    streams = [("Blog2 standard (Away + under)", stream_blog2), ("DC signal 1", stream_dc1),
+               ("DC signal 2", stream_dc2), ("DC signal 3", stream_dc3)]
+    picks_out = []
+    for name, fn in streams:
+        picks = []
+        for r in scored:
+            lab = fn(r)
+            if lab:
+                hg, ag = int(r["hg"]), int(r["ag"])
+                picks.append((r, lab, hg, ag, _grade(lab, hg, ag)))
+                picks_out.append({"stream": name, "date": r["date"], "home": r["home"], "away": r["away"],
+                                  "label": lab, "score": f"{hg}-{ag}", "result": picks[-1][4]})
+        n = len(picks)
+        print(name, f"- {n} picks")
+        if not n: print(); continue
+        from collections import Counter
+        c = Counter(p[4] for p in picks)
+        print(f"  graded (assumed +N handicap): win {c['win']}, push {c['push']}, loss {c['loss']}")
+        side_nl = sum((p[2] >= p[3]) if "home" in p[1].lower() else (p[3] >= p[2]) for p in picks)
+        side_w = sum((p[2] > p[3]) if "home" in p[1].lower() else (p[3] > p[2]) for p in picks)
+        print(f"  side won {side_w/n:.0%} | side did not lose {side_nl/n:.0%}")
+        if name.startswith("Blog2"):
+            print(f"  under 2.5 hit: {sum(p[2]+p[3] < 2.5 for p in picks)/n:.0%} (base {sum(int(r['hg'])+int(r['ag'])<2.5 for r in scored)/len(scored):.0%})")
+        bare = [p for p in picks if "handicap" not in p[1].lower() and "win or draw" not in p[1].lower()]
+        rets = []
+        for r, lab, hg, ag, g in bare:
+            o = _f(r["mkt_H"] if "home" in lab.lower() else r["mkt_A"])
+            if o: rets.append((o - 1) if g == "win" else -1)
+        if rets: print(f"  straight-win picks with market odds: {len(rets)}, flat-stake return {sum(rets)/len(rets):+.0%}")
+        labs = Counter(p[1] for p in picks)
+        if len(labs) > 1:
+            for lab, k in labs.most_common(6):
+                g = Counter(p[4] for p in picks if p[1] == lab)
+                print(f"    {lab}: {k} (win {g['win']}, push {g['push']}, loss {g['loss']})")
+        print()
+    write(picks_out, "filter_picks.csv")
+
 def analyze(path):
     """Hit rate of each prediction field value, using the merged file."""
     from collections import defaultdict
@@ -290,6 +425,8 @@ if __name__ == "__main__":
         scores(sys.argv[2], sys.argv[3])
     elif cmd == "probe":
         probe(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "")
+    elif cmd == "filters":
+        filters(sys.argv[2])
     elif cmd == "analyze":
         analyze(sys.argv[2])
     elif cmd == "fetch":
