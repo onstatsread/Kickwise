@@ -183,10 +183,14 @@ def scores(pred_csv, out_csv):
                 print(f"{dd}: {len(cache[dd])} results from API")
             pool += cache[dd]
         for m in pool:
-            h = (m.get("homeTeam") or {}).get("name") if isinstance(m.get("homeTeam"), dict) else m.get("homeTeam")
-            a = (m.get("awayTeam") or {}).get("name") if isinstance(m.get("awayTeam"), dict) else m.get("awayTeam")
-            ratio = (difflib.SequenceMatcher(None, _norm(r["home"]), _norm(h)).ratio() +
-                     difflib.SequenceMatcher(None, _norm(r["away"]), _norm(a)).ratio()) / 2
+            def names(side):
+                v = m.get(side + "Team")
+                out_ = [m.get(side + "TeamName")]
+                out_.append(v.get("name") if isinstance(v, dict) else v)
+                return [x for x in out_ if x]
+            def best_ratio(want, cands):
+                return max([difflib.SequenceMatcher(None, _norm(want), _norm(c)).ratio() for c in cands] or [0])
+            ratio = (best_ratio(r["home"], names("home")) + best_ratio(r["away"], names("away"))) / 2
             if ratio > best_r:
                 best, best_r = m, ratio
         sc = _score(best) if best and best_r >= 0.75 else None
@@ -199,6 +203,23 @@ def scores(pred_csv, out_csv):
                 print("Could not find score fields. Sample match keys:", list(best.keys()))
     write(out, out_csv)
     print(f"{len(out)} scored, {missed} not found (not played yet or names differ)")
+
+def _experiments(key, date):
+    """Try paging / sorting parameters and show what each returns."""
+    import json, urllib.request
+    base = f"https://api.goal-api.com/v1/results/date/{date}"
+    tests = ["limit=500", "limit=500&offset=500", "limit=100&offset=100", "limit=500&page=2",
+             "limit=500&sort=asc", "limit=500&order=asc", "limit=500&sortOrder=asc",
+             "limit=500&sortBy=kickoffUtc&sortOrder=asc", "limit=500&from=00:00&to=13:59"]
+    for q in tests:
+        req = urllib.request.Request(f"{base}?{q}", headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
+        try:
+            js = json.loads(urllib.request.urlopen(req).read().decode())
+        except Exception as e:
+            print(f"[{q}] failed: {e}"); continue
+        data = js.get("data") or []
+        hrs = sorted({str(m.get("kickoffUtc"))[11:13] for m in data})
+        print(f"[{q}] n={len(data)} pagination={js.get('pagination')} hours={hrs[:1]}..{hrs[-1:]} first_id={(data[0].get('id') if data else None)}")
 
 def probe(date, needle=""):
     """Diagnose GOAL API coverage for one date: counts, kickoff hours, sample match."""
@@ -217,7 +238,8 @@ def probe(date, needle=""):
         hrs[k[11:13] if "T" in k else k[:2]] += 1
     print("results per kickoff hour (UTC):", dict(sorted(hrs.items())))
     print("statuses:", dict(Counter(str(m.get("matchStatus")) for m in items)))
-    print("sample:", items[0])
+    print("sample keys ok")
+    _experiments(key, date)
     if needle:
         for delta in range(-2, 3):
             dd = (_d.fromisoformat(date) + _td(days=delta)).isoformat()
