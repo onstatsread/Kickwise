@@ -1,0 +1,22 @@
+302 matches with scores
+
+D64 -> teams scored matches?
+  both                         90/174  (52%)
+  one                          22/75  (29%)
+
+B46 -> total goals within the stated number
+  4goals                       47/120  (39%)
+  3goals                       42/82  (51%)
+  5                            0/52  (0%)
+  2goals                       18/34  (53%)
+  5goals                       8/14  (57%)
+
+O/U result -> under 2.5 correct?
+  over                         39/69  (57%)
+  under                        26/48  (54%)
+  under confirmed              14/44  (32%)
+
+D69 side -> correct winner?
+  away/other                   128/203  (63%)
+  home                         54/99  (55%)
+
