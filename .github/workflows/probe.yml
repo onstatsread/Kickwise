@@ -1,0 +1,21 @@
+name: Probe GOAL API
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date, e.g. 2026-09-19"
+        default: "2026-09-19"
+      team:
+        description: "Team name to search for"
+        default: "Wuxi Wugou"
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python extract_predictions.py probe "${{ inputs.date }}" "${{ inputs.team }}"
+        env:
+          GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
