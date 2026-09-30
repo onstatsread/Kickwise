@@ -5,6 +5,7 @@ then merge final scores so you can study which fields correlate.
 Usage:
   python extract_predictions.py fetch <post-url> predictions.csv   (appends)
   python extract_predictions.py crawl https://kickwisepredictions.blogspot.com all_predictions.csv
+  GOAL_API_KEY=xxx python extract_predictions.py scores all_predictions.csv scores.csv
   python extract_predictions.py analyze analysis.csv
   python extract_predictions.py parse post.html predictions.csv
   python extract_predictions.py merge predictions.csv scores.csv analysis.csv
@@ -114,6 +115,64 @@ def crawl(blog, out):
             seen.add(k); uniq.append(r)
     write(uniq, out)
 
+def _score(m):
+    """Find home/away goals in a GOAL API result, whatever the field names are."""
+    def num(v):
+        try: return int(v)
+        except (TypeError, ValueError): return None
+    pairs = [("homeScore","awayScore"),("home_score","away_score"),("homeGoals","awayGoals"),
+             ("homeTeamScore","awayTeamScore"),("scoreHome","scoreAway"),
+             ("match_hometeam_score","match_awayteam_score")]
+    for a, b in pairs:
+        if a in m and b in m and num(m[a]) is not None and num(m[b]) is not None:
+            return num(m[a]), num(m[b])
+    sc = m.get("score")
+    if isinstance(sc, dict):
+        for a, b in [("home","away"),("homeScore","awayScore"),("fullTime",None)]:
+            if b and num(sc.get(a)) is not None and num(sc.get(b)) is not None:
+                return num(sc[a]), num(sc[b])
+    return None
+
+def _norm(t):
+    return re.sub(r"[^a-z0-9 ]", "", (t or "").lower()).strip()
+
+def scores(pred_csv, out_csv):
+    """Fill final scores from GOAL API: GET /results/date/{date}."""
+    import json, os, urllib.request, difflib
+    key = os.environ["GOAL_API_KEY"]
+    preds = list(csv.DictReader(open(pred_csv, encoding="utf-8")))
+    cache, out, missed, shown = {}, [], 0, False
+    for r in preds:
+        d = r["date"]
+        if d not in cache:
+            req = urllib.request.Request(
+                f"https://api.goal-api.com/v1/results/date/{d}?limit=500",
+                headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
+            try:
+                cache[d] = json.loads(urllib.request.urlopen(req).read().decode())["data"]
+            except Exception as e:
+                print("fetch failed", d, e); cache[d] = []
+            if isinstance(cache[d], dict):  # some APIs nest the list
+                cache[d] = cache[d].get("results") or cache[d].get("fixtures") or []
+        best, best_r = None, 0.0
+        for m in cache[d]:
+            h = (m.get("homeTeam") or {}).get("name") if isinstance(m.get("homeTeam"), dict) else m.get("homeTeam")
+            a = (m.get("awayTeam") or {}).get("name") if isinstance(m.get("awayTeam"), dict) else m.get("awayTeam")
+            ratio = (difflib.SequenceMatcher(None, _norm(r["home"]), _norm(h)).ratio() +
+                     difflib.SequenceMatcher(None, _norm(r["away"]), _norm(a)).ratio()) / 2
+            if ratio > best_r:
+                best, best_r = m, ratio
+        sc = _score(best) if best and best_r >= 0.75 else None
+        if sc:
+            out.append({"date": d, "home": r["home"], "away": r["away"], "hg": sc[0], "ag": sc[1]})
+        else:
+            missed += 1
+            if best and best_r >= 0.75 and not shown:
+                shown = True
+                print("Could not find score fields. Sample match keys:", list(best.keys()))
+    write(out, out_csv)
+    print(f"{len(out)} scored, {missed} not found (not played yet or names differ)")
+
 def analyze(path):
     """Hit rate of each prediction field value, using the merged file."""
     from collections import defaultdict
@@ -150,6 +209,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "crawl":
         crawl(sys.argv[2], sys.argv[3])
+    elif cmd == "scores":
+        scores(sys.argv[2], sys.argv[3])
     elif cmd == "analyze":
         analyze(sys.argv[2])
     elif cmd == "fetch":
