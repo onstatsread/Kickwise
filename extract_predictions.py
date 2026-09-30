@@ -69,7 +69,12 @@ def write(rows, path, append=False):
     import os
     new = not (append and os.path.exists(path))
     with open(path, "a" if append else "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        names = []
+        for r in rows:  # union of all keys, so rows with extra fields still write
+            for k in r:
+                if k not in names:
+                    names.append(k)
+        w = csv.DictWriter(f, fieldnames=names, restval="")
         if new: w.writeheader()
         w.writerows(rows)
     print(f"wrote {len(rows)} rows -> {path}")
