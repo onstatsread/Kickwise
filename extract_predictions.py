@@ -136,6 +136,27 @@ def _score(m):
 def _norm(t):
     return re.sub(r"[^a-z0-9 ]", "", (t or "").lower()).strip()
 
+def _fetch_day(key, d):
+    """All results for one date, following the API's pagination."""
+    import json, urllib.request
+    items, offset = [], 0
+    while True:
+        url = f"https://api.goal-api.com/v1/results/date/{d}?limit=100&offset={offset}"
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
+        try:
+            js = json.loads(urllib.request.urlopen(req).read().decode())
+        except Exception as e:
+            print("fetch failed", d, offset, e); break
+        data = js.get("data") or []
+        if isinstance(data, dict):
+            data = data.get("results") or data.get("fixtures") or []
+        items += data
+        pg = js.get("pagination") or {}
+        if not data or not pg.get("hasMore"):
+            break
+        offset += len(data)
+    return items
+
 def scores(pred_csv, out_csv):
     """Fill final scores from GOAL API: GET /results/date/{date}."""
     import json, os, urllib.request, difflib
@@ -145,17 +166,18 @@ def scores(pred_csv, out_csv):
     for r in preds:
         d = r["date"]
         if d not in cache:
-            req = urllib.request.Request(
-                f"https://api.goal-api.com/v1/results/date/{d}?limit=500",
-                headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
-            try:
-                cache[d] = json.loads(urllib.request.urlopen(req).read().decode())["data"]
-            except Exception as e:
-                print("fetch failed", d, e); cache[d] = []
-            if isinstance(cache[d], dict):  # some APIs nest the list
-                cache[d] = cache[d].get("results") or cache[d].get("fixtures") or []
+            cache[d] = _fetch_day(key, d)
+            print(f"{d}: {len(cache[d])} results from API")
         best, best_r = None, 0.0
-        for m in cache[d]:
+        from datetime import date as _d, timedelta as _td
+        pool = list(cache[d])
+        for delta in (-1, 1):  # late kickoffs can land on the neighbouring date
+            dd = (_d.fromisoformat(d) + _td(days=delta)).isoformat()
+            if dd not in cache:
+                cache[dd] = _fetch_day(key, dd)
+                print(f"{dd}: {len(cache[dd])} results from API")
+            pool += cache[dd]
+        for m in pool:
             h = (m.get("homeTeam") or {}).get("name") if isinstance(m.get("homeTeam"), dict) else m.get("homeTeam")
             a = (m.get("awayTeam") or {}).get("name") if isinstance(m.get("awayTeam"), dict) else m.get("awayTeam")
             ratio = (difflib.SequenceMatcher(None, _norm(r["home"]), _norm(h)).ratio() +
