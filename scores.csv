@@ -1,23 +1,73 @@
 date,home,away,hg,ag
 2026-09-29,Wuxi Wugou,Ningbo Professional,1,0
+2026-09-29,Botafogo SP,Ponte Preta,2,0
+2026-09-24,Luis Angel Firpo,Cacahuatique El,0,0
 2026-09-24,Alianza FC,Fuerte San Francisco El,2,2
 2026-09-23,Bregalnica Stip,FK Skopje North,1,0
 2026-09-23,Birmingham,Brooklyn,4,0
 2026-09-22,Arnett Gardens,Dunbeholden,3,0
 2026-09-22,Biskra,Saoura,0,0
+2026-09-21,Pyrgos,AEL Larissa,0,4
 2026-09-21,Struga,Arsimi North,6,0
 2026-09-21,Panthrakikos,Niki Volos,1,0
 2026-09-21,Rustavi,Iberia 1999,0,2
 2026-09-21,Spaeri,Dila Gori,1,4
 2026-09-21,Petrolul,Csikszereda M. Ciuc,2,0
 2026-09-21,Manta,Orense,2,1
-2026-09-21,Criciuma,Operario-PR,0,2
+2026-09-20,Emelec,Libertad,1,2
+2026-09-20,Sao Paulo,Internacional,1,0
+2026-09-20,Colorado Springs,New Mexico,0,0
+2026-09-20,Phoenix Rising,El Paso,1,3
+2026-09-20,Las Vegas Lights,Hartford Athletic,1,1
+2026-09-20,Jeonbuk,Gwangju FC South,2,2
+2026-09-20,Ansan Greeners,Cheongju South,2,3
+2026-09-20,Yongin,Gyeongnam South,0,0
+2026-09-20,Gamba Osaka,Vissel Kobe,0,1
+2026-09-20,Machida,Kashiwa Reysol,2,4
+2026-09-20,Kudrivka,Kolos Kovalivka,2,3
+2026-09-20,Incheon,Daejeon South,1,1
+2026-09-20,Pohang,Seoul South,2,1
+2026-09-20,Seongnam,Hwaseong South,2,2
+2026-09-20,Piast Gliwice,Pogon Szczecin,1,2
+2026-09-20,Feyenoord,Utrecht,5,0
+2026-09-20,Hradec Kralove,Teplice Czech,0,2
+2026-09-20,Ogre United,Super Nova,1,0
+2026-09-20,Sundsvall,Ljungskile,3,2
+2026-09-20,Chonburi,Buriram,0,1
+2026-09-20,Rayong FC,Ratchaburi,1,1
+2026-09-20,Celtic,Rangers,0,1
+2026-09-20,Hegelmann,Suduva,1,1
+2026-09-20,Tammeka,Kalju,1,3
+2026-09-20,Sukhothai,Port MTI FC,2,1
+2026-09-20,Athens Kallithea,Panserraikos,2,1
+2026-09-20,Getafe,Malaga,1,0
+2026-09-20,Baranovici,FC Gomel,0,2
+2026-09-20,Sonderjyske,Randers FC,4,2
+2026-09-20,Djurgarden,Elfsborg,1,2
+2026-09-20,Halmstad,AIK,2,1
+2026-09-20,Kalmar,Hacken,0,5
+2026-09-20,Vaduz,Thun,1,2
+2026-09-20,Ararat,Syunik,1,0
+2026-09-20,Bangkok Utd,Pathum United,3,2
+2026-09-20,Valerenga,Fredrikstad,1,1
+2026-09-20,Karpaty Lviv,Veres-Rivne,1,1
+2026-09-20,Hartberg,LASK,3,3
+2026-09-20,Ried,Wolfsberger AC,4,1
+2026-09-20,AZ Alkmaar,Telstar,1,0
+2026-09-20,Twente,PSV,3,2
+2026-09-20,Sigma Olomouc,Sparta Prague Czech,0,3
+2026-09-20,Tukums 2000,Grobina,1,1
+2026-09-20,FA Siauliai,Kauno Zalgiris,0,2
+2026-09-20,Helsingborg,Norrby,0,0
+2026-09-20,Bayer Leverkusen,RB Leipzig,2,0
 2026-09-20,Gremio,Palmeiras,0,0
 2026-09-20,Ponte Preta,CRB,1,0
 2026-09-20,Otrant,Jezero,4,1
 2026-09-20,Dynamo Brest,Dnepr Mogilev,4,2
 2026-09-20,Real Sireti,Milsami,1,2
 2026-09-20,Shirak Gyumri,Ararat-Armenia,1,3
+2026-09-20,Asteras Tripolis B,Kalamaria,1,0
+2026-09-20,Olympiacos Piraeus B,Marko,2,4
 2026-09-20,Estrela,Academico Viseu,0,2
 2026-09-20,Vitoria Guimaraes,Moreirense,1,1
 2026-09-20,Degerfors,Hammarby,0,1
@@ -36,6 +86,7 @@ date,home,away,hg,ag
 2026-09-20,Raufoss,Stromsgodset,0,2
 2026-09-20,Sandnes,Moss,1,2
 2026-09-20,Salzburg,Sturm Graz,3,0
+2026-09-20,Jagiellonia,Legia,1,3
 2026-09-20,Schalke,Elversberg,0,0
 2026-09-20,Hibernians,Floriana,0,4
 2026-09-20,Flora,Parnu JK Vaprus,3,2
@@ -59,11 +110,67 @@ date,home,away,hg,ag
 2026-09-20,Mount Pleasant,Racing United,0,1
 2026-09-20,Treasure Beach,Tivoli,1,1
 2026-09-20,Alianza FC,Municipal Limeno El,3,2
+2026-09-20,Platense Municipal,Aguila El,0,1
 2026-09-20,Indy Eleven,Oakland Roots,0,1
 2026-09-20,Flamengo RJ,Bragantino,2,1
 2026-09-20,Londrina,Fortaleza,1,2
 2026-09-20,Sacramento Republic,San Antonio,0,0
+2026-09-19,Avispa Fukuoka,Sanfrecce Hiroshima,0,1
+2026-09-19,Kawasaki Frontale,Kashima Antlers,3,3
+2026-09-19,Urawa Reds,Verdy,3,1
+2026-09-19,V-Varen Nagasaki,Cerezo Osaka,1,1
+2026-09-19,Okayama,Kyoto,1,2
+2026-09-19,FC Tokyo,Nagoya Grampus,1,0
+2026-09-19,Anyang,Ulsan HD South,2,1
+2026-09-19,Seoul E-Land,Daegu South,2,1
+2026-09-19,Isloch,Neman,1,2
+2026-09-19,Dunav Ruse,Botev Vratsa,2,2
+2026-09-19,Nordic United,Landskrona,1,4
+2026-09-19,Oster,Norrkoping,1,3
+2026-09-19,Rasisalai Utd,Lamphun Warrior,1,1
+2026-09-19,Shaanxi Union,Suzhou Dongwu,2,2
+2026-09-19,Shenzhen Juniors,Changchun Yatai,1,1
+2026-09-19,Banga,Dziugas Telsiai,2,0
+2026-09-19,Pattani,Prachuap,0,3
+2026-09-19,Young Lions,Geylang,1,5
+2026-09-19,Nanjing City,Wuxi Wugou,0,3
+2026-09-19,Meizhou Hakka,Shijiazhuang Gongfu,1,3
+2026-09-19,Osasuna,Rayo Vallecano,1,1
+2026-09-19,Alashkert,Pyunik Yerevan,3,3
+2026-09-19,TPS,Ilves,0,3
+2026-09-19,Chiangrai Utd,Sisaket United,0,1
+2026-09-19,FK Zorya Luhansk,Dyn. Kyiv,0,2
+2026-09-19,Artis Brno,Liberec Czech,0,0
+2026-09-19,FK Pardubice,Bohemians Czech,2,1
+2026-09-19,Elva,FC Tallinn,1,1
+2026-09-19,Politehnica UTM,Petrocub,0,1
+2026-09-19,Oddevold,Varnamo,1,2
+2026-09-19,Varberg,Brage,3,2
+2026-09-19,Jelgava,Riga FC,0,1
+2026-09-19,Karditsa,Panionios,0,0
+2026-09-19,Zakynthos,Ellas Syrou,1,4
+2026-09-19,Eintracht Frankfurt,Freiburg,2,2
+2026-09-19,Werder Bremen,Augsburg,3,2
+2026-09-19,Septemvri Sofia,Botev Plovdiv,0,3
+2026-09-19,Slavia Mozyr,Naftan,0,1
+2026-09-19,Bangor FC,Portadown Northern,3,1
+2026-09-19,Carrick Rangers,Larne Northern,2,5
+2026-09-19,Cliftonville,Glentoran Northern,1,2
+2026-09-19,Dungannon,Ballymena Northern,1,1
+2026-09-19,Linfield,Crusaders Northern,1,0
+2026-09-19,Dundee FC,Motherwell,2,1
+2026-09-19,Hibernian,Aberdeen,1,1
+2026-09-19,St Johnstone,Falkirk,1,1
+2026-09-19,St. Mirren,Dundee Utd,0,3
+2026-09-19,Kristiansund,Rosenborg,1,3
+2026-09-19,Gagra,Meshakhte Tkibuli,1,1
+2026-09-19,Vikingur,07 Vestur Sorvagur Faroe,3,3
+2026-09-19,Asane,Bryne,0,4
+2026-09-19,VPS,KuPS,0,2
+2026-09-19,Gil Vicente,Maritimo,1,1
+2026-09-19,Nacional,Famalicao,0,4
 2026-09-19,Den Haag,Cambuur,1,1
+2026-09-19,HB Torshavn,AB Argir Faroe,4,1
 2026-09-19,Olympique Akbou,USM Alger,2,3
 2026-09-19,Varazdin,Osijek,0,0
 2026-09-19,Novi Pazar,Zemun,2,2
@@ -75,6 +182,7 @@ date,home,away,hg,ag
 2026-09-19,Orgryte,Sirius,1,2
 2026-09-19,Ghaz Al Shamal,Newroz,0,0
 2026-09-19,Al Quwa Al Jawiya,Diyala,1,1
+2026-09-19,Slovacko,Ostrava Czech,2,2
 2026-09-19,Molde,Aalesund,1,2
 2026-09-19,Luzern,Grasshoppers,5,1
 2026-09-19,Young Boys,Servette,3,2
@@ -95,6 +203,7 @@ date,home,away,hg,ag
 2026-09-19,Ajax,Excelsior,2,2
 2026-09-19,Al-Karma,Zakho,1,0
 2026-09-19,ES Setif,Constantine,5,1
+2026-09-19,Vardar,Shkendija Haracine North,2,0
 2026-09-19,Istra 1961,Gorica,0,1
 2026-09-19,Meux,RWDM Brussels,0,1
 2026-09-19,Motor Lublin,Gornik Zabrze,0,0
@@ -110,22 +219,30 @@ date,home,away,hg,ag
 2026-09-19,Athletic Club,Botafogo SP,1,1
 2026-09-19,Guayaquil City,Leones del Norte,1,1
 2026-09-19,Charleston,Monterey Bay,1,0
+2026-09-19,Detroit,Pittsburgh,1,0
 2026-09-19,Lexington,Orange County SC,6,0
 2026-09-19,Louisville City,Loudoun,2,1
 2026-09-19,Brooklyn,FC Tulsa,2,2
 2026-09-19,Rhode Island,Miami FC,1,2
+2026-09-19,Tampa Bay,Birmingham,4,0
 2026-09-19,Vasco,Coritiba,5,0
+2026-09-19,Aucas,Macara,1,2
+2026-09-19,Bucheon FC 1995,Gimcheon Sangmu South,0,2
+2026-09-19,Jeonnam,Suwon FC South,0,3
 2026-09-18,Yanbian Longding,Guangdong,1,2
 2026-09-18,Dalian K'un City,Ningbo Professional,1,0
 2026-09-18,Nantong Zhiyun,Guangxi Hengchen,0,1
 2026-09-18,Zhejiang Professional,Wuhan Three Towns,4,1
 2026-09-18,Ayutthaya Utd,Uthai Thani,1,2
+2026-09-18,Polissya Zhytomyr,Kryvbas,1,0
 2026-09-18,Belshina,FC Minsk,2,0
 2026-09-18,FC Gandzasar,Urartu,0,3
 2026-09-18,Kyzylzhar,Kaisar Kyzylorda,1,1
 2026-09-18,Shkendija,Bashkimi North,4,1
 2026-09-18,Sileks,Tikves North,0,0
 2026-09-18,Khenchela,Ben Aknoun,1,1
+2026-09-18,UTA Arad,Sepsi Sf. Gheorghe,1,0
+2026-09-18,Al Arabi Irbid,Al Jazeera Amman,0,0
 2026-09-18,Lahti,Jaro,1,1
 2026-09-18,SJK,Mariehamn,2,1
 2026-09-18,Aktobe,Ulytau,2,2
@@ -159,8 +276,10 @@ date,home,away,hg,ag
 2026-09-18,Platense,UPNFM,0,2
 2026-09-18,New York City,New York Red Bulls,0,1
 2026-09-18,Ceara,Novorizontino,2,1
+2026-09-17,Birmingham,New Mexico,4,4
 2026-09-17,Vakhsh,Regar-TadAZ,0,1
 2026-09-17,Orenburg,Krasnodar,0,0
+2026-09-17,FC Astana,Kairat Almaty,1,0
 2026-09-17,Tobol,Yelimay Semey,0,2
 2026-09-17,Atyrau,Ordabasy,0,3
 2026-09-17,Akron Togliatti,Akhmat Grozny,2,0
@@ -228,9 +347,48 @@ date,home,away,hg,ag
 2026-09-14,Bahia,Remo,2,1
 2026-09-14,Union La Calera,Limache,1,0
 2026-09-14,Rangers,Deportes Iquique,1,2
+2026-09-13,Santos,Cruzeiro,2,1
+2026-09-13,St. Louis City,Minnesota United,4,2
+2026-09-13,FC Dallas,Portland Timbers,2,1
+2026-09-13,Alianza,Junior,1,0
+2026-09-13,Real Salt Lake,New York City,0,2
+2026-09-13,Oakland Roots,Lexington,1,4
+2026-09-13,Orange County SC,Las Vegas Lights,0,2
+2026-09-13,Phoenix Rising,FC Tulsa,2,1
+2026-09-13,Sacramento Republic,Detroit,1,0
+2026-09-13,Los Angeles Galaxy,Seattle Sounders,1,1
+2026-09-13,San Jose Earthquakes,Houston Dynamo,1,0
+2026-09-13,Gimcheon Sangmu,Gangwon South,2,2
+2026-09-13,Gyeongnam,Seongnam South,1,0
+2026-09-13,Isloch,FC Gomel,2,1
+2026-09-13,Gwangju FC,Anyang South,1,1
+2026-09-13,Busan,Gimhae South,2,0
+2026-09-13,Suwon FC,Cheonan City South,1,1
+2026-09-13,Ertis Pavlodar,Okzhetpes,2,1
+2026-09-13,Prachuap,Sukhothai,1,0
+2026-09-13,Wuxi Wugou,Nantong Zhiyun,1,3
+2026-09-13,Paide,Harju JK Laagri,1,2
+2026-09-13,Sabah,DPMM,1,2
+2026-09-13,Meizhou Hakka,Nanjing City,2,1
+2026-09-13,Shijiazhuang Gongfu,Shenzhen Juniors,0,0
+2026-09-13,Dnepr Mogilev,ML Vitebsk,1,1
+2026-09-13,Elfsborg,Kalmar,1,0
+2026-09-13,Hammarby,Brommapojkarna,3,1
+2026-09-13,Chonburi,Rayong FC,2,3
+2026-09-13,KuPS,HJK,0,0
+2026-09-13,Selangor,Kuala Lumpur City,3,0
+2026-09-13,Viking,Kristiansund,8,1
+2026-09-13,Norrkoping,Oddevold,0,0
+2026-09-13,Niki Volos,Olympiacos Piraeus B,1,2
+2026-09-13,Flenu,Meux,1,4
+2026-09-13,RB Leipzig,Hamburger SV,5,0
+2026-09-13,Streymur,B36 Torshavn Faroe,2,1
 2026-09-13,FA Siauliai,Hegelmann,0,0
 2026-09-13,Dila Gori,Dinamo Batumi,2,2
+2026-09-13,Chrisoupolis,Pyrgos,1,0
 2026-09-13,Kuressaare,Tammeka,1,3
+2026-09-13,Kairat Almaty,Tobol,1,4
+2026-09-13,Ellas Syrou,Karditsa,3,0
 2026-09-13,Malmo FF,Orgryte,4,1
 2026-09-13,Moquegua,Sporting Cristal,1,2
 2026-09-13,HamKam,Molde,1,5
@@ -253,6 +411,7 @@ date,home,away,hg,ag
 2026-09-13,Fredrikstad,Sarpsborg 08,1,1
 2026-09-13,Sport Boys,Deportivo Garcilaso,1,0
 2026-09-13,San Marcos de Arica,Curico Unido,3,0
+2026-09-13,Pereira,Bucaramanga,1,3
 2026-09-13,Mirassol,Vitoria,2,2
 2026-09-13,Macara,Emelec,1,0
 2026-09-13,Flamengo RJ,Corinthians,2,1
@@ -266,8 +425,42 @@ date,home,away,hg,ag
 2026-09-13,A. Italiano,O'Higgins,1,0
 2026-09-13,Dunbeholden,Cavalier,1,2
 2026-09-13,Montego Bay,Chapelton,2,0
+2026-09-12,Cusco,FBC Melgar,0,1
+2026-09-12,Santa Fe,Deportes Tolima,1,0
+2026-09-12,New Mexico,Indy Eleven,2,2
+2026-09-12,Colorado Springs,San Antonio,2,1
+2026-09-12,Jeonbuk,Seoul South,1,2
+2026-09-12,Ulsan HD,Incheon South,2,1
+2026-09-12,Daegu,Yongin South,3,1
+2026-09-12,Seoul E-Land,Suwon Bluewings South,0,1
+2026-09-12,Daejeon,Pohang South,2,2
+2026-09-12,Ansan Greeners,Hwaseong South,0,2
+2026-09-12,Sisaket United,Ayutthaya Utd,0,1
+2026-09-12,Tianjin Jinmen Tiger,Liaoning Tieren,1,0
+2026-09-12,Ningbo Professional,Shaanxi Union,1,0
+2026-09-12,Suzhou Dongwu,Foshan Nanshi,3,2
+2026-09-12,Grobina,Jelgava,0,0
+2026-09-12,Levadia,Parnu JK Vaprus,4,0
+2026-09-12,Uthai Thani,Pattani,1,2
+2026-09-12,Guangdong GZ-Power,Dalian K'un City,1,1
+2026-09-12,Guangxi Hengchen,Yanbian Longding,2,1
+2026-09-12,Hougang,Lion City,2,2
+2026-09-12,Wuhan Three Towns,Henan Songshan Longmen,1,1
+2026-09-12,Pathum United,Rasisalai Utd,3,2
+2026-09-12,Melaka FC,Kuching City FC,1,2
+2026-09-12,Yelimay Semey,Zhetysu Taldykorgan,2,1
+2026-09-12,Marko,Athens Kallithea,2,1
+2026-09-12,Dortmund,Paderborn,3,0
+2026-09-12,Hoffenheim,Stuttgart,2,1
+2026-09-12,Mainz,Eintracht Frankfurt,1,3
+2026-09-12,Augsburg,Bayer Leverkusen,2,2
+2026-09-12,Lillestrom,Valerenga,2,0
+2026-09-12,Mariehamn,TPS,1,0
+2026-09-12,Ordabasy,FC Astana,1,0
+2026-09-12,Al Ramtha,Al Arabi Irbid,1,0
 2026-09-12,Vitebsk,Belshina,1,1
 2026-09-12,Kaisar Kyzylorda,Atyrau,1,0
+2026-09-12,AEL Larissa,Zakynthos,1,0
 2026-09-12,Nublense,Everton,1,3
 2026-09-12,Los Chankas,FC Cajamarca,1,2
 2026-09-12,Rosenborg,Tromso,5,3
@@ -280,17 +473,19 @@ date,home,away,hg,ag
 2026-09-12,Rouisset,Olympique Akbou,2,0
 2026-09-12,Union Rochefortoise,Onhaye,1,2
 2026-09-12,Longford,Treaty United,0,2
+2026-09-12,Gremio,Vasco,1,2
 2026-09-12,Manta,Aucas,0,0
 2026-09-12,Chapecoense-SC,Internacional,1,2
 2026-09-12,Supra du Quebec,HFX Wanderers,0,2
 2026-09-12,Constantine,ASO Chlef,3,0
-2026-09-12,Moquegua,Sporting Cristal,1,2
 2026-09-12,Palmeiras,Sao Paulo,2,0
 2026-09-12,Guayaquil City,Mushuc Runa,3,1
 2026-09-12,Brooklyn,Miami FC,1,1
 2026-09-12,Hartford Athletic,Tampa Bay,3,1
 2026-09-12,Louisville City,El Paso,1,2
+2026-09-12,Pittsburgh,Loudoun,1,0
 2026-09-12,Sporting Jax,Rhode Island,0,3
+2026-09-12,Birmingham,Charleston,2,2
 2026-09-12,DC United,Atlanta Utd,0,0
 2026-09-12,FC Cincinnati,Charlotte,3,3
 2026-09-12,Inter Miami,Nashville SC,2,2
