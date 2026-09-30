@@ -205,21 +205,30 @@ def scores(pred_csv, out_csv):
     print(f"{len(out)} scored, {missed} not found (not played yet or names differ)")
 
 def _experiments(key, date):
-    """Try paging / sorting parameters and show what each returns."""
+    """Try other endpoints/parameters and show what each returns."""
     import json, urllib.request
-    base = f"https://api.goal-api.com/v1/results/date/{date}"
-    tests = ["limit=500", "limit=500&offset=500", "limit=100&offset=100", "limit=500&page=2",
-             "limit=500&sort=asc", "limit=500&order=asc", "limit=500&sortOrder=asc",
-             "limit=500&sortBy=kickoffUtc&sortOrder=asc", "limit=500&from=00:00&to=13:59"]
+    root = "https://api.goal-api.com/v1"
+    tests = [
+        f"/results?limit=500",
+        f"/results?limit=500&offset=500",
+        f"/results?limit=500&from={date}&to={date}",
+        f"/results?limit=500&date={date}",
+        f"/fixtures?limit=500&from={date}&to={date}",
+        f"/fixtures?limit=500&from={date}&to={date}&offset=500",
+        f"/fixtures/date/{date}?limit=500",
+        f"/fixtures/date/{date}?limit=500&offset=500",
+    ]
     for q in tests:
-        req = urllib.request.Request(f"{base}?{q}", headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(root + q, headers={"Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0"})
         try:
             js = json.loads(urllib.request.urlopen(req).read().decode())
         except Exception as e:
             print(f"[{q}] failed: {e}"); continue
         data = js.get("data") or []
-        hrs = sorted({str(m.get("kickoffUtc"))[11:13] for m in data})
-        print(f"[{q}] n={len(data)} pagination={js.get('pagination')} hours={hrs[:1]}..{hrs[-1:]} first_id={(data[0].get('id') if data else None)}")
+        if isinstance(data, dict):
+            data = data.get("results") or data.get("fixtures") or []
+        ks = sorted(str(m.get("kickoffUtc")) for m in data)
+        print(f"[{q}] n={len(data)} pagination={js.get('pagination')} first={ks[:1]} last={ks[-1:]}")
 
 def probe(date, needle=""):
     """Diagnose GOAL API coverage for one date: counts, kickoff hours, sample match."""
