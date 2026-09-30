@@ -20,6 +20,6 @@ jobs:
       - run: |
           git config user.name "bot"
           git config user.email "bot@users.noreply.github.com"
-          git add all_predictions.csv scores.csv analysis.csv report.txt
+          git add all_predictions.csv scores.csv analysis.csv report.txt filter_report.txt filter_picks.csv 
           git commit -m "update" || echo "no changes"
           git push
