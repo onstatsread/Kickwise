@@ -1,4 +1,9 @@
 date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,decision,signal,ou_result,pred1,pred2,pred3
+2026-09-30,18:00,RWDM Brussels,Union Rochefortoise,Belgium,First Amateur Division,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,4goals,1.52,2.92,3.0,2.0,3.5,3.0,,,over,,,Home handicap
+2026-09-30,21:00,San Felipe,San Luis,Chile,Primera B,"San Luis FC, handicap/ handicap",,not match,one,4goals,3.46,2.24,3.79,3.0,3.25,2.1,Home,,under,,,Home
+2026-09-30,23:00,Brooklyn,Detroit,USA,USL Championship,"Detroit City, handicap/ double",,not match,both,4goals,5.85,3.06,1.99,3.25,3.25,2.0,Home 2-handicap,,under,Detroit City/ double / double / 4goals,Detroit City / 4goals / same,Home
+2026-09-30,23:00,Miami FC,Sporting Jax,USA,USL Championship,Miami/ handicap,double,match,both,4goals,1.72,5.24,4.41,1.61,4.0,4.1,Home,,under confirmed,Miami/ handicap / double,Miami only,Away handicap
+2026-09-30,23:30,Rhode Island,Indy Eleven,USA,USL Championship,Rhode Island/ handicap,,match,one,4goals,1.52,4.35,9.09,1.85,3.5,3.5,Away 2-handicap,,under,,,Home handicap
 2026-09-29,11:00,Wuxi Wugou,Ningbo Professional,China,League One,Wuxi Wugou/ handicap,,match,one,4goals,3.23,3.06,2.76,2.1,3.1,3.2,Home 2-handicap,under,under,,,Home 2-handicap/ under 4goals
 2026-09-29,22:30,Botafogo SP,Ponte Preta,Brazil,Serie B,Botafogo SP/ double,double,match,both,3goals,1.23,8.55,13.89,1.23,6.5,10.17,Away 2-handicap,,under confirmed,Botafogo SP/ double / double / 3goals,Botafogo SP / 3goals,Away
 2026-09-24,01:00,Luis Angel Firpo,Cacahuatique El,Salvador,Primera Division,Firpo / low/ handicap,,not match,both,4goals,2.56,3.31,3.25,,,,,,,Firpo/ handicap / double / 4goals,Firpo / 4goals / same,
