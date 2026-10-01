@@ -248,6 +248,17 @@ def build_pred2_text(pred):
     return pred2
 
 
+def _pct(d, key):
+    """' (NN%)' when the key is present, '' when the data source did not supply it."""
+    v = d.get(key)
+    return f" ({v}%)" if v is not None else ""
+
+
+def _ou_text(label, d):
+    return (f"{label} Over {d.get('over_odds')}{_pct(d, 'over_pct')} / "
+            f"Under {d.get('under_odds')}{_pct(d, 'under_pct')}")
+
+
 def format_match_html(league_name, match, pred):
     if not pred:
         return ""
@@ -268,9 +279,9 @@ def format_match_html(league_name, match, pred):
         odds_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
-            📊 Odds: Home {odds['home_odds']} ({odds['home_pct']}%) |
-            Draw {odds['draw_odds']} ({odds['draw_pct']}%) |
-            Away {odds['away_odds']} ({odds['away_pct']}%)
+            📊 Odds: Home {odds.get('home_odds')}{_pct(odds, 'home_pct')} |
+            Draw {odds.get('draw_odds')}{_pct(odds, 'draw_pct')} |
+            Away {odds.get('away_odds')}{_pct(odds, 'away_pct')}
           </td>
         </tr>"""
 
@@ -280,9 +291,9 @@ def format_match_html(league_name, match, pred):
         market_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
-            💰 Market Odds: Home {market_odds['home_odds']} ({market_odds['home_pct']}%) |
-            Draw {market_odds['draw_odds']} ({market_odds['draw_pct']}%) |
-            Away {market_odds['away_odds']} ({market_odds['away_pct']}%)
+            💰 Market Odds: Home {market_odds.get('home_odds')}{_pct(market_odds, 'home_pct')} |
+            Draw {market_odds.get('draw_odds')}{_pct(market_odds, 'draw_pct')} |
+            Away {market_odds.get('away_odds')}{_pct(market_odds, 'away_pct')}
           </td>
         </tr>"""
 
@@ -321,9 +332,9 @@ def format_match_html(league_name, match, pred):
     if ou25.get("over_odds") or market_ou25.get("over_odds"):
         parts = []
         if ou25.get("over_odds"):
-            parts.append(f"Model Over {ou25['over_odds']} ({ou25['over_pct']}%) / Under {ou25['under_odds']} ({ou25['under_pct']}%)")
+            parts.append(_ou_text("Model", ou25))
         if market_ou25.get("over_odds"):
-            parts.append(f"Market Over {market_ou25['over_odds']} ({market_ou25['over_pct']}%) / Under {market_ou25['under_odds']} ({market_ou25['under_pct']}%)")
+            parts.append(_ou_text("Market", market_ou25))
         ou25_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
@@ -889,7 +900,13 @@ def main():
             print(f"    ⚠️ Skipping {m['fix']['home']} vs {m['fix']['away']} (all N/A)")
             na_matches += 1
             continue
-        match_html = format_match_html(m["league_name"], m["fix"], pred)
+        try:
+            match_html = format_match_html(m["league_name"], m["fix"], pred)
+        except Exception as e:
+            # one malformed prediction must not stop the whole daily run
+            print(f"    ❌ Could not format {m['fix']['home']} vs {m['fix']['away']}: {type(e).__name__}: {e}")
+            failed_matches += 1
+            continue
         if match_html:
             match_time = m["fix"].get("time", "TBD")
             if match_time != current_time:
