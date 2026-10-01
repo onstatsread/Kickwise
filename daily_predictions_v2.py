@@ -30,6 +30,7 @@ from daily_predictions import (
     check_double_chance_signal_2, check_double_chance_signal_3,
     passes_double_chance_extra_filter, passes_dominance_ratio_filter,
     send_telegram_notification, post_to_blogger, get_access_token,
+    check_watch_list_1, check_watch_list_2, WATCHLIST1_ONLY_2HC_PICKS,
 )
 
 
@@ -143,6 +144,11 @@ def main():
     dc_notify_cards = []
     dc2_notify_cards = []
     dc3_notify_cards = []
+    wl1_notify_cards = []   # watch list 1: flagged 2-handicap picks
+    wl1_clean_cards = []    # watch list 1: 2-handicap picks with no flags
+    wl2_danger_cards = []   # watch list 2: 2-3 flags
+    wl2_caution_cards = []  # watch list 2: 1 flag
+    wl2_clean_cards = []    # watch list 2: 0 flags
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -189,6 +195,9 @@ def main():
 
             value_pct = pred.get("value_pct") or {}
 
+            wl1_signals = []  # 2-handicap picks from DC1/DC2/DC3 for this match
+            wl2_signals = []  # ALL picks from DC1/DC2/DC3 for this match
+
             dc_side = check_double_chance_signal(pred)
             if dc_side:
                 dc_signal = refine_double_chance_signal(pred, dc_side)
@@ -197,6 +206,9 @@ def main():
                     and passes_double_chance_extra_filter(value_pct)
                     and passes_dominance_ratio_filter(value_pct)
                 ):
+                    wl2_signals.append(f"DC1: {dc_signal}")
+                    if "2-handicap" in dc_signal:
+                        wl1_signals.append(f"DC1: {dc_signal}")
                     dc_notify_cards.append(
                         f"🕐 {match_time} | {m['league_name']}\n"
                         f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
@@ -212,6 +224,9 @@ def main():
                 and passes_double_chance_extra_filter(value_pct)
                 and passes_dominance_ratio_filter(value_pct)
             ):
+                wl2_signals.append(f"DC2: {dc2_result}")
+                if "2-handicap" in dc2_result:
+                    wl1_signals.append(f"DC2: {dc2_result}")
                 model_odds = pred.get("odds") or {}
                 dc2_notify_cards.append(
                     f"🕐 {match_time} | {m['league_name']}\n"
@@ -229,6 +244,9 @@ def main():
                 and passes_double_chance_extra_filter(value_pct)
                 and passes_dominance_ratio_filter(value_pct)
             ):
+                wl2_signals.append(f"DC3: {dc3_result}")
+                if "2-handicap" in dc3_result:
+                    wl1_signals.append(f"DC3: {dc3_result}")
                 model_odds = pred.get("odds") or {}
                 value_signal = pred.get("value_signal") or {}
                 dc3_notify_cards.append(
@@ -240,6 +258,52 @@ def main():
                     f"Draw {model_odds.get('draw_odds')} | "
                     f"Away {model_odds.get('away_odds')}"
                 )
+
+            # Watch List 1 — red flags on the bot's own 2-handicap picks
+            if wl1_signals or not WATCHLIST1_ONLY_2HC_PICKS:
+                wl1_flags = check_watch_list_1(pred, m["league_name"])
+                if not wl1_flags and wl1_signals:
+                    # 2-handicap pick with no red flags -> clean list
+                    b46_clean = pred.get("b46") or pred.get("b46r") or "—"
+                    wl1_notify_clean = (
+                        f"🕐 {match_time} | {m['league_name']}\n"
+                        f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                        f"🎯 Picks: {' | '.join(wl1_signals)}\n"
+                        f"📋 B46: {b46_clean}"
+                    )
+                    wl1_clean_cards.append(wl1_notify_clean)
+                if wl1_flags:
+                    model_odds = pred.get("odds") or {}
+                    value_pct = pred.get("value_pct") or {}
+                    b46_wl = pred.get("b46") or pred.get("b46r") or "—"
+                    picks_line = " | ".join(wl1_signals) if wl1_signals else "—"
+                    wl1_notify_cards.append(
+                        f"🕐 {match_time} | {m['league_name']}\n"
+                        f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                        f"🎯 Picks: {picks_line}\n"
+                        f"📋 B46: {b46_wl}\n"
+                        f"🚩 Flags: {', '.join(wl1_flags)}\n"
+                        f"💰 Draw: odds {model_odds.get('draw_odds')} | "
+                        f"value {value_pct.get('draw')}%"
+                    )
+
+            # Watch List 2 — red flags on every DC1/DC2/DC3 pick
+            if wl2_signals:
+                wl2_side = wl2_signals[0].split(": ", 1)[1].split()[0].lower()
+                wl2_flags = check_watch_list_2(pred, wl2_side)
+                b46_wl2 = pred.get("b46") or pred.get("b46r") or "—"
+                wl2_head = (
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"🎯 Picks: {' | '.join(wl2_signals)}\n"
+                    f"📋 B46: {b46_wl2}"
+                )
+                if len(wl2_flags) >= 2:
+                    wl2_danger_cards.append(wl2_head + f"\n🚩 Flags ({len(wl2_flags)}): " + "; ".join(wl2_flags))
+                elif len(wl2_flags) == 1:
+                    wl2_caution_cards.append(wl2_head + f"\n⚠️ Flag (1): {wl2_flags[0]}")
+                else:
+                    wl2_clean_cards.append(wl2_head)
 
     if total_matches == 0:
         print("No matches found today.")
@@ -316,6 +380,53 @@ def main():
         send_telegram_notification(dc3_message)
     else:
         print("\nℹ️ Double chance signal 3: no matches flagged today.")
+
+    if wl1_notify_cards or wl1_clean_cards:
+        wl1_parts = [f"⚠️ Kickwise Watch List 1 — {today_display}"]
+        if wl1_notify_cards:
+            wl1_parts.append(
+                f"🚩 FLAGGED — {len(wl1_notify_cards)} match(es), extra caution\n\n"
+                + "\n\n".join(wl1_notify_cards)
+            )
+        else:
+            wl1_parts.append("🚩 FLAGGED — none today")
+        if wl1_clean_cards:
+            wl1_parts.append(
+                f"✅ CLEAN (no flags) — {len(wl1_clean_cards)} 2-handicap pick(s)\n\n"
+                + "\n\n".join(wl1_clean_cards)
+            )
+        else:
+            wl1_parts.append("✅ CLEAN (no flags) — none today")
+        send_telegram_notification("\n\n".join(wl1_parts))
+    else:
+        print("\nℹ️ Watch list 1: no 2-handicap picks today.")
+
+    if wl2_danger_cards or wl2_caution_cards or wl2_clean_cards:
+        wl2_parts = [f"⚠️ Kickwise Watch List 2 — {today_display}"]
+        if wl2_danger_cards:
+            wl2_parts.append(
+                f"🚩 DANGER (2-3 flags) — {len(wl2_danger_cards)} pick(s)\n\n"
+                + "\n\n".join(wl2_danger_cards)
+            )
+        else:
+            wl2_parts.append("🚩 DANGER (2-3 flags) — none today")
+        if wl2_caution_cards:
+            wl2_parts.append(
+                f"⚠️ CAUTION (1 flag) — {len(wl2_caution_cards)} pick(s)\n\n"
+                + "\n\n".join(wl2_caution_cards)
+            )
+        else:
+            wl2_parts.append("⚠️ CAUTION (1 flag) — none today")
+        if wl2_clean_cards:
+            wl2_parts.append(
+                f"✅ CLEAN (no flags) — {len(wl2_clean_cards)} pick(s)\n\n"
+                + "\n\n".join(wl2_clean_cards)
+            )
+        else:
+            wl2_parts.append("✅ CLEAN (no flags) — none today")
+        send_telegram_notification("\n\n".join(wl2_parts))
+    else:
+        print("\nℹ️ Watch list 2: no double chance picks today.")
 
 
 if __name__ == "__main__":
