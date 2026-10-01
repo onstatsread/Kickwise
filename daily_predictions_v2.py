@@ -165,7 +165,13 @@ def main():
             na_matches += 1
             continue
 
-        match_html = format_match_html(m["league_name"], m["fix"], pred)
+        try:
+            match_html = format_match_html(m["league_name"], m["fix"], pred)
+        except Exception as e:
+            # one malformed prediction must not stop the whole daily run
+            print(f"    ❌ Could not format {m['fix']['home']} vs {m['fix']['away']}: {type(e).__name__}: {e}")
+            failed_matches += 1
+            continue
         if match_html:
             match_time = m["fix"].get("time", "TBD")
             if match_time != current_time:
