@@ -1,12 +1,7 @@
 name: Kickwise Daily Predictions V2 (GOAL API)
 
 on:
-  schedule:
-    # 23:30 UTC — offset 30 min AFTER the main pipeline's 23:00 UTC
-    # run, so both scripts don't hit the same Render backend at the
-    # exact same moment (free-tier cold-start/spin-down makes
-    # simultaneous load a real risk, not just theoretical).
-    - cron: '30 23 * * *'
+  
   workflow_dispatch: {}  # allows manual runs from the Actions tab, useful while testing
 
 jobs:
