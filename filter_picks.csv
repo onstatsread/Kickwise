@@ -1,4 +1,13 @@
 stream,date,home,away,label,score,result
+Blog2 standard (Away + under),2026-10-04,Colorado Springs,Oakland Roots,Away,0-0,loss
+Blog2 standard (Away + under),2026-10-03,Veres-Rivne,Kudrivka,Away,2-1,loss
+Blog2 standard (Away + under),2026-10-03,Briton Ferry,Colwyn Bay,Away,1-0,loss
+Blog2 standard (Away + under),2026-10-03,Carrick Rangers,Crusaders Northern,Away,4-0,loss
+Blog2 standard (Away + under),2026-10-03,Cliftonville,Ballymena Northern,Away,0-1,win
+Blog2 standard (Away + under),2026-10-03,Magallanes,Curico Unido,Away,1-0,loss
+Blog2 standard (Away + under),2026-10-02,Dundalk,Bohemians,Away,1-2,win
+Blog2 standard (Away + under),2026-10-02,Londrina,Criciuma,Away,0-2,win
+Blog2 standard (Away + under),2026-09-30,Miami FC,Sporting Jax,Away,4-1,loss
 Blog2 standard (Away + under),2026-09-21,Spaeri,Dila Gori,Away,1-4,win
 Blog2 standard (Away + under),2026-09-20,Ansan Greeners,Cheongju South,Away,2-3,win
 Blog2 standard (Away + under),2026-09-20,Machida,Kashiwa Reysol,Away,2-4,win
@@ -39,6 +48,16 @@ Blog2 standard (Away + under),2026-09-13,A. Italiano,O'Higgins,Away,1-0,loss
 Blog2 standard (Away + under),2026-09-12,Chapecoense-SC,Internacional,Away,1-2,win
 Blog2 standard (Away + under),2026-09-11,Galway,Bohemians,Away,2-3,win
 Blog2 standard (Away + under),2026-09-11,Shelbourne,Derry City,Away,0-1,win
+DC signal 1,2026-10-03,Strommen,Sandnes,Home 2-handicap,3-3,win
+DC signal 1,2026-10-03,Ammanford,Holywell,Home 2-handicap,2-1,win
+DC signal 1,2026-10-03,Haverfordwest,Flint,Away 3-handicap,0-1,win
+DC signal 1,2026-10-03,Glentoran,Dungannon Northern,Home win or draw,2-0,win
+DC signal 1,2026-10-03,Detroit,Birmingham,Away 2-handicap,1-0,win
+DC signal 1,2026-10-02,Dundalk,Bohemians,Home 3-handicap,1-2,win
+DC signal 1,2026-10-02,Athlone,Cork City,Home 2-handicap,2-1,win
+DC signal 1,2026-10-02,Finn Harps,Kerry,Home 2-handicap,1-2,win
+DC signal 1,2026-09-30,Brooklyn,Detroit,Home 2-handicap,1-3,push
+DC signal 1,2026-09-30,Rhode Island,Indy Eleven,Away 2-handicap,1-0,win
 DC signal 1,2026-09-21,Manta,Orense,Home win or draw,2-1,win
 DC signal 1,2026-09-20,Las Vegas Lights,Hartford Athletic,Home win or draw,1-1,win
 DC signal 1,2026-09-20,Gamba Osaka,Vissel Kobe,Home 2-handicap,0-1,win
@@ -84,6 +103,10 @@ DC signal 1,2026-09-15,Indy Eleven,Brooklyn,Away 3-handicap,4-0,loss
 DC signal 1,2026-09-14,Meshakhte Tkibuli,Rustavi,Home 3-handicap,0-1,win
 DC signal 1,2026-09-14,Orebro,Nordic United,Home win or draw,1-1,win
 DC signal 1,2026-09-12,Manta,Aucas,Home 2-handicap,0-0,win
+DC signal 2,2026-10-03,Glentoran,Dungannon Northern,Home 2-handicap,2-0,win
+DC signal 2,2026-10-03,Copiapo,D. Puerto Montt,Home 2-handicap,3-0,win
+DC signal 2,2026-10-02,Londrina,Criciuma,Away 2-handicap,0-2,win
+DC signal 2,2026-10-01,Athletic Club,Sport Recife,Home 2-handicap,1-2,win
 DC signal 2,2026-09-29,Wuxi Wugou,Ningbo Professional,Home 2-handicap,1-0,win
 DC signal 2,2026-09-20,Machida,Kashiwa Reysol,Away 2-handicap,2-4,win
 DC signal 2,2026-09-20,Incheon,Daejeon South,Home 2-handicap,1-1,win
@@ -112,6 +135,17 @@ DC signal 2,2026-09-14,Norrby,Varberg,Home 2-handicap,1-2,win
 DC signal 2,2026-09-14,Waterford,Derry City,Away 2-handicap,2-2,win
 DC signal 2,2026-09-13,Magallanes,D. Puerto Montt,Home 2-handicap,2-0,win
 DC signal 2,2026-09-12,Brooklyn,Miami FC,Home 2-handicap,1-1,win
+DC signal 3,2026-10-03,Veres-Rivne,Kudrivka,Away 2-handicap,2-1,win
+DC signal 3,2026-10-03,Strommen,Sandnes,Home 2-handicap,3-3,win
+DC signal 3,2026-10-03,Caernarfon,Barry,Away 2-handicap,0-1,win
+DC signal 3,2026-10-03,Glentoran,Dungannon Northern,Home,2-0,win
+DC signal 3,2026-10-03,Magallanes,Curico Unido,Away 2-handicap,1-0,win
+DC signal 3,2026-10-03,Copiapo,D. Puerto Montt,Home,3-0,win
+DC signal 3,2026-10-02,Athlone,Cork City,Home 2-handicap,2-1,win
+DC signal 3,2026-10-02,Londrina,Criciuma,Away 2-handicap,0-2,win
+DC signal 3,2026-10-02,Juventude,Operario-PR,Home,3-0,win
+DC signal 3,2026-10-01,Athletic Club,Sport Recife,Home 2-handicap,1-2,win
+DC signal 3,2026-09-30,Brooklyn,Detroit,Home 2-handicap,1-3,push
 DC signal 3,2026-09-29,Wuxi Wugou,Ningbo Professional,Home 2-handicap,1-0,win
 DC signal 3,2026-09-21,Manta,Orense,Home 2-handicap,2-1,win
 DC signal 3,2026-09-20,Las Vegas Lights,Hartford Athletic,Home 2-handicap,1-1,win
