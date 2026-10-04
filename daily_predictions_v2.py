@@ -31,6 +31,9 @@ from daily_predictions import (
     passes_double_chance_extra_filter, passes_dominance_ratio_filter,
     send_telegram_notification, post_to_blogger, get_access_token,
     check_watch_list_1, check_watch_list_2, WATCHLIST1_ONLY_2HC_PICKS,
+    standard_pick_risk_line,
+    check_under_list_3,
+    check_over_list_4,
 )
 
 
@@ -149,6 +152,8 @@ def main():
     wl2_danger_cards = []   # watch list 2: 2-3 flags
     wl2_caution_cards = []  # watch list 2: 1 flag
     wl2_clean_cards = []    # watch list 2: 0 flags
+    under3_cards = []       # watch list 3 UNDER picks
+    over4_cards = []        # watch list 4 OVER picks
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -196,7 +201,8 @@ def main():
                     f"⚡ Decision: {value_signal.get('decision') or '—'}\n"
                     f"📋 B46: {b46_out}\n"
                     f"📈 O/U Result: {ou25_value_signal.get('result') or '—'}\n"
-                    f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}"
+                    f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}\n"
+                    f"{standard_pick_risk_line(pred)}"
                 )
 
             value_pct = pred.get("value_pct") or {}
@@ -310,6 +316,36 @@ def main():
                     wl2_caution_cards.append(wl2_head + f"\n⚠️ Flag (1): {wl2_flags[0]}")
                 else:
                     wl2_clean_cards.append(wl2_head)
+
+
+            # Watch List 3 UNDER — B46 3goals or less + evenly matched game
+            if check_under_list_3(pred):
+                u3_odds = pred.get("odds") or pred.get("oddsr") or {}
+                u3_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                under3_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📋 B46: {u3_b46}\n"
+                    f"💰 Model Odds: Home {u3_odds.get('home_odds')} | "
+                    f"Draw {u3_odds.get('draw_odds')} | "
+                    f"Away {u3_odds.get('away_odds')}"
+                )
+
+
+            # Watch List 4 OVER — B46 4goals+ + high draw odds + O/U confirms
+            if check_over_list_4(pred):
+                o4_odds = pred.get("odds") or pred.get("oddsr") or {}
+                o4_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                o4_ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
+                over4_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📋 B46: {o4_b46}\n"
+                    f"📈 O/U Result: {o4_ou}\n"
+                    f"💰 Model Odds: Home {o4_odds.get('home_odds')} | "
+                    f"Draw {o4_odds.get('draw_odds')} | "
+                    f"Away {o4_odds.get('away_odds')}"
+                )
 
     if total_matches == 0:
         print("No matches found today.")
@@ -433,6 +469,26 @@ def main():
         send_telegram_notification("\n\n".join(wl2_parts))
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
+
+    if under3_cards:
+        under3_message = (
+            f"🎯 Kickwise Watch List 3 UNDER — {today_display}\n"
+            f"{len(under3_cards)} match(es): B46 3goals or less + evenly matched\n\n"
+            + "\n\n".join(under3_cards)
+        )
+        send_telegram_notification(under3_message)
+    else:
+        print("\nℹ️ Watch list 3 UNDER: no matches today.")
+
+    if over4_cards:
+        over4_message = (
+            f"🎯 Kickwise Watch List 4 OVER — {today_display}\n"
+            f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
+            + "\n\n".join(over4_cards)
+        )
+        send_telegram_notification(over4_message)
+    else:
+        print("\nℹ️ Watch list 4 OVER: no matches today.")
 
 
 if __name__ == "__main__":
