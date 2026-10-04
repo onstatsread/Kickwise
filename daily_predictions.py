@@ -441,6 +441,123 @@ def format_match_html(league_name, match, pred):
   </table>
 </div>"""
 
+# ============================================================
+# STANDARD PICKS RISK FLAGS — shown on the Telegram "Kickwise
+# Standard Picks" cards. WARNING ONLY: no pick is removed and the
+# Blog 2 post is unchanged.
+#
+# Built from the Oct 2026 review of 49 Standard Picks (target: under
+# 2.5 goals). Each flag below is one point of risk:
+#   1. B46 says 4goals or 5goals
+#   2. D64 says "both"
+#   3. Underdog's model odds are 3.8 or higher (one clear favourite)
+# Levels: 0-1 flags = OK | 2 flags = CAREFUL | 3 flags = AVOID
+# (3 flags went over 2.5 in ~8 of 10 picks.)
+# Good sign: B120 says "under" (0 of 7 picks went over so far).
+#
+# NOTE: cut-offs were chosen by looking at the same picks, over ~3
+# weeks. Re-check against new results before relying on them.
+# ============================================================
+STANDARD_RISK_B46_LABELS   = ("4goals", "5goals")
+STANDARD_RISK_DOG_ODDS_MIN = 3.8
+
+
+def standard_pick_flags(pred):
+    flags = []
+
+    b46 = pred.get("b46") or pred.get("b46r") or ""
+    if str(b46).replace(" ", "").lower() in STANDARD_RISK_B46_LABELS:
+        flags.append(f"B46 {b46}")
+
+    if str(pred.get("d64") or "").strip().lower() == "both":
+        flags.append("D64 both")
+
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    home_o, away_o = model_odds.get("home_odds"), model_odds.get("away_odds")
+    if home_o is not None and away_o is not None:
+        dog = max(home_o, away_o)
+        if dog >= STANDARD_RISK_DOG_ODDS_MIN:
+            flags.append(f"underdog odds {dog}")
+
+    return flags
+
+
+def standard_pick_risk_line(pred):
+    flags = standard_pick_flags(pred)
+    n = len(flags)
+    if n >= 3:
+        level = "🚩 AVOID"
+    elif n == 2:
+        level = "⚠️ CAREFUL"
+    else:
+        level = "✅ OK"
+    line = f"{level} — {n}/3 flags"
+    if flags:
+        line += ": " + "; ".join(flags)
+    if str(pred.get("b120") or "").strip().lower() == "under":
+        line += "\n👍 B120 says under (good sign)"
+    return line
+
+
+# ============================================================
+# WATCH LIST 3 UNDER — a pick list for goals UNDER, built on B46.
+# Built from the Oct 2026 review of all scored matches:
+#   B46 says 2goals or less / 3goals  AND  both teams' model odds
+#   are under 3.0 (an evenly matched game, no clear underdog)
+#   -> 34 matches, 68% finished under 2.5 goals (all matches: 45%;
+#   B46 3goals or less alone: 53%). Held in the early, later and
+#   newest matches.
+# NOTE: only 34 matches (margin of error ~ +/-16 points) and the
+# 3.0 cut-off was set after looking at the data. Re-check against
+# new results before relying on it. Nothing else is changed.
+# ============================================================
+UNDER3_B46_LABELS   = ("2goalsorless", "3goals")
+UNDER3_MAX_DOG_ODDS = 3.0   # both teams' model odds must be below this
+
+
+def check_under_list_3(pred):
+    """Returns True when the match qualifies for Watch List 3 UNDER."""
+    b46 = pred.get("b46") or pred.get("b46r") or ""
+    if str(b46).replace(" ", "").lower() not in UNDER3_B46_LABELS:
+        return False
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    home_o, away_o = model_odds.get("home_odds"), model_odds.get("away_odds")
+    if home_o is None or away_o is None:
+        return False
+    return max(home_o, away_o) < UNDER3_MAX_DOG_ODDS
+
+
+# ============================================================
+# WATCH LIST 4 OVER — a pick list for goals OVER 2.5, built on B46.
+# Built from the Oct 2026 review of all scored matches:
+#   B46 says 4goals or 5goals  AND  model draw odds are 4.5 or
+#   higher  AND  O/U result is "under confirmed" or "over"
+#   -> 78 matches, 68% finished over 2.5 goals (all matches: 55%;
+#   B46 4goals/5goals alone: 60%). Held in the early, later and
+#   newest matches.
+# NOTE: edge is ~13 points with a margin of error of ~ +/-10 points,
+# and the 4.5 cut-off was set after looking at the data. Re-check
+# against new results before relying on it. Nothing else is changed.
+# ============================================================
+OVER4_B46_LABELS     = ("4goals", "5goals")
+OVER4_MIN_DRAW_ODDS  = 4.5
+OVER4_OU_RESULTS     = ("under confirmed", "over")
+
+
+def check_over_list_4(pred):
+    """Returns True when the match qualifies for Watch List 4 OVER."""
+    b46 = pred.get("b46") or pred.get("b46r") or ""
+    if str(b46).replace(" ", "").lower() not in OVER4_B46_LABELS:
+        return False
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    draw_o = model_odds.get("draw_odds")
+    if draw_o is None or draw_o < OVER4_MIN_DRAW_ODDS:
+        return False
+    ou_result = (pred.get("ou25_value_signal") or {}).get("result")
+    ou_result = ou_result.strip().lower() if isinstance(ou_result, str) else ""
+    return ou_result in OVER4_OU_RESULTS
+
+
 def meets_blog2_standard(pred):
     model_odds = pred.get("odds") or pred.get("oddsr") or {}
     market_odds = pred.get("market_odds") or {}
@@ -745,7 +862,8 @@ def check_watch_list_1(pred, league_name):
     if draw_odds is not None and draw_odds >= WATCHLIST1_DRAW_ODDS_MIN:
         flags.append(f"Draw odds {draw_odds}")
 
-    ou_result = ((pred.get("ou25_value_signal") or {}).get("result") or "").strip().lower()
+    ou_result = (pred.get("ou25_value_signal") or {}).get("result")
+    ou_result = ou_result.strip().lower() if isinstance(ou_result, str) else ""
     if ou_result in WATCHLIST1_OU_RESULTS:
         flags.append(f"O/U result: {ou_result}")
 
@@ -885,6 +1003,8 @@ def main():
     wl2_danger_cards = []   # watch list 2: 2-3 flags
     wl2_caution_cards = []  # watch list 2: 1 flag
     wl2_clean_cards = []    # watch list 2: 0 flags
+    under3_cards = []       # watch list 3 UNDER picks
+    over4_cards = []        # watch list 4 OVER picks
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -931,7 +1051,8 @@ def main():
                     f"⚡ Decision: {value_signal.get('decision') or '—'}\n"
                     f"📋 B46: {b46_out}\n"
                     f"📈 O/U Result: {ou25_value_signal.get('result') or '—'}\n"
-                    f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}"
+                    f"🧭 Prediction 3: {pred.get('prediction_3') or '—'}\n"
+                    f"{standard_pick_risk_line(pred)}"
                 )
 
             value_pct = pred.get("value_pct") or {}
@@ -1044,6 +1165,36 @@ def main():
                     wl2_caution_cards.append(wl2_head + f"\n⚠️ Flag (1): {wl2_flags[0]}")
                 else:
                     wl2_clean_cards.append(wl2_head)
+
+
+            # Watch List 3 UNDER — B46 3goals or less + evenly matched game
+            if check_under_list_3(pred):
+                u3_odds = pred.get("odds") or pred.get("oddsr") or {}
+                u3_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                under3_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📋 B46: {u3_b46}\n"
+                    f"💰 Model Odds: Home {u3_odds.get('home_odds')} | "
+                    f"Draw {u3_odds.get('draw_odds')} | "
+                    f"Away {u3_odds.get('away_odds')}"
+                )
+
+
+            # Watch List 4 OVER — B46 4goals+ + high draw odds + O/U confirms
+            if check_over_list_4(pred):
+                o4_odds = pred.get("odds") or pred.get("oddsr") or {}
+                o4_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                o4_ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
+                over4_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📋 B46: {o4_b46}\n"
+                    f"📈 O/U Result: {o4_ou}\n"
+                    f"💰 Model Odds: Home {o4_odds.get('home_odds')} | "
+                    f"Draw {o4_odds.get('draw_odds')} | "
+                    f"Away {o4_odds.get('away_odds')}"
+                )
 
     if total_matches == 0:
         print("No matches found today.")
@@ -1167,6 +1318,26 @@ def main():
         send_telegram_notification("\n\n".join(wl2_parts))
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
+
+    if under3_cards:
+        under3_message = (
+            f"🎯 Kickwise Watch List 3 UNDER — {today_display}\n"
+            f"{len(under3_cards)} match(es): B46 3goals or less + evenly matched\n\n"
+            + "\n\n".join(under3_cards)
+        )
+        send_telegram_notification(under3_message)
+    else:
+        print("\nℹ️ Watch list 3 UNDER: no matches today.")
+
+    if over4_cards:
+        over4_message = (
+            f"🎯 Kickwise Watch List 4 OVER — {today_display}\n"
+            f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
+            + "\n\n".join(over4_cards)
+        )
+        send_telegram_notification(over4_message)
+    else:
+        print("\nℹ️ Watch list 4 OVER: no matches today.")
 
 if __name__ == "__main__":
     main()
