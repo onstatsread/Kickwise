@@ -55,22 +55,130 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
     return chunks
 
 
-def send_telegram_notification(message):
-    if not TELEGRAM_ENABLED:
-        return
+# ============================================================
+# EXTRA TELEGRAM BOTS (up to 10) — add them any time, no code change.
+#
+# Put ONE repository secret called TELEGRAM_BOTS (a JSON list) and add
+# the line  TELEGRAM_BOTS: ${{ secrets.TELEGRAM_BOTS }}  to the workflow's
+# env section. Example value:
+#
+#   [
+#     {"name": "Friends", "token": "123456:ABC...", "chat_id": "987654321"},
+#     {"name": "Group 2", "token": "654321:XYZ...", "chat_id": "-1001234567890",
+#      "lists": ["wl1", "wl2", "wl3", "wl4"]},
+#     {"name": "Paused", "token": "...", "chat_id": "...", "enabled": false}
+#   ]
+#
+# To add another bot later: edit the secret and append one more {...}.
+# Each bot gets only the lists named in its "lists". If "lists" is left
+# out it gets the DEFAULT_EXTRA_BOT_LISTS below.
+#
+# List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
+# UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
+# signals, standard = Kickwise Standard Picks.
+# The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
+# still receives everything.
+# ============================================================
+MAX_EXTRA_BOTS = 10
+DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard")
 
+
+def _load_extra_bots():
+    raw = (os.environ.get("TELEGRAM_BOTS") or "").strip()
+    if not raw:
+        return []
+    try:
+        entries = json.loads(raw)
+    except Exception as e:
+        print(f"⚠️ TELEGRAM_BOTS is not valid JSON — extra bots skipped ({e})")
+        return []
+    if not isinstance(entries, list):
+        print("⚠️ TELEGRAM_BOTS must be a JSON list [ {...}, {...} ] — extra bots skipped")
+        return []
+
+    bots, seen = [], set()
+    for i, e in enumerate(entries, start=1):
+        if not isinstance(e, dict):
+            print(f"⚠️ Extra bot #{i}: not an object — skipped")
+            continue
+        name = str(e.get("name") or f"bot {i}")
+        token = str(e.get("token") or "").strip()
+        chat_id = str(e.get("chat_id") or "").strip()
+        if e.get("enabled") is False:
+            continue
+        if not token or not chat_id:
+            print(f"⚠️ Extra bot '{name}': missing token or chat_id — skipped")
+            continue
+        if token == TELEGRAM_BOT_TOKEN and chat_id == str(TELEGRAM_CHAT_ID):
+            continue  # same as the main bot — don't send twice
+        if (token, chat_id) in seen:
+            print(f"⚠️ Extra bot '{name}': duplicate of an earlier entry — skipped")
+            continue
+        seen.add((token, chat_id))
+        lists = e.get("lists")
+        if not isinstance(lists, list) or not lists:
+            lists = list(DEFAULT_EXTRA_BOT_LISTS)
+        lists = {str(x).strip().lower() for x in lists}
+        unknown = lists - set(VALID_LIST_KEYS)
+        if unknown:
+            print(f"⚠️ Extra bot '{name}': unknown list key(s) {sorted(unknown)} ignored")
+        bots.append({"name": name, "token": token, "chat_id": chat_id, "lists": lists})
+
+    if len(bots) > MAX_EXTRA_BOTS:
+        print(f"⚠️ {len(bots)} extra bots configured — only the first {MAX_EXTRA_BOTS} are used")
+        bots = bots[:MAX_EXTRA_BOTS]
+    return bots
+
+
+def _post_to_bot(name, token, chat_id, message):
     chunks = _split_telegram_message(message)
     total = len(chunks)
     for i, chunk in enumerate(chunks, start=1):
         text = chunk if total == 1 else f"(part {i}/{total})\n\n{chunk}"
         try:
-            requests.get(
-                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-                params={"chat_id": TELEGRAM_CHAT_ID, "text": text},
+            r = requests.get(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                params={"chat_id": chat_id, "text": text},
                 timeout=15,
             )
+            if r.status_code != 200:
+                # never print the token
+                print(f"⚠️ Extra bot '{name}' failed (part {i}/{total}): HTTP {r.status_code} — {r.text[:150]}")
+                return
         except Exception as e:
-            print(f"⚠️ Telegram notification failed (part {i}/{total}): {e}")
+            print(f"⚠️ Extra bot '{name}' failed (part {i}/{total}): {type(e).__name__}")
+            return
+
+
+def send_to_extra_bots(message, list_key):
+    for bot in _load_extra_bots():
+        if list_key in bot["lists"]:
+            _post_to_bot(bot["name"], bot["token"], bot["chat_id"], message)
+
+
+def send_telegram_notification(message, list_key=None):
+    if TELEGRAM_ENABLED:
+        chunks = _split_telegram_message(message)
+        total = len(chunks)
+        for i, chunk in enumerate(chunks, start=1):
+            text = chunk if total == 1 else f"(part {i}/{total})\n\n{chunk}"
+            try:
+                requests.get(
+                    f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                    params={"chat_id": TELEGRAM_CHAT_ID, "text": text},
+                    timeout=15,
+                )
+            except Exception as e:
+                print(f"⚠️ Telegram notification failed (part {i}/{total}): {e}")
+
+    # Extra bots (see block above) — one failing bot never stops the others.
+    if list_key:
+        try:
+            send_to_extra_bots(message, list_key)
+        except Exception as e:
+            print(f"⚠️ Extra bots failed: {type(e).__name__}")
+
 
 LEAGUE_CODES = {
     "Belarus - Vysshaya Liga": "belarus",
@@ -1235,7 +1343,7 @@ def main():
                     f"{cards_text}\n\n"
                     f"{result_2.get('url','')}"
                 )
-                send_telegram_notification(notify_message)
+                send_telegram_notification(notify_message, "standard")
             else:
                 print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
@@ -1246,7 +1354,7 @@ def main():
             f"{len(dc_notify_cards)} match(es) flagged\n\n"
             f"{dc_cards_text}"
         )
-        send_telegram_notification(dc_message)
+        send_telegram_notification(dc_message, "dc1")
     else:
         print("\nℹ️ Double chance signal: no matches flagged today.")
 
@@ -1257,7 +1365,7 @@ def main():
             f"{len(dc2_notify_cards)} match(es) flagged\n\n"
             f"{dc2_cards_text}"
         )
-        send_telegram_notification(dc2_message)
+        send_telegram_notification(dc2_message, "dc2")
     else:
         print("\nℹ️ Double chance signal 2: no matches flagged today.")
 
@@ -1268,7 +1376,7 @@ def main():
             f"{len(dc3_notify_cards)} match(es) flagged\n\n"
             f"{dc3_cards_text}"
         )
-        send_telegram_notification(dc3_message)
+        send_telegram_notification(dc3_message, "dc3")
     else:
         print("\nℹ️ Double chance signal 3: no matches flagged today.")
 
@@ -1288,7 +1396,7 @@ def main():
             )
         else:
             wl1_parts.append("✅ CLEAN (no flags) — none today")
-        send_telegram_notification("\n\n".join(wl1_parts))
+        send_telegram_notification("\n\n".join(wl1_parts), "wl1")
     else:
         print("\nℹ️ Watch list 1: no 2-handicap picks today.")
 
@@ -1315,7 +1423,7 @@ def main():
             )
         else:
             wl2_parts.append("✅ CLEAN (no flags) — none today")
-        send_telegram_notification("\n\n".join(wl2_parts))
+        send_telegram_notification("\n\n".join(wl2_parts), "wl2")
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
 
@@ -1325,7 +1433,7 @@ def main():
             f"{len(under3_cards)} match(es): B46 3goals or less + evenly matched\n\n"
             + "\n\n".join(under3_cards)
         )
-        send_telegram_notification(under3_message)
+        send_telegram_notification(under3_message, "wl3")
     else:
         print("\nℹ️ Watch list 3 UNDER: no matches today.")
 
@@ -1335,7 +1443,7 @@ def main():
             f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
             + "\n\n".join(over4_cards)
         )
-        send_telegram_notification(over4_message)
+        send_telegram_notification(over4_message, "wl4")
     else:
         print("\nℹ️ Watch list 4 OVER: no matches today.")
 
