@@ -386,7 +386,7 @@ def main():
                     f"{cards_text}\n\n"
                     f"{result_2.get('url','')}"
                 )
-                send_telegram_notification(notify_message)
+                send_telegram_notification(notify_message, "standard")
             else:
                 print(f"❌ Blog 2 failed to post: {status_2} — {result_2}")
 
@@ -397,7 +397,7 @@ def main():
             f"{len(dc_notify_cards)} match(es) flagged\n\n"
             f"{dc_cards_text}"
         )
-        send_telegram_notification(dc_message)
+        send_telegram_notification(dc_message, "dc1")
     else:
         print("\nℹ️ Double chance signal: no matches flagged today.")
 
@@ -408,7 +408,7 @@ def main():
             f"{len(dc2_notify_cards)} match(es) flagged\n\n"
             f"{dc2_cards_text}"
         )
-        send_telegram_notification(dc2_message)
+        send_telegram_notification(dc2_message, "dc2")
     else:
         print("\nℹ️ Double chance signal 2: no matches flagged today.")
 
@@ -419,7 +419,7 @@ def main():
             f"{len(dc3_notify_cards)} match(es) flagged\n\n"
             f"{dc3_cards_text}"
         )
-        send_telegram_notification(dc3_message)
+        send_telegram_notification(dc3_message, "dc3")
     else:
         print("\nℹ️ Double chance signal 3: no matches flagged today.")
 
@@ -439,7 +439,7 @@ def main():
             )
         else:
             wl1_parts.append("✅ CLEAN (no flags) — none today")
-        send_telegram_notification("\n\n".join(wl1_parts))
+        send_telegram_notification("\n\n".join(wl1_parts), "wl1")
     else:
         print("\nℹ️ Watch list 1: no 2-handicap picks today.")
 
@@ -466,7 +466,7 @@ def main():
             )
         else:
             wl2_parts.append("✅ CLEAN (no flags) — none today")
-        send_telegram_notification("\n\n".join(wl2_parts))
+        send_telegram_notification("\n\n".join(wl2_parts), "wl2")
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
 
@@ -476,7 +476,7 @@ def main():
             f"{len(under3_cards)} match(es): B46 3goals or less + evenly matched\n\n"
             + "\n\n".join(under3_cards)
         )
-        send_telegram_notification(under3_message)
+        send_telegram_notification(under3_message, "wl3")
     else:
         print("\nℹ️ Watch list 3 UNDER: no matches today.")
 
@@ -486,7 +486,7 @@ def main():
             f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
             + "\n\n".join(over4_cards)
         )
-        send_telegram_notification(over4_message)
+        send_telegram_notification(over4_message, "wl4")
     else:
         print("\nℹ️ Watch list 4 OVER: no matches today.")
 
