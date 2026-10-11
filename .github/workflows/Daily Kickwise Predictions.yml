@@ -23,6 +23,7 @@ jobs:
       ANNABET_PASSWORD: ${{ secrets.ANNABET_PASSWORD }}
       GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
       ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
+      TELEGRAM_BOTS: ${{ secrets.TELEGRAM_BOTS }}
       # add any other env vars your modules read (from Render's Environment tab)
 
     steps:
