@@ -34,6 +34,7 @@ from daily_predictions import (
     standard_pick_risk_line,
     check_under_list_3,
     check_over_list_4,
+    multiple_candidate_leg, build_daily_multiple_message,
 )
 
 
@@ -154,6 +155,7 @@ def main():
     wl2_clean_cards = []    # watch list 2: 0 flags
     under3_cards = []       # watch list 3 UNDER picks
     over4_cards = []        # watch list 4 OVER picks
+    multiple_legs = []      # Daily Multiple eligible legs
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -345,6 +347,15 @@ def main():
                     f"Away {o4_odds.get('away_odds')}"
                 )
 
+
+            # Daily Multiple — collect eligible legs (see DAILY MULTIPLE block)
+            _mleg = multiple_candidate_leg(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"],
+                match_time, wl1_signals,
+            )
+            if _mleg:
+                multiple_legs.append(_mleg)
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -487,6 +498,10 @@ def main():
         send_telegram_notification(over4_message, "wl4")
     else:
         print("\nℹ️ Watch list 4 OVER: no matches today.")
+
+    send_telegram_notification(
+        build_daily_multiple_message(multiple_legs, today_display), "multiple"
+    )
 
 
 if __name__ == "__main__":
