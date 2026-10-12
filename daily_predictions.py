@@ -75,13 +75,13 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 #
 # List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
 # UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
-# signals, standard = Kickwise Standard Picks.
+# signals, standard = Kickwise Standard Picks, multiple = Daily Multiple.
 # The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
 # still receives everything.
 # ============================================================
 MAX_EXTRA_BOTS = 10
 DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
-VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple")
 
 
 def _load_extra_bots():
@@ -637,19 +637,17 @@ def check_under_list_3(pred):
 
 # ============================================================
 # WATCH LIST 4 OVER — a pick list for goals OVER 2.5, built on B46.
-# Built from the Oct 2026 review of all scored matches:
-#   B46 says 4goals or 5goals  AND  model draw odds are 4.5 or
-#   higher  AND  O/U result is "under confirmed" or "over"
-#   -> 78 matches, 68% finished over 2.5 goals (all matches: 55%;
-#   B46 4goals/5goals alone: 60%). Held in the early, later and
-#   newest matches.
-# NOTE: edge is ~13 points with a margin of error of ~ +/-10 points,
-# and the 4.5 cut-off was set after looking at the data. Re-check
+# Rule: B46 says 4goals or 5goals  AND  both teams' model odds are
+# under 3.0 (an evenly matched game — the mirror of List 3 UNDER).
+# Evidence: 43 matches -> 67% over 2.5 on the first data, 32 NEW
+# matches -> 66% (all matches ~50-55%; B46 4goals/5goals alone ~56-60%).
+# The earlier version (draw odds 4.5+ and O/U result) did NOT hold on
+# new matches (57% vs 56% for B46 alone) and was replaced.
+# NOTE: ~75 matches in total (margin of error ~ +/-11 points). Re-check
 # against new results before relying on it. Nothing else is changed.
 # ============================================================
 OVER4_B46_LABELS     = ("4goals", "5goals")
-OVER4_MIN_DRAW_ODDS  = 4.5
-OVER4_OU_RESULTS     = ("under confirmed", "over")
+OVER4_MAX_DOG_ODDS   = 3.0   # both teams' model odds must be below this
 
 
 def check_over_list_4(pred):
@@ -658,12 +656,127 @@ def check_over_list_4(pred):
     if str(b46).replace(" ", "").lower() not in OVER4_B46_LABELS:
         return False
     model_odds = pred.get("odds") or pred.get("oddsr") or {}
-    draw_o = model_odds.get("draw_odds")
-    if draw_o is None or draw_o < OVER4_MIN_DRAW_ODDS:
+    home_o, away_o = model_odds.get("home_odds"), model_odds.get("away_odds")
+    if home_o is None or away_o is None:
         return False
-    ou_result = (pred.get("ou25_value_signal") or {}).get("result")
-    ou_result = ou_result.strip().lower() if isinstance(ou_result, str) else ""
-    return ou_result in OVER4_OU_RESULTS
+    return max(home_o, away_o) < OVER4_MAX_DOG_ODDS
+
+
+# ============================================================
+# DAILY MULTIPLE — a short accumulator built ONLY from the most
+# reliable leg types found in the Sep-Oct 2026 review. It says
+# "No multiple today" unless at least MULTIPLE_MIN_LEGS legs qualify.
+#
+# Leg types (hit rates on scored matches; "safe" = 95% lower bound).
+# In-sample backtest: 10 days had a multiple, 7 of them landed in full.
+#   A  2-handicap pick (DC1/DC2/DC3), clean on Watch List 1 and with
+#      0-1 flags on Watch List 2 -> 62 picks, 90% covered, safe 80%
+#   B  List 3 UNDER match (B46 3goals or less + both odds under 3.0)
+#      with none of the under-3.5 warning signs (draw odds 4.5+,
+#      O/U result "over", D64 "both") -> UNDER 3.5 goals leg
+#      (21 matches, 86% under 3.5, safe 65% — a small sample)
+# One leg per match, at most MULTIPLE_MAX_PER_LEAGUE per league
+# (bad results cluster by day/league), at most MULTIPLE_MAX_LEGS legs.
+#
+# NOT A GUARANTEE. The combined chance shown is an estimate from a
+# small sample; the "safe" figure is the realistic worst case. Odds are
+# not known to the bot — compare each leg's odds with the break-even
+# shown before playing. Only stake what you can afford to lose.
+# ============================================================
+MULTIPLE_MIN_LEGS        = 3
+MULTIPLE_MAX_LEGS        = 4
+MULTIPLE_MAX_PER_LEAGUE  = 2
+# leg type -> (hit rate, safe hit rate) from the review
+MULTIPLE_LEG_STATS = {"A": (0.90, 0.80), "B": (0.86, 0.65)}
+
+
+def multiple_candidate_leg(pred, league_name, home, away, match_time, wl1_signals):
+    """Returns a leg dict if this match is eligible for the Daily Multiple, else None."""
+    legs = []
+
+    # ---- Leg type A: clean 2-handicap pick ----
+    if wl1_signals:
+        side = wl1_signals[0].split(": ", 1)[1].split()[0].lower()
+        wl1_flags = check_watch_list_1(pred, league_name)
+        wl2_flags = check_watch_list_2(pred, side)
+        if not wl1_flags and len(wl2_flags) <= 1:
+            legs.append({
+                "type": "A", "time": match_time, "league": league_name,
+                "home": home, "away": away,
+                "bet": f"{side.title()} +2 handicap",
+                "note": f"flags: WL1 0, WL2 {len(wl2_flags)}",
+                "rank": (0 if not wl2_flags else 1),
+            })
+
+    # ---- Leg type B: List 3 UNDER with no warning signs -> under 3.5 ----
+    if check_under_list_3(pred):
+        model_odds = pred.get("odds") or pred.get("oddsr") or {}
+        ou = (pred.get("ou25_value_signal") or {}).get("result")
+        ou = ou.strip().lower() if isinstance(ou, str) else ""
+        draw_o = model_odds.get("draw_odds")
+        d64 = str(pred.get("d64") or "").strip().lower()
+        warn = (draw_o is not None and draw_o >= 4.5) or ou == "over" or d64 == "both"
+        if not warn:
+            b46 = pred.get("b46") or pred.get("b46r") or ""
+            strong = str(b46).replace(" ", "").lower() == "2goalsorless"
+            legs.append({
+                "type": "B", "time": match_time, "league": league_name,
+                "home": home, "away": away,
+                "bet": "Under 3.5 goals",
+                "note": f"B46 {b46}" + (" (strongest label)" if strong else ""),
+                "rank": 2 if not strong else 1,
+            })
+
+    if not legs:
+        return None
+    # one leg per match: best grade first (A before B), then lower rank number
+    legs.sort(key=lambda l: (l["type"], l["rank"]))
+    return legs[0]
+
+
+def build_daily_multiple_message(legs, today_display):
+    head = f"🎰 Kickwise Daily Multiple — {today_display}\n"
+    foot = ("\n\n⚠️ Not a guarantee — the chance shown is an estimate from a small "
+            "sample. Check each leg's real odds first and only stake what you can "
+            "afford to lose.")
+    ordered = sorted(legs, key=lambda l: (l["type"], l["rank"], l["time"]))
+
+    chosen, per_league = [], {}
+    for l in ordered:
+        if len(chosen) >= MULTIPLE_MAX_LEGS:
+            break
+        if per_league.get(l["league"], 0) >= MULTIPLE_MAX_PER_LEAGUE:
+            continue
+        chosen.append(l)
+        per_league[l["league"]] = per_league.get(l["league"], 0) + 1
+    chosen.sort(key=lambda l: l["time"])
+
+    def card(l):
+        hit, safe = MULTIPLE_LEG_STATS[l["type"]]
+        return (f"🕐 {l['time']} | {l['league']}\n"
+                f"👥 {l['home']} vs {l['away']}\n"
+                f"✅ {l['bet']}  (leg grade {l['type']}: landed ~{hit:.0%}, safe {safe:.0%};"
+                f" break-even odds {1/hit:.2f})\n"
+                f"📋 {l['note']}")
+
+    if len(chosen) < MULTIPLE_MIN_LEGS:
+        msg = head + (f"\n🚫 No multiple today — only {len(chosen)} qualifying leg(s) "
+                      f"(need {MULTIPLE_MIN_LEGS}).")
+        if chosen:
+            msg += "\n\nLegs that did qualify (not enough for a multiple):\n\n" + "\n\n".join(card(l) for l in chosen)
+        return msg + foot
+
+    p_all, p_safe = 1.0, 1.0
+    for l in chosen:
+        hit, safe = MULTIPLE_LEG_STATS[l["type"]]
+        p_all *= hit
+        p_safe *= safe
+    fair = 1.0 / p_all
+    msg = (head + f"{len(chosen)} legs — chance ALL land: ~{p_all:.0%} "
+           f"(realistic worst case ~{p_safe:.0%})\n"
+           f"Break-even combined odds: {fair:.2f}\n\n"
+           + "\n\n".join(card(l) for l in chosen))
+    return msg + foot
 
 
 def meets_blog2_standard(pred):
@@ -932,24 +1045,22 @@ def check_double_chance_signal_3(pred):
 
 # ============================================================
 # WATCH LIST 1 — red-flag checklist for the bot's own 2-handicap
-# picks. A match is flagged when ANY of the four flags below is
-# true. Built from the Sep 2026 review of Telegram 2-handicap picks
-# (66 scored picks, 11 went over their B46 goal count).
+# picks. A match is flagged when ANY of the flags below is true.
+# Warns that the pick may finish with MORE goals than its B46 number.
 #
-# Flags:
+# Flags (re-tested on 67 NEW picks, Oct 2026 — only these two held up):
 #   1. Draw value (value_pct["draw"]) is -15% or lower
-#   2. Model draw odds are 4.5 or higher
-#   3. O/U 2.5 result says "under confirmed" or "over"
-#   4. The match is in Sweden or Ireland
+#      (new picks: 29% went over B46 vs 14% without)
+#   2. The match is in Sweden or Ireland
+#      (new picks: 33% vs 20% — only 6 matches, low confidence)
 #
-# NOTE: these patterns were found on a small sample (3 weeks) and did
-# not repeat on the other 2-handicap matches, so treat them as a
-# WATCH LIST (extra caution), not a hard filter. Nothing is removed
-# from the other signals — this is a separate notification.
+# Dropped after the new-data test (no difference any more): "draw odds
+# 4.5 or higher" and "O/U result under confirmed / over".
+#
+# NOTE: this is a WATCH LIST (extra caution), not a hard filter.
+# Nothing is removed from the other signals — separate notification.
 # ============================================================
 WATCHLIST1_DRAW_VALUE_MAX   = -15    # flag when draw value <= this (%)
-WATCHLIST1_DRAW_ODDS_MIN    = 4.5    # flag when model draw odds >= this
-WATCHLIST1_OU_RESULTS       = ("under confirmed", "over")
 WATCHLIST1_COUNTRIES        = ("sweden", "ireland")
 # True  = only check matches already picked as a 2-handicap by
 #         Double Chance signal 1, 2 or 3 (what the review was based on).
@@ -964,16 +1075,6 @@ def check_watch_list_1(pred, league_name):
     draw_v = value_pct.get("draw")
     if draw_v is not None and draw_v <= WATCHLIST1_DRAW_VALUE_MAX:
         flags.append(f"Draw value {draw_v}%")
-
-    model_odds = pred.get("odds") or {}
-    draw_odds = model_odds.get("draw_odds")
-    if draw_odds is not None and draw_odds >= WATCHLIST1_DRAW_ODDS_MIN:
-        flags.append(f"Draw odds {draw_odds}")
-
-    ou_result = (pred.get("ou25_value_signal") or {}).get("result")
-    ou_result = ou_result.strip().lower() if isinstance(ou_result, str) else ""
-    if ou_result in WATCHLIST1_OU_RESULTS:
-        flags.append(f"O/U result: {ou_result}")
 
     country = (league_name or "").split(" - ")[0].strip().lower()
     if country in WATCHLIST1_COUNTRIES:
@@ -994,11 +1095,13 @@ def check_watch_list_1(pred, league_name):
 #   B. Draw value is -20% or lower, OR model draw odds are 4.5+
 #   C. Opposing team's value is 25% or more
 #
-# Levels: 0 flags = CLEAN | 1 flag = CAUTION | 2-3 flags = DANGER
+# Levels: 0 flags = NO FLAGS | 1 flag = CAUTION | 2-3 flags = DANGER
 #
-# NOTE: cut-offs were chosen by looking at the same picks they were
-# tested on, over ~3 weeks. Treat as a warning only. Nothing is
-# removed from the other signals.
+# New-data test (77 picks, Oct 2026): picks with 2-3 flags lost by 2+
+# goals 32% of the time vs ~15% for 0-1 flags. The danger end held; the
+# "no flags" group is NOT a safe group (47% still lost the match), so it
+# is labelled "NO FLAGS", not "clean".
+# Warning only. Nothing is removed from the other signals.
 # ============================================================
 WATCHLIST2_PICK_ODDS_MIN   = 6
 WATCHLIST2_DRAW_VALUE_MAX  = -20
@@ -1113,6 +1216,7 @@ def main():
     wl2_clean_cards = []    # watch list 2: 0 flags
     under3_cards = []       # watch list 3 UNDER picks
     over4_cards = []        # watch list 4 OVER picks
+    multiple_legs = []      # Daily Multiple eligible legs
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -1289,20 +1393,27 @@ def main():
                 )
 
 
-            # Watch List 4 OVER — B46 4goals+ + high draw odds + O/U confirms
+            # Watch List 4 OVER — B46 4goals+ and an evenly matched game
             if check_over_list_4(pred):
                 o4_odds = pred.get("odds") or pred.get("oddsr") or {}
                 o4_b46 = pred.get("b46") or pred.get("b46r") or "—"
-                o4_ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
                 over4_cards.append(
                     f"🕐 {match_time} | {m['league_name']}\n"
                     f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
                     f"📋 B46: {o4_b46}\n"
-                    f"📈 O/U Result: {o4_ou}\n"
                     f"💰 Model Odds: Home {o4_odds.get('home_odds')} | "
                     f"Draw {o4_odds.get('draw_odds')} | "
                     f"Away {o4_odds.get('away_odds')}"
                 )
+
+
+            # Daily Multiple — collect eligible legs (see DAILY MULTIPLE block)
+            _mleg = multiple_candidate_leg(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"],
+                match_time, wl1_signals,
+            )
+            if _mleg:
+                multiple_legs.append(_mleg)
 
     if total_matches == 0:
         print("No matches found today.")
@@ -1418,11 +1529,11 @@ def main():
             wl2_parts.append("⚠️ CAUTION (1 flag) — none today")
         if wl2_clean_cards:
             wl2_parts.append(
-                f"✅ CLEAN (no flags) — {len(wl2_clean_cards)} pick(s)\n\n"
+                f"⚪ NO FLAGS — {len(wl2_clean_cards)} pick(s) (not a guarantee)\n\n"
                 + "\n\n".join(wl2_clean_cards)
             )
         else:
-            wl2_parts.append("✅ CLEAN (no flags) — none today")
+            wl2_parts.append("⚪ NO FLAGS — none today")
         send_telegram_notification("\n\n".join(wl2_parts), "wl2")
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
@@ -1440,12 +1551,16 @@ def main():
     if over4_cards:
         over4_message = (
             f"🎯 Kickwise Watch List 4 OVER — {today_display}\n"
-            f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
+            f"{len(over4_cards)} match(es): B46 4goals+ and evenly matched\n\n"
             + "\n\n".join(over4_cards)
         )
         send_telegram_notification(over4_message, "wl4")
     else:
         print("\nℹ️ Watch list 4 OVER: no matches today.")
+
+    send_telegram_notification(
+        build_daily_multiple_message(multiple_legs, today_display), "multiple"
+    )
 
 if __name__ == "__main__":
     main()
