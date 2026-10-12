@@ -1,22 +1,22 @@
-552 matches with scores
+916 matches with scores
 
 D64 -> teams scored matches?
-  both                         164/307  (53%)
-  one                          48/139  (35%)
+  both                         265/496  (53%)
+  one                          84/232  (36%)
 
 B46 -> total goals within the stated number
-  4goals                       95/229  (41%)
-  3goals                       78/146  (53%)
-  5 goals                      0/82  (0%)
-  2goals or less               35/64  (55%)
-  5goals                       11/31  (35%)
+  4goals                       147/386  (38%)
+  3goals                       122/238  (51%)
+  5 goals                      0/137  (0%)
+  2goals or less               67/109  (61%)
+  5goals                       13/46  (28%)
 
 O/U result -> under 2.5 correct?
-  over                         71/124  (57%)
-  under                        45/88  (51%)
-  under confirmed              32/85  (38%)
+  over                         126/223  (57%)
+  under                        96/189  (51%)
+  under confirmed              58/149  (39%)
 
 D69 side -> correct winner?
-  away/other                   242/387  (63%)
-  home                         87/165  (53%)
+  away/other                   394/650  (61%)
+  home                         141/266  (53%)
 
