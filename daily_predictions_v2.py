@@ -332,16 +332,14 @@ def main():
                 )
 
 
-            # Watch List 4 OVER — B46 4goals+ + high draw odds + O/U confirms
+            # Watch List 4 OVER — B46 4goals+ and an evenly matched game
             if check_over_list_4(pred):
                 o4_odds = pred.get("odds") or pred.get("oddsr") or {}
                 o4_b46 = pred.get("b46") or pred.get("b46r") or "—"
-                o4_ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
                 over4_cards.append(
                     f"🕐 {match_time} | {m['league_name']}\n"
                     f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
                     f"📋 B46: {o4_b46}\n"
-                    f"📈 O/U Result: {o4_ou}\n"
                     f"💰 Model Odds: Home {o4_odds.get('home_odds')} | "
                     f"Draw {o4_odds.get('draw_odds')} | "
                     f"Away {o4_odds.get('away_odds')}"
@@ -461,11 +459,11 @@ def main():
             wl2_parts.append("⚠️ CAUTION (1 flag) — none today")
         if wl2_clean_cards:
             wl2_parts.append(
-                f"✅ CLEAN (no flags) — {len(wl2_clean_cards)} pick(s)\n\n"
+                f"⚪ NO FLAGS — {len(wl2_clean_cards)} pick(s) (not a guarantee)\n\n"
                 + "\n\n".join(wl2_clean_cards)
             )
         else:
-            wl2_parts.append("✅ CLEAN (no flags) — none today")
+            wl2_parts.append("⚪ NO FLAGS — none today")
         send_telegram_notification("\n\n".join(wl2_parts), "wl2")
     else:
         print("\nℹ️ Watch list 2: no double chance picks today.")
@@ -483,7 +481,7 @@ def main():
     if over4_cards:
         over4_message = (
             f"🎯 Kickwise Watch List 4 OVER — {today_display}\n"
-            f"{len(over4_cards)} match(es): B46 4goals+ with high draw odds\n\n"
+            f"{len(over4_cards)} match(es): B46 4goals+ and evenly matched\n\n"
             + "\n\n".join(over4_cards)
         )
         send_telegram_notification(over4_message, "wl4")
