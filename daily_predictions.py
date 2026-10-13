@@ -675,6 +675,9 @@ def check_over_list_4(pred):
 #      with none of the under-3.5 warning signs (draw odds 4.5+,
 #      O/U result "over", D64 "both") -> UNDER 3.5 goals leg
 #      (21 matches, 86% under 3.5, safe 65% — a small sample)
+# When more legs qualify than fit, the best ones are used (grade A first, then
+# fewer warnings, then earliest kickoff); the next MULTIPLE_RESERVE_LEGS are
+# listed as RESERVES — swap one in only if a leg is postponed or unavailable.
 # One leg per match, at most MULTIPLE_MAX_PER_LEAGUE per league
 # (bad results cluster by day/league), at most MULTIPLE_MAX_LEGS legs.
 #
@@ -686,6 +689,7 @@ def check_over_list_4(pred):
 MULTIPLE_MIN_LEGS        = 3
 MULTIPLE_MAX_LEGS        = 4
 MULTIPLE_MAX_PER_LEAGUE  = 2
+MULTIPLE_RESERVE_LEGS     = 3   # swaps shown below the slip (NOT extra legs)
 # leg type -> (hit rate, safe hit rate) from the review
 MULTIPLE_LEG_STATS = {"A": (0.90, 0.80), "B": (0.86, 0.65)}
 
@@ -751,6 +755,33 @@ def build_daily_multiple_message(legs, today_display):
         per_league[l["league"]] = per_league.get(l["league"], 0) + 1
     chosen.sort(key=lambda l: l["time"])
 
+    # Reserves: next-best qualifying legs, only from leagues that still have room
+    chosen_ids = {id(l) for l in chosen}
+    reserves = []
+    for l in ordered:
+        if len(reserves) >= MULTIPLE_RESERVE_LEGS:
+            break
+        if id(l) in chosen_ids:
+            continue
+        if per_league.get(l["league"], 0) >= MULTIPLE_MAX_PER_LEAGUE:
+            continue
+        reserves.append(l)
+
+    reserve_ids = {id(l) for l in reserves}
+
+    def all_line(l):
+        hit, _safe = MULTIPLE_LEG_STATS[l["type"]]
+        if id(l) in chosen_ids:
+            mark, why = "⭐", ""
+        elif id(l) in reserve_ids:
+            mark, why = "🔁", "  (reserve)"
+        elif per_league.get(l["league"], 0) >= MULTIPLE_MAX_PER_LEAGUE:
+            mark, why = "▫️", "  (league limit)"
+        else:
+            mark, why = "▫️", "  (ranked lower)"
+        return (f"{mark} {l['time']} | {l['league']}: {l['home']} vs {l['away']} — "
+                f"{l['bet']} (grade {l['type']}, ~{hit:.0%}){why}")
+
     def card(l):
         hit, safe = MULTIPLE_LEG_STATS[l["type"]]
         return (f"🕐 {l['time']} | {l['league']}\n"
@@ -775,7 +806,14 @@ def build_daily_multiple_message(legs, today_display):
     msg = (head + f"{len(chosen)} legs — chance ALL land: ~{p_all:.0%} "
            f"(realistic worst case ~{p_safe:.0%})\n"
            f"Break-even combined odds: {fair:.2f}\n\n"
+           f"⭐ THE SLIP — best {len(chosen)} of {len(legs)} qualifying legs\n\n"
            + "\n\n".join(card(l) for l in chosen))
+    if len(legs) > len(chosen):
+        all_sorted = sorted(legs, key=lambda l: (l["time"], l["type"], l["rank"]))
+        msg += (f"\n\n📋 ALL {len(legs)} QUALIFYING LEGS (more legs = lower chance that all land)\n"
+                "⭐ = in the slip   🔁 = reserve: swap in ONLY if a ⭐ leg is postponed or "
+                "unavailable   ▫️ = not used\n"
+                + "\n".join(all_line(l) for l in all_sorted))
     return msg + foot
 
 
