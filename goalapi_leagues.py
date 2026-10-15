@@ -102,6 +102,35 @@ San Marino, Tunisia, Uganda, Azerbaijan, Qatar.
 
 NO COVERAGE — GOAL API has no usable top-flight data: South Africa,
 UAE (in addition to England - Southern Football League above).
+
+============================================================
+BATCH ADDITION (2026-09-17) — 8 more leagues
+============================================================
+These 8 were originally flagged in the stale-season-data
+investigation (see goalapi_fetcher.py's FIX notes) alongside
+Scotland. All confirmed genuinely fixed and gp>=6 after the "skip
+teams with no Current-stage row entirely" fix (2026-09-17) — verified
+via /debug-goalapi-league-gp AND /debug-goalapi-stage-audit, not just
+a single spot-check.
+
+============================================================
+BATCH ADDITION (2026-10-15) — 9 more leagues
+============================================================
+Month-later recheck of everything still sitting in the "not enough
+games yet" bucket from the 2026-09-15 batch. 9 of them have now
+cleared gp>=6 and are confirmed correct top-flight leagues:
+England, Italy, France, Turkey, Albania, Uganda, Azerbaijan, Israel —
+plus Saudi Arabia, where the original 2026-09-15 heuristic had
+flagged "Division 1" as the pick (a second-tier-sounding name); the
+REAL top flight is "Saudi League" (18 teams, gp=9), confirmed via a
+direct league_id check before adding, not assumed from the name.
+
+STILL PENDING as of 2026-10-15 (correct league, still not enough
+games — recheck again in a week or two): Qatar (gp=5),
+Cyprus - 1. Division (gp=5), Indonesia - Liga 1 (gp=5),
+Kuwait - Premier League (gp=4), Hong Kong - Premier League (gp=5),
+Bahrain - Premier League (gp=4), San Marino - Campionato (gp=5),
+Tunisia - Ligue 1 (gp=5).
 """
 
 GOALAPI_LEAGUE_IDS = {
@@ -212,18 +241,12 @@ GOALAPI_LEAGUE_IDS = {
     "Tanzania - Ligi Kuu Bara": "cmr77dxbb00u0rx06vqu9f3rk",
 
     # ===== BATCH ADDITION 2026-09-17 — 8 more leagues =====
-    # These 8 were originally flagged in the stale-season-data
-    # investigation (see goalapi_fetcher.py's FIX notes) alongside
-    # Scotland above. All confirmed genuinely fixed and gp>=6 after
-    # the "skip teams with no Current-stage row entirely" fix
-    # (2026-09-17) — verified via /debug-goalapi-league-gp AND
-    # /debug-goalapi-stage-audit, not just a single spot-check.
-    #
-    # Still pending, correct league confirmed but not enough games
-    # played yet as of 2026-09-17 (recheck in a week or two):
-    # Israel - Ligat Ha'al (cmr77dwbc00i0rx06adepi1hb, gp=5),
-    # Cyprus - 1. Division (cmr77dwj200korx0664b8h5mq, gp=4),
-    # Indonesia - Liga 1 (cmr77dwae00hjrx061fdxl3eb, gp=3).
+    # Still pending as of 2026-09-17, correct league confirmed but not
+    # enough games played yet at the time (now resolved below for
+    # Israel — see the 2026-10-15 batch): Israel - Ligat Ha'al
+    # (cmr77dwbc00i0rx06adepi1hb, was gp=5), Cyprus - 1. Division
+    # (cmr77dwj200korx0664b8h5mq, gp=4), Indonesia - Liga 1
+    # (cmr77dwae00hjrx061fdxl3eb, gp=3).
     "Austria - Bundesliga": "cmr77dvjm005brx062i1cpb4k",
     "Denmark - Superliga": "cmr77dw1z00exrx062x6co26u",
     "Czech Republic - Czech Liga": "cmr77dw9200gmrx06o9tqq555",
@@ -232,4 +255,20 @@ GOALAPI_LEAGUE_IDS = {
     "Northern Ireland - Premiership": "cmr77dwuo00nqrx06v4rpsuzk",
     "Wales - Premier League": "cmr77dx8b00slrx06b733ce6d",
     "Moldova - Super Liga": "cmr77dx5k00r2rx06srbm93dq",
+
+    # ===== BATCH ADDITION 2026-10-15 — 9 more leagues =====
+    # Month-later recheck of the "not enough games" bucket from
+    # 2026-09-15 (plus Israel, re-flagged pending in the 2026-09-17
+    # batch above). All confirmed gp>=6 via fresh /debug-goalapi-
+    # league-gp checks on 2026-10-15 — see docstring above for the
+    # Saudi Arabia naming correction specifically.
+    "England - Premier League": "cmr77dvkr005nrx06lp7rvp49",
+    "Italy - Serie A": "cmr77dvpd006yrx06zig7907g",
+    "France - Ligue 1": "cmr77dvqg007crx06q1kaceyo",
+    "Turkey - Super Lig": "cmr77dw0q00eprx06rqew3m48",
+    "Saudi Arabia - Saudi League": "cmr77dvw600b9rx06euixf818",
+    "Albania - Superliga": "cmr77dwl600ldrx06r1iqjfy6",
+    "Uganda - Premier League": "cmr77dxg800vorx064qptijld",
+    "Azerbaijan - Premyer Liqa": "cmr77dwpr00mwrx063m9vbhjq",
+    "Israel - Ligat Ha'al": "cmr77dwbc00i0rx06adepi1hb",
 }
