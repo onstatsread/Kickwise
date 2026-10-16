@@ -176,7 +176,13 @@ GOALAPI_LEAGUE_IDS = {
     "Venezuela - Liga FUTVE": "cmr77dwzc00zrx067jdu1c1t",
     # "England - Southern Football League": NO MATCH — not in GOAL API's database
     "Germany - Bundesliga": "cmr77dvgm0002rx06rt2uqxii",
-    "Belgium - First Amateur Division": "cmr77dw9g00gyrx06oiicyii0",
+    # CORRECTED 2026-10-15: was "First Amateur Division"
+    # (cmr77dw9g00gyrx06oiicyii0) — confirmed WRONG, that's a lower
+    # amateur tier, not Belgium's professional top flight. Real top
+    # flight is "First Division A" (18 teams, matches current Belgian
+    # Pro League format; the tempting-sounding "Super League" name
+    # was checked too but only has 8 active teams and fails gp>=6).
+    "Belgium - First Division A": "cmr77dw9g00gvrx06jlglb47m",
     "Algeria - Ligue 1": "cmr77dx0200p5rx066psribbn",
     "Australia - A-League": "cmr77dvgx000frx0621wwabup",
     "Australia - Brisbane Premier League": "cmr77dvgy000rrx06ddq7q9lp",
@@ -271,4 +277,24 @@ GOALAPI_LEAGUE_IDS = {
     "Uganda - Premier League": "cmr77dxg800vorx064qptijld",
     "Azerbaijan - Premyer Liqa": "cmr77dwpr00mwrx063m9vbhjq",
     "Israel - Ligat Ha'al": "cmr77dwbc00i0rx06adepi1hb",
+
+    # ===== BATCH ADDITION 2026-10-15 (cont'd) — 7 sub-divisions =====
+    # First sub-division (non-top-flight) entries added to this file.
+    # Found via /debug-goalapi-league-search per country (not the
+    # top-leagues heuristic, which only ever considers the single
+    # best top-flight candidate) and confirmed gp>=6 individually —
+    # same verification standard as every top-flight entry above.
+    "England - Championship": "cmr77dvkr005hrx068xaahpuh",
+    "England - League One": "cmr77dvkr005lrx061tywzotk",
+    "England - League Two": "cmr77dvkr005mrx06iayzvq2w",
+    "Italy - Serie B": "cmr77dvpd006zrx06dmggkel8",
+    "Spain - Segunda Division": "cmr77dvnt006orx06io7l06lv",
+    "Germany - 2. Bundesliga": "cmr77dvgm0001rx060h6ivt4p",
+    "France - Ligue 2": "cmr77dvqg007drx06q6y56j5u",
+
+    # ===== BATCH ADDITION 2026-10-15 (cont'd) — 4 more sub-divisions =====
+    "Germany - 3. Liga": "cmr77dvgm0005rx06zza2b9mt",
+    "Netherlands - Eerste Divisie": "cmr77dvrh007yrx06tn0odxar",
+    "Portugal - Segunda Liga": "cmr77dvun00afrx064ci6r3pk",
+    "Russia - First League": "cmr77dvua00a6rx0646k487gf",
 }
