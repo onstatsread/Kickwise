@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - run: pip install requests
       - run: python extract_predictions.py crawl https://kickwisepredictions.blogspot.com all_predictions.csv
       - run: python extract_predictions.py scores all_predictions.csv scores.csv
         env:
