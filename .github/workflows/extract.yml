@@ -2,6 +2,9 @@ name: Extract predictions
 on: workflow_dispatch
 permissions:
   contents: write
+env:
+  BACKEND_URL: ${{ secrets.BACKEND_URL }}
+  GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
 concurrency:
   group: extract-predictions
   cancel-in-progress: false
