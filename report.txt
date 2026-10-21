@@ -1,21 +1,22 @@
-🚀 Kickwise Daily Predictions — Wednesday, October 21 2026
-  📌 Singapore - S.League: 1 match(es)
+1426 matches with scores
 
-📊 Summary: 1 posted | 0 skipped (genuine N/A) | 0 dropped (request failed after retries)
+D64 -> teams scored matches?
+  both                         425/783  (54%)
+  one                          141/369  (38%)
 
-📝 Posting 1 matches to Blogger...
-✅ Posted successfully! URL: https://kickwisepredictions.blogspot.com/2026/10/kickwise-predictions-wednesday-october_01315783054.html
+B46 -> total goals within the stated number
+  4goals                       232/630  (37%)
+  3goals                       173/349  (50%)
+  5 goals                      0/198  (0%)
+  2goals or less               102/165  (62%)
+  5goals                       24/84  (29%)
 
-ℹ️ Double chance signal: no matches flagged today.
+O/U result -> under 2.5 correct?
+  over                         212/369  (57%)
+  under                        160/308  (52%)
+  under confirmed              89/223  (40%)
 
-ℹ️ Double chance signal 2: no matches flagged today.
+D69 side -> correct winner?
+  away/other                   597/995  (60%)
+  home                         221/431  (51%)
 
-ℹ️ Double chance signal 3: no matches flagged today.
-
-ℹ️ Watch list 1: no 2-handicap picks today.
-
-ℹ️ Watch list 2: no double chance picks today.
-
-ℹ️ Watch list 3 UNDER: no matches today.
-
-ℹ️ Watch list 4 OVER: no matches today.

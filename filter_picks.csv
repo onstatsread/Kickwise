@@ -1,4 +1,37 @@
 stream,date,home,away,label,score,result
+Blog2 standard (Away + under),2026-10-20,Bristol Rovers,Salford,Away,1-2,win
+Blog2 standard (Away + under),2026-10-20,Cheltenham,Fleetwood,Away,4-2,loss
+Blog2 standard (Away + under),2026-10-20,Chesterfield,Colchester,Away,1-1,loss
+Blog2 standard (Away + under),2026-10-20,Cambridge Utd,Wycombe,Away,2-2,loss
+Blog2 standard (Away + under),2026-10-20,Stevenage,Plymouth,Away,3-0,loss
+Blog2 standard (Away + under),2026-10-19,Degerfors,Kalmar,Away,1-2,win
+Blog2 standard (Away + under),2026-10-19,Varberg,Helsingborg,Away,0-0,loss
+Blog2 standard (Away + under),2026-10-19,Al Shabab,Al Faisaly Saudi,Away,2-2,loss
+Blog2 standard (Away + under),2026-10-19,Parma,Torino,Away,0-3,win
+Blog2 standard (Away + under),2026-10-18,Malmo FF,Hacken,Away,0-1,win
+Blog2 standard (Away + under),2026-10-18,Valerenga,Brann,Away,3-1,loss
+Blog2 standard (Away + under),2026-10-18,Karpaty Lviv,Epitsentr,Away,2-2,loss
+Blog2 standard (Away + under),2026-10-18,Sao Paulo,Vasco,Away,1-0,loss
+Blog2 standard (Away + under),2026-10-18,El Paso,Sacramento Republic,Away,0-1,win
+Blog2 standard (Away + under),2026-10-18,Machida,Avispa Fukuoka,Away,3-0,loss
+Blog2 standard (Away + under),2026-10-18,Busan,Jeonnam South,Away,2-1,loss
+Blog2 standard (Away + under),2026-10-18,Ceuta,Oviedo,Away,1-2,win
+Blog2 standard (Away + under),2026-10-17,Ried,Austria Vienna,Away,3-2,loss
+Blog2 standard (Away + under),2026-10-17,Cracovia,Legia,Away,1-1,loss
+Blog2 standard (Away + under),2026-10-17,Miami FC,Charleston,Away,1-2,win
+Blog2 standard (Away + under),2026-10-17,Jaro,Mariehamn,Away,1-1,loss
+Blog2 standard (Away + under),2026-10-17,Watford,Charlton,Away,2-0,loss
+Blog2 standard (Away + under),2026-10-17,Shrewsbury,Bristol Rovers,Away,1-0,loss
+Blog2 standard (Away + under),2026-10-17,Bangor FC,Dungannon Northern,Away,0-0,loss
+Blog2 standard (Away + under),2026-10-17,Wycombe,Notts County,Away,2-0,loss
+Blog2 standard (Away + under),2026-10-17,Derby,Stoke,Away,0-1,win
+Blog2 standard (Away + under),2026-10-17,Swansea,West Ham,Away,0-1,win
+Blog2 standard (Away + under),2026-10-17,Tranmere,Barnet,Away,1-2,win
+Blog2 standard (Away + under),2026-10-17,Mantova,Palermo,Away,0-2,win
+Blog2 standard (Away + under),2026-10-16,Le Mans,Toulouse,Away,0-3,win
+Blog2 standard (Away + under),2026-10-14,Sogndal,Odd,Away,0-1,win
+Blog2 standard (Away + under),2026-10-12,Fortaleza,CRB,Away,2-2,loss
+Blog2 standard (Away + under),2026-10-12,Shamrock Rovers,Bohemians,Away,2-1,loss
 Blog2 standard (Away + under),2026-10-11,Excelsior,Groningen,Away,1-5,win
 Blog2 standard (Away + under),2026-10-11,Aalesund,Sarpsborg 08,Away,2-4,win
 Blog2 standard (Away + under),2026-10-11,Asane,Sogndal,Away,2-1,loss
@@ -77,6 +110,63 @@ Blog2 standard (Away + under),2026-09-13,A. Italiano,O'Higgins,Away,1-0,loss
 Blog2 standard (Away + under),2026-09-12,Chapecoense-SC,Internacional,Away,1-2,win
 Blog2 standard (Away + under),2026-09-11,Galway,Bohemians,Away,2-3,win
 Blog2 standard (Away + under),2026-09-11,Shelbourne,Derry City,Away,0-1,win
+DC signal 1,2026-10-21,Avispa Fukuoka,Gamba Osaka,Away 2-handicap,1-2,win
+DC signal 1,2026-10-21,Yokohama F. Marinos,Verdy,Away 2-handicap,2-2,win
+DC signal 1,2026-10-20,Norrkoping,Orebro,Away 2-handicap,2-2,win
+DC signal 1,2026-10-20,Al Ettifaq,Al Ittihad Saudi,Home 2-handicap,1-4,loss
+DC signal 1,2026-10-20,Crawley,Shrewsbury,Home 2-handicap,2-3,win
+DC signal 1,2026-10-20,Northampton,Tranmere,Home win or draw,0-1,loss
+DC signal 1,2026-10-20,Walsall,Oldham,Away win or draw,3-0,loss
+DC signal 1,2026-10-20,York City,Accrington,Away 3-handicap,1-1,win
+DC signal 1,2026-10-20,Doncaster,Stockport County,Home 2-handicap,0-2,push
+DC signal 1,2026-10-20,Huddersfield,Peterborough,Away 3-handicap,4-1,push
+DC signal 1,2026-10-20,Notts County,Sheffield Wed,Home 2-handicap,2-0,win
+DC signal 1,2026-10-20,Oxford Utd,Wigan,Away 2-handicap,2-1,win
+DC signal 1,2026-10-19,Suduva,Kauno Zalgiris,Away win or draw,0-1,win
+DC signal 1,2026-10-19,Wisla Plock,Radomiak Radom,Away 2-handicap,1-0,win
+DC signal 1,2026-10-18,Ostrava,Sparta Prague Czech,Home 3-handicap,0-0,win
+DC signal 1,2026-10-18,Celtic,Hearts,Away 3-handicap,7-1,loss
+DC signal 1,2026-10-18,Milsami,Zimbru Chisinau,Home 2-handicap,1-1,win
+DC signal 1,2026-10-18,Curico Unido,Deportes Iquique,Home 2-handicap,2-2,win
+DC signal 1,2026-10-18,El Paso,Sacramento Republic,Home win or draw,0-1,loss
+DC signal 1,2026-10-18,Pohang,Anyang South,Home win or draw,0-0,win
+DC signal 1,2026-10-18,Busan,Jeonnam South,Away 3-handicap,2-1,win
+DC signal 1,2026-10-18,Wuhan Three Towns,Shanghai Shenhua,Home 2-handicap,1-3,push
+DC signal 1,2026-10-18,Waalwijk,FC Volendam,Away 2-handicap,1-1,win
+DC signal 1,2026-10-18,Hoffenheim II,Verl,Away 2-handicap,2-1,win
+DC signal 1,2026-10-18,Karlsruher SC,Darmstadt,Away 2-handicap,4-0,loss
+DC signal 1,2026-10-18,Ceuta,Oviedo,Home 2-handicap,1-2,win
+DC signal 1,2026-10-18,Le Havre,Auxerre,Home win or draw,1-3,loss
+DC signal 1,2026-10-18,Lorient,Monaco,Home 2-handicap,1-0,win
+DC signal 1,2026-10-17,Inter Turku,AC Oulu,Away win or draw,1-2,win
+DC signal 1,2026-10-17,Cliftonville,Portadown Northern,Away 3-handicap,1-2,win
+DC signal 1,2026-10-17,Cracovia,Legia,Home 2-handicap,1-1,win
+DC signal 1,2026-10-17,Cacahuatique,Alianza FC El,Home 3-handicap,0-0,win
+DC signal 1,2026-10-17,Cerezo Osaka,Kawasaki Frontale,Away win or draw,2-4,win
+DC signal 1,2026-10-17,Okzhetpes,Kyzylzhar,Away 2-handicap,1-0,win
+DC signal 1,2026-10-17,Kashiwa Reysol,Nagoya Grampus,Away 3-handicap,1-3,win
+DC signal 1,2026-10-17,Ilves,SJK,Away 3-handicap,2-0,win
+DC signal 1,2026-10-17,Jaro,Mariehamn,Away 2-handicap,1-1,win
+DC signal 1,2026-10-17,Peterborough,Burton,Home win or draw,2-2,win
+DC signal 1,2026-10-17,Real Sociedad B,Almeria,Home 2-handicap,2-4,push
+DC signal 1,2026-10-17,Rayong FC,Uthai Thani,Home 2-handicap,1-1,win
+DC signal 1,2026-10-17,Ascoli,Empoli,Away 2-handicap,1-1,win
+DC signal 1,2026-10-17,Brentford,Liverpool,Away 2-handicap,1-2,win
+DC signal 1,2026-10-17,Sheffield Wed,AFC Wimbledon,Away 3-handicap,5-0,loss
+DC signal 1,2026-10-17,Derby,Stoke,Home 2-handicap,0-1,win
+DC signal 1,2026-10-17,Swindon,Walsall,Home 2-handicap,1-1,win
+DC signal 1,2026-10-17,Sakhnin,Hapoel Petah Tikva,Away win or draw,2-0,loss
+DC signal 1,2026-10-17,Newcastle,Aston Villa,Away 2-handicap,0-1,win
+DC signal 1,2026-10-16,Newroz,Al Minaa,Away 2-handicap,2-0,push
+DC signal 1,2026-10-16,Radnik,Radnicki Nis,Away 2-handicap,3-0,loss
+DC signal 1,2026-10-16,Horsens,Randers FC,Home 2-handicap,0-0,win
+DC signal 1,2026-10-16,Al Kahraba,Al Talaba,Away win or draw,0-1,win
+DC signal 1,2026-10-16,Kerry,Cork City,Home win or draw,1-1,win
+DC signal 1,2026-10-16,Breidablik,Vikingur Reykjavik,Home 2-handicap,1-2,win
+DC signal 1,2026-10-16,Frosinone,Sassuolo,Away 2-handicap,4-2,push
+DC signal 1,2026-10-14,Atyrau,Yelimay Semey,Home 2-handicap,1-2,win
+DC signal 1,2026-10-14,Bohemians,Mlada Boleslav Czech,Away win or draw,1-0,loss
+DC signal 1,2026-10-13,Parnu JK Vaprus,Kalju,Home 2-handicap,2-2,win
 DC signal 1,2026-10-11,Aberdeen,St Johnstone,Away win or draw,0-1,win
 DC signal 1,2026-10-11,Petrocub,Zimbru Chisinau,Home 2-handicap,1-1,win
 DC signal 1,2026-10-11,Asane,Sogndal,Away 2-handicap,2-1,win
@@ -168,7 +258,52 @@ DC signal 1,2026-09-15,Indy Eleven,Brooklyn,Away 3-handicap,4-0,loss
 DC signal 1,2026-09-14,Meshakhte Tkibuli,Rustavi,Home 3-handicap,0-1,win
 DC signal 1,2026-09-14,Orebro,Nordic United,Home win or draw,1-1,win
 DC signal 1,2026-09-12,Manta,Aucas,Home 2-handicap,0-0,win
+DC signal 2,2026-10-20,Cheltenham,Fleetwood,Home 2-handicap,4-2,win
+DC signal 2,2026-10-20,Rochdale,Grimsby,Away 2-handicap,2-2,win
+DC signal 2,2026-10-20,Cambridge Utd,Wycombe,Away 2-handicap,2-2,win
+DC signal 2,2026-10-20,Londrina,Cuiaba,Home 2-handicap,1-0,win
+DC signal 2,2026-10-19,Suduva,Kauno Zalgiris,Away 2-handicap,0-1,win
+DC signal 2,2026-10-19,Degerfors,Kalmar,Away 2-handicap,1-2,win
+DC signal 2,2026-10-19,Viborg,Midtjylland,Away 2-handicap,1-2,win
+DC signal 2,2026-10-19,Waterford,Galway,Home 2-handicap,3-2,win
+DC signal 2,2026-10-19,Parma,Torino,Away 2-handicap,0-3,win
+DC signal 2,2026-10-19,Mushuc Runa,Orense,Home 2-handicap,1-1,win
+DC signal 2,2026-10-18,San Antonio,New Mexico,Home 2-handicap,1-0,win
+DC signal 2,2026-10-18,Suwon Bluewings,Hwaseong South,Home 2-handicap,3-2,win
+DC signal 2,2026-10-18,Nordic United,Norrby,Away 2-handicap,2-1,win
+DC signal 2,2026-10-17,Inter Turku,AC Oulu,Away 2-handicap,1-2,win
+DC signal 2,2026-10-17,Ried,Austria Vienna,Away 2-handicap,3-2,win
+DC signal 2,2026-10-17,Rhode Island,Pittsburgh,Home 2-handicap,1-1,win
+DC signal 2,2026-10-17,Yongin,Ansan Greeners South,Home 2-handicap,0-4,loss
+DC signal 2,2026-10-17,Ljungskile,Brage,Home 2-handicap,2-0,win
+DC signal 2,2026-10-17,Lahti,TPS,Home 2-handicap,5-1,win
+DC signal 2,2026-10-17,Zhetysu Taldykorgan,Kaisar Kyzylorda,Home 2-handicap,2-1,win
+DC signal 2,2026-10-17,Ningbo Professional,Suzhou Dongwu,Home 2-handicap,1-1,win
+DC signal 2,2026-10-17,Peterborough,Burton,Home 2-handicap,2-2,win
+DC signal 2,2026-10-17,Fleetwood,Rotherham,Home 2-handicap,2-0,win
+DC signal 2,2026-10-17,Yunnan Yukun,Chongqing Tonglianglong,Home 2-handicap,1-1,win
+DC signal 2,2026-10-17,Alemannia Aachen,Hansa Rostock,Home 2-handicap,2-0,win
+DC signal 2,2026-10-17,Regensburg,Wehen,Away 2-handicap,0-0,win
+DC signal 2,2026-10-17,Keflavik,KR Reykjavik,Away 2-handicap,2-3,win
+DC signal 2,2026-10-17,Shandong Taishan,Zhejiang Professional,Home 2-handicap,5-0,win
+DC signal 2,2026-10-17,Falkenberg,Landskrona,Home 2-handicap,4-3,win
+DC signal 2,2026-10-17,Sandviken,Ostersund,Away 2-handicap,0-0,win
+DC signal 2,2026-10-17,Kristiansund,Aalesund,Home 2-handicap,1-4,loss
+DC signal 2,2026-10-17,Bradford City,Stevenage,Home 2-handicap,2-0,win
+DC signal 2,2026-10-17,Swansea,West Ham,Away 2-handicap,0-1,win
+DC signal 2,2026-10-17,West Brom,Blackburn,Home 2-handicap,3-2,win
+DC signal 2,2026-10-17,Valur,KA Akureyri,Home 2-handicap,4-1,win
+DC signal 2,2026-10-17,Wurzburger Kickers,Mannheim,Away 2-handicap,2-0,push
+DC signal 2,2026-10-16,Karbala,Al Gharraf,Away 2-handicap,1-2,win
+DC signal 2,2026-10-16,Al Kahraba,Al Talaba,Away 2-handicap,0-1,win
+DC signal 2,2026-10-16,Longford,Athlone,Away 2-handicap,1-0,win
+DC signal 2,2026-10-14,Paide,Tammeka,Home 2-handicap,2-1,win
+DC signal 2,2026-10-14,Hartford Athletic,Charleston,Home 2-handicap,1-1,win
+DC signal 2,2026-10-13,Bragantino,Cruzeiro,Away 2-handicap,4-2,push
+DC signal 2,2026-10-12,Coritiba,Botafogo RJ,Home 2-handicap,1-1,win
+DC signal 2,2026-10-12,Shamrock Rovers,Bohemians,Home 2-handicap,2-1,win
 DC signal 2,2026-10-12,Khenchela,Constantine,Away 2-handicap,2-0,push
+DC signal 2,2026-10-12,Radomiak Radom,Motor Lublin,Home 2-handicap,2-3,win
 DC signal 2,2026-10-11,Raufoss,Moss,Away 2-handicap,1-2,win
 DC signal 2,2026-10-11,Brage,Helsingborg,Away 2-handicap,2-0,push
 DC signal 2,2026-10-11,Everton,La Serena,Away 2-handicap,3-2,win
@@ -227,7 +362,83 @@ DC signal 2,2026-09-14,Norrby,Varberg,Home 2-handicap,1-2,win
 DC signal 2,2026-09-14,Waterford,Derry City,Away 2-handicap,2-2,win
 DC signal 2,2026-09-13,Magallanes,D. Puerto Montt,Home 2-handicap,2-0,win
 DC signal 2,2026-09-12,Brooklyn,Miami FC,Home 2-handicap,1-1,win
+DC signal 3,2026-10-21,Avispa Fukuoka,Gamba Osaka,Away 2-handicap,1-2,win
+DC signal 3,2026-10-20,Norrkoping,Orebro,Away 2-handicap,2-2,win
+DC signal 3,2026-10-20,Crawley,Shrewsbury,Home 2-handicap,2-3,win
+DC signal 3,2026-10-20,Northampton,Tranmere,Home 2-handicap,0-1,win
+DC signal 3,2026-10-20,York City,Accrington,Away 2-handicap,1-1,win
+DC signal 3,2026-10-20,Cambridge Utd,Wycombe,Away 2-handicap,2-2,win
+DC signal 3,2026-10-20,Doncaster,Stockport County,Home 2-handicap,0-2,push
+DC signal 3,2026-10-20,Luton,Barnsley,Home,2-1,win
+DC signal 3,2026-10-20,Londrina,Cuiaba,Home 2-handicap,1-0,win
+DC signal 3,2026-10-19,Degerfors,Kalmar,Away 2-handicap,1-2,win
+DC signal 3,2026-10-19,Varberg,Helsingborg,Away 2-handicap,0-0,win
+DC signal 3,2026-10-19,Al Shabab,Al Faisaly Saudi,Away 2-handicap,2-2,win
+DC signal 3,2026-10-19,Waterford,Galway,Home 2-handicap,3-2,win
+DC signal 3,2026-10-19,Parma,Torino,Away,0-3,win
+DC signal 3,2026-10-19,Tottenham,Coventry,Home,3-1,win
+DC signal 3,2026-10-19,Braga,Gil Vicente,Home,1-2,loss
+DC signal 3,2026-10-19,Mushuc Runa,Orense,Home,1-1,loss
+DC signal 3,2026-10-18,Milsami,Zimbru Chisinau,Home 2-handicap,1-1,win
+DC signal 3,2026-10-18,Karpaty Lviv,Epitsentr,Away 2-handicap,2-2,win
+DC signal 3,2026-10-18,Odd,Strommen,Home,1-2,loss
+DC signal 3,2026-10-18,Curico Unido,Deportes Iquique,Home 2-handicap,2-2,win
+DC signal 3,2026-10-18,JKT Tanzania,Mbeya City,Home,2-1,win
+DC signal 3,2026-10-18,Sao Paulo,Vasco,Away 2-handicap,1-0,win
+DC signal 3,2026-10-18,San Antonio,New Mexico,Home,1-0,win
+DC signal 3,2026-10-18,Suwon Bluewings,Hwaseong South,Home,3-2,win
+DC signal 3,2026-10-18,Machida,Avispa Fukuoka,Away 2-handicap,3-0,loss
+DC signal 3,2026-10-18,Pohang,Anyang South,Home 2-handicap,0-0,win
+DC signal 3,2026-10-18,Busan,Jeonnam South,Away 2-handicap,2-1,win
+DC signal 3,2026-10-18,Wuhan Three Towns,Shanghai Shenhua,Home 2-handicap,1-3,push
+DC signal 3,2026-10-18,Waalwijk,FC Volendam,Away 2-handicap,1-1,win
+DC signal 3,2026-10-18,Bangkok Utd,Port MTI FC,Away 2-handicap,0-2,win
+DC signal 3,2026-10-18,Hoffenheim II,Verl,Away 2-handicap,2-1,win
+DC signal 3,2026-10-18,Le Havre,Auxerre,Home 2-handicap,1-3,push
+DC signal 3,2026-10-18,Lorient,Monaco,Home 2-handicap,1-0,win
+DC signal 3,2026-10-17,Cliftonville,Portadown Northern,Away 2-handicap,1-2,win
+DC signal 3,2026-10-17,Ried,Austria Vienna,Away 2-handicap,3-2,win
+DC signal 3,2026-10-17,Sparta Rotterdam,Willem II,Away 2-handicap,3-2,win
+DC signal 3,2026-10-17,Ceara,Juventude,Home 2-handicap,2-2,win
+DC signal 3,2026-10-17,Cacahuatique,Alianza FC El,Home 2-handicap,0-0,win
+DC signal 3,2026-10-17,Aucas,LDU Quito,Home 2-handicap,1-1,win
+DC signal 3,2026-10-17,Rhode Island,Pittsburgh,Home,1-1,loss
+DC signal 3,2026-10-17,Kashima Antlers,V-Varen Nagasaki,Away 2-handicap,2-0,push
+DC signal 3,2026-10-17,Yongin,Ansan Greeners South,Home,0-4,loss
+DC signal 3,2026-10-17,Kashiwa Reysol,Nagoya Grampus,Away 2-handicap,1-3,win
+DC signal 3,2026-10-17,Wolfsburg,Heidenheim,Away 2-handicap,3-1,push
+DC signal 3,2026-10-17,Ljungskile,Brage,Home 2-handicap,2-0,win
+DC signal 3,2026-10-17,Jaro,Mariehamn,Away 2-handicap,1-1,win
+DC signal 3,2026-10-17,Zhetysu Taldykorgan,Kaisar Kyzylorda,Home 2-handicap,2-1,win
+DC signal 3,2026-10-17,Sukhothai,Rasisalai Utd,Away 2-handicap,5-1,loss
+DC signal 3,2026-10-17,Peterborough,Burton,Home 2-handicap,2-2,win
+DC signal 3,2026-10-17,Middlesbrough,Cardiff,Away 2-handicap,2-2,win
+DC signal 3,2026-10-17,Fleetwood,Rotherham,Home 2-handicap,2-0,win
+DC signal 3,2026-10-17,Yunnan Yukun,Chongqing Tonglianglong,Home,1-1,loss
+DC signal 3,2026-10-17,Real Sociedad B,Almeria,Home 2-handicap,2-4,push
+DC signal 3,2026-10-17,Shandong Taishan,Zhejiang Professional,Home,5-0,win
+DC signal 3,2026-10-17,Rayong FC,Uthai Thani,Home 2-handicap,1-1,win
+DC signal 3,2026-10-17,Ascoli,Empoli,Away 2-handicap,1-1,win
+DC signal 3,2026-10-17,Kristiansund,Aalesund,Home 2-handicap,1-4,loss
+DC signal 3,2026-10-17,Bradford City,Stevenage,Home 2-handicap,2-0,win
+DC signal 3,2026-10-17,Stockport County,Bromley,Away 2-handicap,1-0,win
+DC signal 3,2026-10-17,Swansea,West Ham,Away 2-handicap,0-1,win
+DC signal 3,2026-10-17,West Brom,Blackburn,Home,3-2,win
+DC signal 3,2026-10-17,Swindon,Walsall,Home 2-handicap,1-1,win
+DC signal 3,2026-10-17,Wurzburger Kickers,Mannheim,Away,2-0,loss
+DC signal 3,2026-10-16,Horsens,Randers FC,Home 2-handicap,0-0,win
+DC signal 3,2026-10-16,Bohemians,Waterford,Home,2-1,win
+DC signal 3,2026-10-16,Kerry,Cork City,Home 2-handicap,1-1,win
+DC signal 3,2026-10-15,Al Arabi Irbid,Shabab Al Ordon,Home 2-handicap,1-0,win
+DC signal 3,2026-10-14,Atyrau,Yelimay Semey,Home 2-handicap,1-2,win
+DC signal 3,2026-10-14,Paide,Tammeka,Home,2-1,win
+DC signal 3,2026-10-14,Bryne,Raufoss,Home,1-1,loss
+DC signal 3,2026-10-14,Hartford Athletic,Charleston,Home 2-handicap,1-1,win
+DC signal 3,2026-10-13,Parnu JK Vaprus,Kalju,Home 2-handicap,2-2,win
+DC signal 3,2026-10-13,Simba,Mashujaa,Home,6-1,win
+DC signal 3,2026-10-12,Fortaleza,CRB,Away 2-handicap,2-2,win
 DC signal 3,2026-10-12,Khenchela,Constantine,Away 2-handicap,2-0,push
+DC signal 3,2026-10-12,Radomiak Radom,Motor Lublin,Home 2-handicap,2-3,win
 DC signal 3,2026-10-11,Asane,Sogndal,Away 2-handicap,2-1,win
 DC signal 3,2026-10-11,Kongsvinger,Ranheim,Away 2-handicap,6-2,loss
 DC signal 3,2026-10-11,Brage,Helsingborg,Away 2-handicap,2-0,push

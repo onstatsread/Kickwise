@@ -1,28 +1,36 @@
-🚀 Kickwise Daily Predictions — Wednesday, October 21 2026
-  📌 Colombia - Primera A: 1 match(es)
-  📌 Estonia - Meistriliiga: 1 match(es)
-  📌 Finland - Veikkausliiga: 1 match(es)
-  📌 Norway - 1st Division: 1 match(es)
-  📌 USA - MLS: 1 match(es)
-  📌 USA - USL Championship: 2 match(es)
-  📌 Belgium - First Amateur Division: 1 match(es)
-  📌 Singapore - S.League: 1 match(es)
-    ⚠️ Skipping PK-35 Vantaa vs FF Jaro (all N/A)
-    ⚠️ Skipping K.SK. Heist vs Tienen (all N/A)
-    ⚠️ Skipping Brooklyn FC vs Birmingham Legion (all N/A)
-    ⚠️ Skipping FC Cincinnati vs DC United (all N/A)
-    ⚠️ Skipping Llaneros FC vs Deportivo Cali (all N/A)
-    ⚠️ Skipping Sporting Jacksonville vs Louisville City (all N/A)
+1414 scored matches
 
-📊 Summary: 3 posted | 6 skipped (genuine N/A) | 0 dropped (request failed after retries)
+Baseline: home not-lose 67%, away not-lose 57%
 
-📝 Posting 3 matches to Blogger...
-✅ Posted successfully! URL: https://kickwisepredictions.blogspot.com/2026/10/kickwise-predictions-wednesday-october_01527169451.html
+Blog2 standard (Away + under) - 111 picks
+  graded (assumed +N handicap): win 44, push 0, loss 67
+  side won 40% | side did not lose 62%
+  under 2.5 hit: 40% (base 46%)
+  straight-win picks with market odds: 111, flat-stake return -3%
 
-ℹ️ Double chance signal: no matches flagged today.
+DC signal 1 - 148 picks
+  graded (assumed +N handicap): win 108, push 16, loss 24
+  side won 26% | side did not lose 57%
+    Home 2-handicap: 48 (win 33, push 10, loss 5)
+    Away 2-handicap: 33 (win 28, push 3, loss 2)
+    Home win or draw: 25 (win 18, push 0, loss 7)
+    Away win or draw: 16 (win 10, push 0, loss 6)
+    Away 3-handicap: 15 (win 8, push 3, loss 4)
+    Home 3-handicap: 11 (win 11, push 0, loss 0)
 
-ℹ️ Double chance signal 2: no matches flagged today.
+DC signal 2 - 104 picks
+  graded (assumed +N handicap): win 89, push 9, loss 6
+  side won 49% | side did not lose 74%
+    Home 2-handicap: 69 (win 60, push 4, loss 5)
+    Away 2-handicap: 35 (win 29, push 5, loss 1)
 
-ℹ️ Watch list 3 UNDER: no matches today.
+DC signal 3 - 185 picks
+  graded (assumed +N handicap): win 132, push 20, loss 33
+  side won 35% | side did not lose 65%
+  straight-win picks with market odds: 42, flat-stake return -15%
+    Home 2-handicap: 85 (win 66, push 13, loss 6)
+    Away 2-handicap: 58 (win 45, push 7, loss 6)
+    Home: 39 (win 20, push 0, loss 19)
+    Away: 3 (win 1, push 0, loss 2)
 
-ℹ️ Watch list 4 OVER: no matches today.
+wrote 548 rows -> filter_picks.csv
