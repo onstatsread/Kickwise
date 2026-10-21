@@ -4,6 +4,10 @@ permissions:
   contents: write
 env:
   BACKEND_URL: ${{ secrets.BACKEND_URL }}
+  BLOG_ID: ${{ secrets.BLOG_ID }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
   GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
 concurrency:
   group: extract-predictions
@@ -19,8 +23,6 @@ jobs:
       - run: pip install requests
       - run: python extract_predictions.py crawl https://kickwisepredictions.blogspot.com all_predictions.csv
       - run: python extract_predictions.py scores all_predictions.csv scores.csv
-        env:
-          GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
       - run: |
           python extract_predictions.py merge all_predictions.csv scores.csv analysis.csv
           python extract_predictions.py analyze analysis.csv | tee report.txt
