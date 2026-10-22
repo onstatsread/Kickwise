@@ -75,13 +75,14 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 #
 # List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
 # UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
-# signals, standard = Kickwise Standard Picks, multiple = Daily Multiple.
+# signals, standard = Kickwise Standard Picks, multiple = Daily Multiple,
+# dratio = Draw Ratio List.
 # The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
 # still receives everything.
 # ============================================================
 MAX_EXTRA_BOTS = 10
 DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
-VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio")
 
 
 def _load_extra_bots():
@@ -367,6 +368,44 @@ def _ou_text(label, d):
             f"Under {d.get('under_odds')}{_pct(d, 'under_pct')}")
 
 
+# ============================================================
+# DRAW RATIO LIST — user's own formula (Oct 2026).
+#   A = model draw odds x K1 / K2          (K1 = -47.6, K2 = 7.25)
+#   R = model draw value (%) / A
+#   A match is SENT to Telegram when R is below DRAWRATIO_SEND_BELOW (0).
+# Because A is always negative (draw odds are positive), R is negative
+# exactly when the model draw value is POSITIVE — so the constants only
+# change the number shown, not which matches are sent.
+#
+# What the data says (1,048 scored matches): ~30% of matches qualify
+# (~9 a day). On ordinary matches it makes no difference to draws or goals
+# (draw 20% vs 24%, under 2.5 44% vs 46%). On 2-HANDICAP PICKS it matters:
+# with a positive draw value 62 picks covered +2 in 92% (worst case 82%),
+# vs 77% for the other 190. Treat it as a handicap-pick filter.
+# ============================================================
+DRAWRATIO_K1 = -47.6
+DRAWRATIO_K2 = 7.25
+DRAWRATIO_SEND_BELOW = 0
+DRAWRATIO_SHOW_ON_BLOG = True   # show the ratio on each Blog 1 match card
+
+
+def draw_ratio_check(pred):
+    """Returns {"ratio", "send", ...} or None when draw odds / draw value are missing."""
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    draw_odds = model_odds.get("draw_odds")
+    draw_v = (pred.get("value_pct") or {}).get("draw")
+    if not isinstance(draw_odds, (int, float)) or not isinstance(draw_v, (int, float)):
+        return None
+    if draw_odds <= 0:
+        return None
+    a = draw_odds * DRAWRATIO_K1 / DRAWRATIO_K2
+    if a == 0:
+        return None
+    ratio = draw_v / a
+    return {"a": a, "ratio": ratio, "send": ratio < DRAWRATIO_SEND_BELOW,
+            "draw_odds": draw_odds, "draw_value": draw_v}
+
+
 def format_match_html(league_name, match, pred):
     if not pred:
         return ""
@@ -421,6 +460,14 @@ def format_match_html(league_name, match, pred):
         decision = value_signal.get("decision", "")
         decision_line = f"<br><b style='color:#F39C12;font-size:14px'>⚡ DECISION: {decision}</b>" if decision else ""
 
+        ratio_line = ""
+        if DRAWRATIO_SHOW_ON_BLOG:
+            _dr = draw_ratio_check(pred)
+            if _dr:
+                _tag = "SENT to Telegram" if _dr["send"] else "not sent"
+                ratio_line = (f"<br><span style='color:#85C1E9'>📐 Draw ratio: "
+                              f"{_dr['ratio']:.2f} ({_tag})</span>")
+
         value_html = f"""
         <tr>
           <td colspan="2" style="padding:6px 12px;font-size:12px;color:#888">
@@ -431,6 +478,7 @@ def format_match_html(league_name, match, pred):
             Share Diff {fmt_val(value_pct.get('share_diff'))}
             {signal_line}
             {decision_line}
+            {ratio_line}
           </td>
         </tr>"""
 
@@ -663,79 +711,66 @@ def check_over_list_4(pred):
 
 
 # ============================================================
-# DAILY MULTIPLE — a short accumulator built ONLY from the most
-# reliable leg types found in the Sep-Oct 2026 review. It says
-# "No multiple today" unless at least MULTIPLE_MIN_LEGS legs qualify.
+# DAILY MULTIPLE — a short accumulator built ONLY from +2 handicap
+# legs (the largest handicap the user's bookmaker offers).
+# It says "No multiple today" unless at least MULTIPLE_MIN_LEGS legs qualify.
 #
-# Leg types (hit rates on scored matches; "safe" = 95% lower bound).
-# In-sample backtest: 10 days had a multiple, 7 of them landed in full.
-#   A  2-handicap pick (DC1/DC2/DC3), clean on Watch List 1 and with
-#      0-1 flags on Watch List 2 -> 62 picks, 90% covered, safe 80%
-#   B  List 3 UNDER match (B46 3goals or less + both odds under 3.0)
-#      with none of the under-3.5 warning signs (draw odds 4.5+,
-#      O/U result "over", D64 "both") -> UNDER 3.5 goals leg
-#      (21 matches, 86% under 3.5, safe 65% — a small sample)
-# When more legs qualify than fit, the best ones are used (grade A first, then
-# fewer warnings, then earliest kickoff); the next MULTIPLE_RESERVE_LEGS are
-# listed as RESERVES — swap one in only if a leg is postponed or unavailable.
-# One leg per match, at most MULTIPLE_MAX_PER_LEAGUE per league
-# (bad results cluster by day/league), at most MULTIPLE_MAX_LEGS legs.
+# The only leg type — a 2-handicap pick (DC1/DC2/DC3) with ZERO Watch
+# List 2 flags (Oct 2026 review of 89 such picks, 41 of them new):
+#   * wins (picked team wins, draws or loses by 1) ... 88%, worst case 79%
+#   * loses by exactly 2 ......... 6%  (refund on an Asian +2 line,
+#                                        a LOSS on a 3-way handicap market)
+#   * loses by 3 or more ......... 7%
+#   * does not lose if a -2 result is refunded ... 93%, worst case 86%
+# Watch List 1 is NOT used any more: it failed its test on new matches.
+# Under-goal legs (old "type B") were removed: weak recent record.
 #
-# NOT A GUARANTEE. The combined chance shown is an estimate from a
-# small sample; the "safe" figure is the realistic worst case. Odds are
-# not known to the bot — compare each leg's odds with the break-even
-# shown before playing. Only stake what you can afford to lose.
+# Ranking: strongest picked side first (lowest model odds for the picked
+# team), then earliest kickoff. At most MULTIPLE_MAX_LEGS legs, one leg per
+# match, at most MULTIPLE_MAX_PER_LEAGUE per league (bad results cluster by
+# day/league). The next MULTIPLE_RESERVE_LEGS legs are listed as RESERVES —
+# swap one in only if a leg is postponed or unavailable.
+# In-sample backtest (min 2, max 3 legs): 14 days had a slip and 12 won in
+# full (13 if a -2 result is refunded) — a small sample, not a promise.
+#
+# NOT A GUARANTEE. The chance shown is an estimate from a small sample;
+# the "worst case" figure is the realistic low end. Odds are not known to
+# the bot — compare each leg's real odds with the break-even shown.
+# Only stake what you can afford to lose.
 # ============================================================
-MULTIPLE_MIN_LEGS        = 3
-MULTIPLE_MAX_LEGS        = 4
+MULTIPLE_MIN_LEGS        = 2
+MULTIPLE_MAX_LEGS        = 3
 MULTIPLE_MAX_PER_LEAGUE  = 2
-MULTIPLE_RESERVE_LEGS     = 3   # swaps shown below the slip (NOT extra legs)
-# leg type -> (hit rate, safe hit rate) from the review
-MULTIPLE_LEG_STATS = {"A": (0.90, 0.80), "B": (0.86, 0.65)}
+MULTIPLE_RESERVE_LEGS    = 3   # swaps shown below the slip (NOT extra legs)
+# +2 handicap leg: (wins, worst-case wins, wins-or-refunded-at-minus-2)
+MULTIPLE_LEG_STATS = {"A": (0.88, 0.79)}
+MULTIPLE_LEG_NOT_LOSE = 0.93
 
 
 def multiple_candidate_leg(pred, league_name, home, away, match_time, wl1_signals):
-    """Returns a leg dict if this match is eligible for the Daily Multiple, else None."""
-    legs = []
+    """Returns a leg dict if this match is eligible for the Daily Multiple, else None.
 
-    # ---- Leg type A: clean 2-handicap pick ----
-    if wl1_signals:
-        side = wl1_signals[0].split(": ", 1)[1].split()[0].lower()
-        wl1_flags = check_watch_list_1(pred, league_name)
-        wl2_flags = check_watch_list_2(pred, side)
-        if not wl1_flags and len(wl2_flags) <= 1:
-            legs.append({
-                "type": "A", "time": match_time, "league": league_name,
-                "home": home, "away": away,
-                "bet": f"{side.title()} +2 handicap",
-                "note": f"flags: WL1 0, WL2 {len(wl2_flags)}",
-                "rank": (0 if not wl2_flags else 1),
-            })
-
-    # ---- Leg type B: List 3 UNDER with no warning signs -> under 3.5 ----
-    if check_under_list_3(pred):
-        model_odds = pred.get("odds") or pred.get("oddsr") or {}
-        ou = (pred.get("ou25_value_signal") or {}).get("result")
-        ou = ou.strip().lower() if isinstance(ou, str) else ""
-        draw_o = model_odds.get("draw_odds")
-        d64 = str(pred.get("d64") or "").strip().lower()
-        warn = (draw_o is not None and draw_o >= 4.5) or ou == "over" or d64 == "both"
-        if not warn:
-            b46 = pred.get("b46") or pred.get("b46r") or ""
-            strong = str(b46).replace(" ", "").lower() == "2goalsorless"
-            legs.append({
-                "type": "B", "time": match_time, "league": league_name,
-                "home": home, "away": away,
-                "bet": "Under 3.5 goals",
-                "note": f"B46 {b46}" + (" (strongest label)" if strong else ""),
-                "rank": 2 if not strong else 1,
-            })
-
-    if not legs:
+    Eligible = a 2-handicap pick from DC1/DC2/DC3 with no Watch List 2 flags.
+    (wl1_signals is the list of 2-handicap picks found for this match.)"""
+    if not wl1_signals:
         return None
-    # one leg per match: best grade first (A before B), then lower rank number
-    legs.sort(key=lambda l: (l["type"], l["rank"]))
-    return legs[0]
+    side = wl1_signals[0].split(": ", 1)[1].split()[0].lower()
+    if side not in ("home", "away"):
+        return None
+    if check_watch_list_2(pred, side):      # any flag -> not eligible
+        return None
+
+    model_odds = pred.get("odds") or pred.get("oddsr") or {}
+    pick_odds = model_odds.get(f"{side}_odds")
+    rank = pick_odds if isinstance(pick_odds, (int, float)) else 99.0
+
+    return {
+        "type": "A", "time": match_time, "league": league_name,
+        "home": home, "away": away,
+        "bet": f"{side.title()} +2 handicap",
+        "note": f"Watch List 2: no flags (picked side's model odds {pick_odds})",
+        "rank": rank,
+    }
 
 
 def build_daily_multiple_message(legs, today_display):
@@ -780,13 +815,13 @@ def build_daily_multiple_message(legs, today_display):
         else:
             mark, why = "▫️", "  (ranked lower)"
         return (f"{mark} {l['time']} | {l['league']}: {l['home']} vs {l['away']} — "
-                f"{l['bet']} (grade {l['type']}, ~{hit:.0%}){why}")
+                f"{l['bet']} (~{hit:.0%}){why}")
 
     def card(l):
         hit, safe = MULTIPLE_LEG_STATS[l["type"]]
         return (f"🕐 {l['time']} | {l['league']}\n"
                 f"👥 {l['home']} vs {l['away']}\n"
-                f"✅ {l['bet']}  (leg grade {l['type']}: landed ~{hit:.0%}, safe {safe:.0%};"
+                f"✅ {l['bet']}  (won ~{hit:.0%} of the time, worst case ~{safe:.0%};"
                 f" break-even odds {1/hit:.2f})\n"
                 f"📋 {l['note']}")
 
@@ -803,9 +838,13 @@ def build_daily_multiple_message(legs, today_display):
         p_all *= hit
         p_safe *= safe
     fair = 1.0 / p_all
-    msg = (head + f"{len(chosen)} legs — chance ALL land: ~{p_all:.0%} "
+    p_nolose = MULTIPLE_LEG_NOT_LOSE ** len(chosen)
+    msg = (head + f"{len(chosen)} legs — chance ALL legs win: ~{p_all:.0%} "
            f"(realistic worst case ~{p_safe:.0%})\n"
-           f"Break-even combined odds: {fair:.2f}\n\n"
+           f"If your bookmaker REFUNDS a leg that loses by exactly 2 goals "
+           f"(Asian +2), chance no leg loses: ~{p_nolose:.0%}\n"
+           f"Break-even combined odds: {fair:.2f}\n"
+           "A leg wins when the picked team wins, draws or loses by 1 goal.\n\n"
            f"⭐ THE SLIP — best {len(chosen)} of {len(legs)} qualifying legs\n\n"
            + "\n\n".join(card(l) for l in chosen))
     if len(legs) > len(chosen):
@@ -1255,6 +1294,7 @@ def main():
     under3_cards = []       # watch list 3 UNDER picks
     over4_cards = []        # watch list 4 OVER picks
     multiple_legs = []      # Daily Multiple eligible legs
+    drawratio_cards = []    # Draw Ratio List matches
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -1453,6 +1493,21 @@ def main():
             if _mleg:
                 multiple_legs.append(_mleg)
 
+
+            # Draw Ratio List — user's formula (see DRAW RATIO LIST block)
+            _dr = draw_ratio_check(pred)
+            if _dr and _dr["send"]:
+                _dr_picks = f"\n🎯 Picks: {' | '.join(wl2_signals)}" if wl2_signals else ""
+                _dr_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                drawratio_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📐 Ratio: {_dr['ratio']:.2f}  (draw odds {_dr['draw_odds']}, "
+                    f"draw value {_dr['draw_value']:+}%)"
+                    f"{_dr_picks}\n"
+                    f"📋 B46: {_dr_b46}"
+                )
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -1599,6 +1654,16 @@ def main():
     send_telegram_notification(
         build_daily_multiple_message(multiple_legs, today_display), "multiple"
     )
+
+    if drawratio_cards:
+        drawratio_message = (
+            f"📐 Kickwise Draw Ratio List — {today_display}\n"
+            f"{len(drawratio_cards)} match(es) with ratio below 0 (draw value positive)\n\n"
+            + "\n\n".join(drawratio_cards)
+        )
+        send_telegram_notification(drawratio_message, "dratio")
+    else:
+        print("\nℹ️ Draw ratio list: no matches today.")
 
 if __name__ == "__main__":
     main()
