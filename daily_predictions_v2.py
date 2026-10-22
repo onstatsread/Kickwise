@@ -35,6 +35,7 @@ from daily_predictions import (
     check_under_list_3,
     check_over_list_4,
     multiple_candidate_leg, build_daily_multiple_message,
+    draw_ratio_check,
 )
 
 
@@ -156,6 +157,7 @@ def main():
     under3_cards = []       # watch list 3 UNDER picks
     over4_cards = []        # watch list 4 OVER picks
     multiple_legs = []      # Daily Multiple eligible legs
+    drawratio_cards = []    # Draw Ratio List matches
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -356,6 +358,21 @@ def main():
             if _mleg:
                 multiple_legs.append(_mleg)
 
+
+            # Draw Ratio List — user's formula (see DRAW RATIO LIST block)
+            _dr = draw_ratio_check(pred)
+            if _dr and _dr["send"]:
+                _dr_picks = f"\n🎯 Picks: {' | '.join(wl2_signals)}" if wl2_signals else ""
+                _dr_b46 = pred.get("b46") or pred.get("b46r") or "—"
+                drawratio_cards.append(
+                    f"🕐 {match_time} | {m['league_name']}\n"
+                    f"👥 {m['fix']['home']} vs {m['fix']['away']}\n"
+                    f"📐 Ratio: {_dr['ratio']:.2f}  (draw odds {_dr['draw_odds']}, "
+                    f"draw value {_dr['draw_value']:+}%)"
+                    f"{_dr_picks}\n"
+                    f"📋 B46: {_dr_b46}"
+                )
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -502,6 +519,16 @@ def main():
     send_telegram_notification(
         build_daily_multiple_message(multiple_legs, today_display), "multiple"
     )
+
+    if drawratio_cards:
+        drawratio_message = (
+            f"📐 Kickwise Draw Ratio List — {today_display}\n"
+            f"{len(drawratio_cards)} match(es) with ratio below 0 (draw value positive)\n\n"
+            + "\n\n".join(drawratio_cards)
+        )
+        send_telegram_notification(drawratio_message, "dratio")
+    else:
+        print("\nℹ️ Draw ratio list: no matches today.")
 
 
 if __name__ == "__main__":
