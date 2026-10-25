@@ -76,13 +76,13 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 # List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
 # UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
 # signals, standard = Kickwise Standard Picks, multiple = Daily Multiple,
-# dratio = Draw Ratio List.
+# dratio = Draw Ratio List, pred2 = Prediction 2 List.
 # The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
 # still receives everything.
 # ============================================================
 MAX_EXTRA_BOTS = 10
 DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
-VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio", "pred2")
 
 
 def _load_extra_bots():
@@ -404,6 +404,47 @@ def draw_ratio_check(pred):
     ratio = draw_v / a
     return {"a": a, "ratio": ratio, "send": ratio < DRAWRATIO_SEND_BELOW,
             "draw_odds": draw_odds, "draw_value": draw_v}
+
+
+# ============================================================
+# PREDICTION 2 LIST — sends team names, league, time, H/D/A decision, B46,
+# Prediction 2 (with its Blog 1 bar colour as an emoji) and the O/U signal.
+# A match is sent ONLY when BOTH a Prediction 2 AND an H/D/A decision exist.
+# Colour logic is identical to the Blog 1 card: B54 contains "over" -> black;
+# else AA15 is "no" -> red; else teal (default).
+# ============================================================
+PRED2_LIST_REQUIRE_DECISION = True
+
+
+def pred2_color(pred):
+    aa15_no = (pred.get("aa15", "") or "").lower() == "no" or \
+              (pred.get("aa15r", "") or "").lower() == "no"
+    b54_over = "over" in (pred.get("b54", "") or "").lower() or \
+               "over" in (pred.get("b54r", "") or "").lower()
+    if b54_over:
+        return "black", "⚫"
+    if aa15_no:
+        return "red", "🔴"
+    return "teal", "🔷"
+
+
+def pred2_list_card(pred, league_name, home, away, match_time):
+    """Telegram card, or None unless Prediction 2 AND the H/D/A decision both exist."""
+    pred2 = build_pred2_text(pred)
+    decision = (pred.get("value_signal") or {}).get("decision") or ""
+    if not pred2:
+        return None
+    if PRED2_LIST_REQUIRE_DECISION and not decision:
+        return None
+    name, dot = pred2_color(pred)
+    b46 = pred.get("b46") or pred.get("b46r") or "—"
+    ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
+    return (f"🕐 {match_time} | {league_name}\n"
+            f"👥 {home} vs {away}\n"
+            f"⚡ Decision: {decision or '—'}\n"
+            f"📋 B46: {b46}\n"
+            f"🎯 Prediction 2: {pred2}   {dot} {name}\n"
+            f"📈 O/U: {ou}")
 
 
 def format_match_html(league_name, match, pred):
@@ -1295,6 +1336,7 @@ def main():
     over4_cards = []        # watch list 4 OVER picks
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
+    pred2_cards = []        # Prediction 2 List matches
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -1508,6 +1550,14 @@ def main():
                     f"📋 B46: {_dr_b46}"
                 )
 
+
+            # Prediction 2 List — needs BOTH Prediction 2 and an H/D/A decision
+            _p2card = pred2_list_card(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _p2card:
+                pred2_cards.append(_p2card)
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -1664,6 +1714,17 @@ def main():
         send_telegram_notification(drawratio_message, "dratio")
     else:
         print("\nℹ️ Draw ratio list: no matches today.")
+
+    if pred2_cards:
+        pred2_message = (
+            f"🎯 Kickwise Prediction 2 List — {today_display}\n"
+            f"{len(pred2_cards)} match(es) with Prediction 2 and an H/D/A decision\n"
+            "Colour: ⚫ black = B54 says over | 🔴 red = AA15 is no | 🔷 teal = default\n\n"
+            + "\n\n".join(pred2_cards)
+        )
+        send_telegram_notification(pred2_message, "pred2")
+    else:
+        print("\nℹ️ Prediction 2 list: no matches today.")
 
 if __name__ == "__main__":
     main()
