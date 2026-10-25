@@ -36,6 +36,7 @@ from daily_predictions import (
     check_over_list_4,
     multiple_candidate_leg, build_daily_multiple_message,
     draw_ratio_check,
+    pred2_list_card,
 )
 
 
@@ -158,6 +159,7 @@ def main():
     over4_cards = []        # watch list 4 OVER picks
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
+    pred2_cards = []        # Prediction 2 List matches
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -373,6 +375,14 @@ def main():
                     f"📋 B46: {_dr_b46}"
                 )
 
+
+            # Prediction 2 List — needs BOTH Prediction 2 and an H/D/A decision
+            _p2card = pred2_list_card(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _p2card:
+                pred2_cards.append(_p2card)
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -529,6 +539,17 @@ def main():
         send_telegram_notification(drawratio_message, "dratio")
     else:
         print("\nℹ️ Draw ratio list: no matches today.")
+
+    if pred2_cards:
+        pred2_message = (
+            f"🎯 Kickwise Prediction 2 List — {today_display}\n"
+            f"{len(pred2_cards)} match(es) with Prediction 2 and an H/D/A decision\n"
+            "Colour: ⚫ black = B54 says over | 🔴 red = AA15 is no | 🔷 teal = default\n\n"
+            + "\n\n".join(pred2_cards)
+        )
+        send_telegram_notification(pred2_message, "pred2")
+    else:
+        print("\nℹ️ Prediction 2 list: no matches today.")
 
 
 if __name__ == "__main__":
