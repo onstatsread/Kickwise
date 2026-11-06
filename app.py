@@ -2184,7 +2184,21 @@ def fixtures_v2(date_str: str = Query(None, alias="date")):
             "status": fx.get("status"),
             "fixture_id": fx.get("id"),
         })
-
+# Warm the Odds-API.io cache in the background: 10 matches per request
+    try:
+        import threading
+        from odds_api_io import prefetch_odds_for_matches
+        from odds_api_io_leagues import has_odds_api_io_coverage
+        pairs = [(fx["home"], fx["away"])
+                 for lg, fxs in by_league.items() if has_odds_api_io_coverage(lg)
+                 for fx in fxs]
+        if pairs:
+            threading.Thread(
+                target=lambda: asyncio.run(prefetch_odds_for_matches(pairs)),
+                daemon=True,
+            ).start()
+    except Exception as e:
+        print(f"[fixtures-v2] odds prefetch not started: {e}")
     return {"date": date_s, "leagues": by_league}
 
 
