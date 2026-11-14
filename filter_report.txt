@@ -1,36 +1,40 @@
-1420 scored matches
+2879 scored matches
 
-Baseline: home not-lose 67%, away not-lose 57%
+Baseline: home not-lose 68%, away not-lose 56%
 
-Blog2 standard (Away + under) - 111 picks
-  graded (assumed +N handicap): win 44, push 0, loss 67
-  side won 40% | side did not lose 62%
+Blog2 standard (Away + under) - 156 picks
+  graded (assumed +N handicap): win 59, push 0, loss 97
+  side won 38% | side did not lose 60%
   under 2.5 hit: 40% (base 46%)
-  straight-win picks with market odds: 111, flat-stake return -3%
+  straight-win picks with market odds: 156, flat-stake return -5%
 
-DC signal 1 - 148 picks
-  graded (assumed +N handicap): win 108, push 16, loss 24
-  side won 26% | side did not lose 57%
-    Home 2-handicap: 48 (win 33, push 10, loss 5)
-    Away 2-handicap: 33 (win 28, push 3, loss 2)
-    Home win or draw: 25 (win 18, push 0, loss 7)
-    Away win or draw: 16 (win 10, push 0, loss 6)
-    Away 3-handicap: 15 (win 8, push 3, loss 4)
-    Home 3-handicap: 11 (win 11, push 0, loss 0)
+DC signal 1 - 282 picks
+  graded (assumed +N handicap): win 204, push 28, loss 50
+  side won 27% | side did not lose 55%
+    Home 2-handicap: 87 (win 59, push 16, loss 12)
+    Away 2-handicap: 55 (win 46, push 5, loss 4)
+    Home win or draw: 54 (win 34, push 0, loss 20)
+    Away 3-handicap: 33 (win 24, push 5, loss 4)
+    Away win or draw: 29 (win 20, push 0, loss 9)
+    Home 3-handicap: 24 (win 21, push 2, loss 1)
 
-DC signal 2 - 105 picks
-  graded (assumed +N handicap): win 90, push 9, loss 6
-  side won 49% | side did not lose 73%
+DC signal 2 - 205 picks
+  graded (assumed +N handicap): win 178, push 15, loss 12
+  side won 45% | side did not lose 71%
     Home 2-handicap: 70 (win 61, push 4, loss 5)
     Away 2-handicap: 35 (win 29, push 5, loss 1)
+    Home 2-handicap 📐 Draw ratio: 0.01 (not sent): 3 (win 3, push 0, loss 0)
+    Home 2-handicap 📐 Draw ratio: 0.81 (not sent): 3 (win 3, push 0, loss 0)
+    Home 2-handicap 📐 Draw ratio: 0.34 (not sent): 2 (win 2, push 0, loss 0)
+    Home 2-handicap 📐 Draw ratio: 0.44 (not sent): 2 (win 2, push 0, loss 0)
 
-DC signal 3 - 187 picks
-  graded (assumed +N handicap): win 134, push 20, loss 33
-  side won 35% | side did not lose 65%
-  straight-win picks with market odds: 42, flat-stake return -15%
-    Home 2-handicap: 86 (win 67, push 13, loss 6)
-    Away 2-handicap: 59 (win 46, push 7, loss 6)
-    Home: 39 (win 20, push 0, loss 19)
-    Away: 3 (win 1, push 0, loss 2)
+DC signal 3 - 258 picks
+  graded (assumed +N handicap): win 184, push 27, loss 47
+  side won 32% | side did not lose 61%
+  straight-win picks with market odds: 55, flat-stake return -8%
+    Home 2-handicap: 117 (win 87, push 18, loss 12)
+    Away 2-handicap: 86 (win 68, push 9, loss 9)
+    Home: 49 (win 28, push 0, loss 21)
+    Away: 6 (win 1, push 0, loss 5)
 
-wrote 551 rows -> filter_picks.csv
+wrote 901 rows -> filter_picks.csv
