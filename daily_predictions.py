@@ -409,11 +409,17 @@ def draw_ratio_check(pred):
 # ============================================================
 # PREDICTION 2 LIST — sends team names, league, time, H/D/A decision, B46,
 # Prediction 2 (with its Blog 1 bar colour as an emoji) and the O/U signal.
-# A match is sent ONLY when BOTH a Prediction 2 AND an H/D/A decision exist.
+# A match is sent ONLY when BOTH a Prediction 2 AND an H/D/A decision exist,
+# AND the home value and away value have opposite signs (never both negative,
+# never both positive).
 # Colour logic is identical to the Blog 1 card: B54 contains "over" -> black;
 # else AA15 is "no" -> red; else teal (default).
 # ============================================================
 PRED2_LIST_REQUIRE_DECISION = True
+# Extra filter: the home value and the away value must have OPPOSITE signs
+# (one negative, one positive). Both negative, both positive, a zero or a
+# missing value -> the match is not sent.
+PRED2_LIST_OPPOSITE_VALUES = True
 
 
 def pred2_color(pred):
@@ -436,6 +442,13 @@ def pred2_list_card(pred, league_name, home, away, match_time):
         return None
     if PRED2_LIST_REQUIRE_DECISION and not decision:
         return None
+    if PRED2_LIST_OPPOSITE_VALUES:
+        vp = pred.get("value_pct") or {}
+        hv, av = vp.get("home"), vp.get("away")
+        if not isinstance(hv, (int, float)) or not isinstance(av, (int, float)):
+            return None
+        if not ((hv < 0 < av) or (av < 0 < hv)):
+            return None
     name, dot = pred2_color(pred)
     b46 = pred.get("b46") or pred.get("b46r") or "—"
     ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
@@ -757,14 +770,18 @@ def check_over_list_4(pred):
 # It says "No multiple today" unless at least MULTIPLE_MIN_LEGS legs qualify.
 #
 # The only leg type — a 2-handicap pick (DC1/DC2/DC3) with ZERO Watch
-# List 2 flags (Oct 2026 review of 89 such picks, 41 of them new):
-#   * wins (picked team wins, draws or loses by 1) ... 88%, worst case 79%
-#   * loses by exactly 2 ......... 6%  (refund on an Asian +2 line,
-#                                        a LOSS on a 3-way handicap market)
-#   * loses by 3 or more ......... 7%
-#   * does not lose if a -2 result is refunded ... 93%, worst case 86%
-# Watch List 1 is NOT used any more: it failed its test on new matches.
-# Under-goal legs (old "type B") were removed: weak recent record.
+# List 2 flags AND the picked team's model odds BELOW MULTIPLE_MAX_PICK_ODDS
+# (3.5). Evidence (Oct-Nov 2026 review of 109 such picks; 56 from the older
+# matches and 53 from the newest, which were not used to choose the filter):
+#   * wins (picked team wins, draws or loses by 1) ... 90%, worst case 83%
+#     (89% on the older picks, 91% on the newer ones)
+#   * does not lose if a -2 result is refunded ....... 96%
+# Without the odds condition the same rule won 88% (168 picks, worst 82%).
+# Filters that failed on new matches and are NOT used: Watch List 1, the
+# draw-ratio rule, and the Standard Picks flags. Under-goal legs ("type B")
+# were removed earlier: weak recent record.
+# A "win" means the picked team does not lose by 2 or more goals. Losing by
+# EXACTLY 2 is a refund on an Asian +2 line but a loss on a 3-way market.
 #
 # Ranking: strongest picked side first (lowest model odds for the picked
 # team), then earliest kickoff. At most MULTIPLE_MAX_LEGS legs, one leg per
@@ -784,14 +801,16 @@ MULTIPLE_MAX_LEGS        = 3
 MULTIPLE_MAX_PER_LEAGUE  = 2
 MULTIPLE_RESERVE_LEGS    = 3   # swaps shown below the slip (NOT extra legs)
 # +2 handicap leg: (wins, worst-case wins, wins-or-refunded-at-minus-2)
-MULTIPLE_LEG_STATS = {"A": (0.88, 0.79)}
-MULTIPLE_LEG_NOT_LOSE = 0.93
+MULTIPLE_MAX_PICK_ODDS = 3.5    # picked team's model odds must be BELOW this
+MULTIPLE_LEG_STATS = {"A": (0.90, 0.83)}
+MULTIPLE_LEG_NOT_LOSE = 0.96
 
 
 def multiple_candidate_leg(pred, league_name, home, away, match_time, wl1_signals):
     """Returns a leg dict if this match is eligible for the Daily Multiple, else None.
 
-    Eligible = a 2-handicap pick from DC1/DC2/DC3 with no Watch List 2 flags.
+    Eligible = a 2-handicap pick from DC1/DC2/DC3 with no Watch List 2 flags
+    and picked-team model odds below MULTIPLE_MAX_PICK_ODDS.
     (wl1_signals is the list of 2-handicap picks found for this match.)"""
     if not wl1_signals:
         return None
@@ -803,7 +822,9 @@ def multiple_candidate_leg(pred, league_name, home, away, match_time, wl1_signal
 
     model_odds = pred.get("odds") or pred.get("oddsr") or {}
     pick_odds = model_odds.get(f"{side}_odds")
-    rank = pick_odds if isinstance(pick_odds, (int, float)) else 99.0
+    if not isinstance(pick_odds, (int, float)) or pick_odds >= MULTIPLE_MAX_PICK_ODDS:
+        return None                          # picked team not strong enough
+    rank = pick_odds
 
     return {
         "type": "A", "time": match_time, "league": league_name,
