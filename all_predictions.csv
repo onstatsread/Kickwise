@@ -1,4 +1,13 @@
 date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,val_H,val_D,val_A,decision,signal,ou_result,pred1,pred2,pred3
+2026-11-16,00:00,New Mexico,Sacramento Republic,USA,USL Championship,New Mexico United/ handicap,under,not match,one,4goals,2.92,3.09,2.99,,,,,,,,,,,,
+2026-11-16,11:30,Ario Eslamshahr,Saipa,Iran,Azadegan League,Saipa / low/ handicap,,not match,one,2goals or less,2.81,3.39,2.87,,,,,,,,,,,,
+2026-11-16,11:30,Havadar SC,Mes Kerman,Iran,Azadegan League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
+2026-11-16,11:30,Mes Rafsanjan,Shahin Bandar Ameri,Iran,Azadegan League,Mes Rafsanjan/ handicap,double,match,both,2goals or less,1.4,4.65,13.7,,,,,,,,,,Mes Rafsanjan/ handicap / double / 2goals,Mes Rafsanjan only,
+2026-11-16,12:00,Marko,Zakynthos,Greece,Super League 2,Marko/ wins,double,not match,both,3goals,1.6,3.16,16.67,,,,,,,,,,Marko/ wins / double / 3goals,Marko / same,
+2026-11-16,12:45,Panionios,Olympiacos Piraeus B,Greece,Super League 2,Panionios/ handicap,,not match,one,3goals,1.32,7.25,9.43,,,,,,,,,,,,
+2026-11-16,13:00,Naft Gachsaran,Niroye Zamini,Iran,Azadegan League,Naft Gachsaran/ double,double,match,both,2goals or less,1.39,6.62,7.81,,,,,,,,,,Naft Gachsaran/ double / double / 2goals,Naft Gachsaran / 2goals or less,
+2026-11-16,13:00,Pars Janoobi Jam,Novin Ahvaz,Iran,Azadegan League,"Pars Jonoubi Jam, handicap/ handicap",,match,both,2goals or less,2.71,3.56,2.86,,,,,,,,,,,Pars Jonoubi Jam only,
+2026-11-16,13:00,Niki Volos,Pyrgos,Greece,Super League 2,"Niki Volos, handicap/ handicap",,not match,one,3goals,2.98,3.07,2.96,,,,,,,,,,,,
 2026-11-15,02:00,Alianza FC,FAS El,Salvador,Primera Division,FAS/ handicap,double,match,both,4goals,3.09,4.57,2.19,,,,,,,,,,FAS/ handicap / double,FAS,
 2026-11-15,05:00,SKA Khabarovsk,Leningradets,Russia,First League,SKA Khabarovsk/ handicap,,match,one,4goals,1.47,5.21,7.87,,,,,,,,,,,,
 2026-11-15,10:00,Chelyabinsk,Veles Moscow,Russia,First League,Chelyabinsk/ handicap,,match,both,4goals,3.92,3.65,2.12,,,,,,,,,,Chelyabinsk/ handicap / double / 4goals,Veles,

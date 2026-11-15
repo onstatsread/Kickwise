@@ -155,6 +155,8 @@ Blog2 standard (Away + under),2026-09-13,A. Italiano,O'Higgins,Away,1-0,loss
 Blog2 standard (Away + under),2026-09-12,Chapecoense-SC,Internacional,Away,1-2,win
 Blog2 standard (Away + under),2026-09-11,Galway,Bohemians,Away,2-3,win
 Blog2 standard (Away + under),2026-09-11,Shelbourne,Derry City,Away,0-1,win
+DC signal 1,2026-11-14,Sheffield Wed,Plymouth,Away 2-handicap,3-0,loss
+DC signal 1,2026-11-14,Criciuma,Novorizontino,Home 2-handicap,0-1,win
 DC signal 1,2026-11-12,Ponte Preta,Operario-PR,Home 3-handicap,0-2,win
 DC signal 1,2026-11-08,Fredrikstad,Brann,Home 2-handicap,2-2,win
 DC signal 1,2026-11-08,Fiorentina,Juventus,Home 2-handicap,2-2,win
@@ -437,6 +439,10 @@ DC signal 1,2026-09-15,Indy Eleven,Brooklyn,Away 3-handicap,4-0,loss
 DC signal 1,2026-09-14,Meshakhte Tkibuli,Rustavi,Home 3-handicap,0-1,win
 DC signal 1,2026-09-14,Orebro,Nordic United,Home win or draw,1-1,win
 DC signal 1,2026-09-12,Manta,Aucas,Home 2-handicap,0-0,win
+DC signal 2,2026-11-14,Stockport County,Reading,Home 2-handicap 📐 Draw ratio: 0.32 (not sent),3-1,win
+DC signal 2,2026-11-14,Wigan,Barnsley,Home 2-handicap 📐 Draw ratio: 0.09 (not sent),2-1,win
+DC signal 2,2026-11-14,Fortaleza,Vila Nova FC,Away 2-handicap 📐 Draw ratio: 0.43 (not sent),1-0,win
+DC signal 2,2026-11-14,Sport Recife,Goias,Away 2-handicap 📐 Draw ratio: 0.30 (not sent),3-0,loss
 DC signal 2,2026-11-09,Kristiansund,Valerenga,Home 2-handicap 📐 Draw ratio: 0.34 (not sent),1-0,win
 DC signal 2,2026-11-08,L.R. Vicenza,Cremonese,Home 2-handicap 📐 Draw ratio: 1.20 (not sent),1-4,loss
 DC signal 2,2026-11-08,Machida,Sanfrecce Hiroshima,Home 2-handicap 📐 Draw ratio: 0.72 (not sent),0-0,win

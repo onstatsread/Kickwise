@@ -1,75 +1,84 @@
 date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,val_H,val_D,val_A,decision,signal,ou_result,pred1,pred2,pred3,hg,ag,total,outcome,under25,teams_scored,margin
-2026-11-15,02:00,Alianza FC,FAS El,Salvador,Primera Division,FAS/ handicap,double,match,both,4goals,3.09,4.57,2.19,,,,,,,,,,FAS/ handicap / double,FAS,,,,,,,,
-2026-11-15,05:00,SKA Khabarovsk,Leningradets,Russia,First League,SKA Khabarovsk/ handicap,,match,one,4goals,1.47,5.21,7.87,,,,,,,,,,,,,,,,,,,
-2026-11-15,10:00,Chelyabinsk,Veles Moscow,Russia,First League,Chelyabinsk/ handicap,,match,both,4goals,3.92,3.65,2.12,,,,,,,,,,Chelyabinsk/ handicap / double / 4goals,Veles,,,,,,,,
-2026-11-15,10:30,Kalamaria,Athens Kallithea,Greece,Super League 2,"Athens Kallithea, handicap/ handicap",,match,both,3goals,4.9,1.81,4.12,,,,,,,,,,"Athens Kallithea, handicap/ handicap / double / 3goals",Athens Kallithea only,,,,,,,,
-2026-11-15,10:45,Police FC,Posta Rangers,Kenya,Premier League,Police/ handicap,double,match,both,2goals or less,2.57,3.94,2.8,,,,,,,,,,Police/ handicap / double / 2goals,Police / 2goals or less,,,,,,,,
-2026-11-15,11:00,Amarante,Felgueiras,Portugal,Segunda Liga,Felgueiras 1932 / low/ handicap,,match,one,3goals,2.05,3.16,5.1,,,,,,,,,,,,,,,,,,,
-2026-11-15,11:00,Tondela,SC Farense,Portugal,Segunda Liga,Tondela/ handicap,under,not match,one,3goals,2.18,3.79,3.61,,,,,,,,,,,,,,,,,,,
+2026-11-16,00:00,New Mexico,Sacramento Republic,USA,USL Championship,New Mexico United/ handicap,under,not match,one,4goals,2.92,3.09,2.99,,,,,,,,,,,,,,,,,,,
+2026-11-16,11:30,Ario Eslamshahr,Saipa,Iran,Azadegan League,Saipa / low/ handicap,,not match,one,2goals or less,2.81,3.39,2.87,,,,,,,,,,,,,,,,,,,
+2026-11-16,11:30,Havadar SC,Mes Kerman,Iran,Azadegan League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,,,,,,,,
+2026-11-16,11:30,Mes Rafsanjan,Shahin Bandar Ameri,Iran,Azadegan League,Mes Rafsanjan/ handicap,double,match,both,2goals or less,1.4,4.65,13.7,,,,,,,,,,Mes Rafsanjan/ handicap / double / 2goals,Mes Rafsanjan only,,,,,,,,
+2026-11-16,12:00,Marko,Zakynthos,Greece,Super League 2,Marko/ wins,double,not match,both,3goals,1.6,3.16,16.67,,,,,,,,,,Marko/ wins / double / 3goals,Marko / same,,,,,,,,
+2026-11-16,12:45,Panionios,Olympiacos Piraeus B,Greece,Super League 2,Panionios/ handicap,,not match,one,3goals,1.32,7.25,9.43,,,,,,,,,,,,,,,,,,,
+2026-11-16,13:00,Naft Gachsaran,Niroye Zamini,Iran,Azadegan League,Naft Gachsaran/ double,double,match,both,2goals or less,1.39,6.62,7.81,,,,,,,,,,Naft Gachsaran/ double / double / 2goals,Naft Gachsaran / 2goals or less,,,,,,,,
+2026-11-16,13:00,Pars Janoobi Jam,Novin Ahvaz,Iran,Azadegan League,"Pars Jonoubi Jam, handicap/ handicap",,match,both,2goals or less,2.71,3.56,2.86,,,,,,,,,,,Pars Jonoubi Jam only,,,,,,,,
+2026-11-16,13:00,Niki Volos,Pyrgos,Greece,Super League 2,"Niki Volos, handicap/ handicap",,not match,one,3goals,2.98,3.07,2.96,,,,,,,,,,,,,,,,,,,
+2026-11-15,02:00,Alianza FC,FAS El,Salvador,Primera Division,FAS/ handicap,double,match,both,4goals,3.09,4.57,2.19,,,,,,,,,,FAS/ handicap / double,FAS,,1,1,2,D,1,2,0
+2026-11-15,05:00,SKA Khabarovsk,Leningradets,Russia,First League,SKA Khabarovsk/ handicap,,match,one,4goals,1.47,5.21,7.87,,,,,,,,,,,,,1,0,1,H,1,1,1
+2026-11-15,10:00,Chelyabinsk,Veles Moscow,Russia,First League,Chelyabinsk/ handicap,,match,both,4goals,3.92,3.65,2.12,,,,,,,,,,Chelyabinsk/ handicap / double / 4goals,Veles,,4,2,6,H,0,2,2
+2026-11-15,10:30,Kalamaria,Athens Kallithea,Greece,Super League 2,"Athens Kallithea, handicap/ handicap",,match,both,3goals,4.9,1.81,4.12,,,,,,,,,,"Athens Kallithea, handicap/ handicap / double / 3goals",Athens Kallithea only,,1,1,2,D,1,2,0
+2026-11-15,10:45,Police FC,Posta Rangers,Kenya,Premier League,Police/ handicap,double,match,both,2goals or less,2.57,3.94,2.8,,,,,,,,,,Police/ handicap / double / 2goals,Police / 2goals or less,,2,1,3,H,0,2,1
+2026-11-15,11:00,Amarante,Felgueiras,Portugal,Segunda Liga,Felgueiras 1932 / low/ handicap,,match,one,3goals,2.05,3.16,5.1,,,,,,,,,,,,,1,1,2,D,1,2,0
+2026-11-15,11:00,Tondela,SC Farense,Portugal,Segunda Liga,Tondela/ handicap,under,not match,one,3goals,2.18,3.79,3.61,,,,,,,,,,,,,2,0,2,H,1,1,2
 2026-11-15,11:00,Tusker,Shabana,Kenya,Premier League,Tusker/ handicap,,match,one,2goals or less,2.69,4.5,2.46,,,,,,,,,,,,,,,,,,,
-2026-11-15,12:00,Kakamega Homeboyz,KCB,Kenya,Premier League,KCB/ double,double,match,both,2goals or less,6.58,5.59,1.49,,,,,,,,,,KCB/ double / double / 2goals,KCB / 2goals or less,,,,,,,,
-2026-11-15,12:30,Leopards,Mombasa United,Kenya,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.49,3.02,,,,,,,,,,,,,,,,,,,,
-2026-11-15,13:00,Tenerife,Ceuta,Spain,Segunda Division,Tenerife/ double,double,match,both,4goals,1.42,5.03,10.2,,,,,,,,,,Tenerife/ double / double,Tenerife / same,,,,,,,,
+2026-11-15,12:00,Kakamega Homeboyz,KCB,Kenya,Premier League,KCB/ double,double,match,both,2goals or less,6.58,5.59,1.49,,,,,,,,,,KCB/ double / double / 2goals,KCB / 2goals or less,,0,0,0,D,1,0,0
+2026-11-15,12:30,Leopards,Mombasa United,Kenya,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,1.49,3.02,,,,,,,,,,,,,,1,0,1,H,1,1,1
+2026-11-15,13:00,Tenerife,Ceuta,Spain,Segunda Division,Tenerife/ double,double,match,both,4goals,1.42,5.03,10.2,,,,,,,,,,Tenerife/ double / double,Tenerife / same,,2,0,2,H,1,1,2
 2026-11-15,13:15,3K FC,Gor Mahia,Kenya,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,,,,,,,,
-2026-11-15,14:00,Portimonense,Academica,Portugal,Segunda Liga,Académica/ handicap,double,match,both,3goals,9.09,4.37,1.51,,,,,,,,,,Académica/ handicap / double / 3goals,Académica / 3goals / same,,,,,,,,
-2026-11-15,14:00,Sochi,Shinnik Yaroslavl,Russia,First League,Sochi/ handicap,double,match,both,4goals,3.01,2.93,3.05,,,,,,,,,,Sochi/ handicap / double / 4goals,Sochi,,,,,,,,
-2026-11-15,15:00,Wydad Fes,Chabab Atlas Khenifra,Morocco,Botola,Wydad Fès/ wins,double,match,both,3goals,1.03,47.62,200.0,,,,,,,,,,Wydad Fès/ wins / double,Wydad Fès,,,,,,,,
-2026-11-15,15:00,Spaeri,Iberia 1999,Georgia,Erovnuli Liga,Iberia 1999/ handicap,double,match,both,4goals,4.55,5.08,1.72,,,,,,,,,,Iberia 1999/ handicap / double / 4goals,Iberia 1999 only,,,,,,,,
-2026-11-15,15:15,Granada CF,Las Palmas,Spain,Segunda Division,Granada/ handicap,double,match,both,4goals,2.16,4.93,3.0,,,,,,,,,,Granada/ handicap / double,Granada,,,,,,,,
-2026-11-15,17:00,Yacoub El Mansour,USM Oujda,Morocco,Botola,Yacoub El Mansour/ handicap,double,match,both,3goals,2.03,4.33,3.6,,,,,,,,,,Yacoub El Mansour/ handicap / double / 3goals,Yacoub El Mansour / same,,,,,,,,
-2026-11-15,17:30,Eldense,Sabadell,Spain,Segunda Division,Eldense/ handicap,under,not match,one,4goals,2.75,2.91,3.41,,,,,,,,,,,,,,,,,,,
-2026-11-15,18:00,Leixoes,Chaves,Portugal,Segunda Liga,Leixões/ handicap,,match,one,3goals,1.32,6.99,10.2,,,,,,,,,,,,,,,,,,,
-2026-11-15,20:00,Molynes,Portmore,Jamaica,National Premier League,Portmore United/ double,double,match,both,4goals,8.0,6.13,1.4,,,,,,,,,,Portmore United/ double / double,Portmore United,,,,,,,,
+2026-11-15,14:00,Portimonense,Academica,Portugal,Segunda Liga,Académica/ handicap,double,match,both,3goals,9.09,4.37,1.51,,,,,,,,,,Académica/ handicap / double / 3goals,Académica / 3goals / same,,0,0,0,D,1,0,0
+2026-11-15,14:00,Sochi,Shinnik Yaroslavl,Russia,First League,Sochi/ handicap,double,match,both,4goals,3.01,2.93,3.05,,,,,,,,,,Sochi/ handicap / double / 4goals,Sochi,,0,0,0,D,1,0,0
+2026-11-15,15:00,Wydad Fes,Chabab Atlas Khenifra,Morocco,Botola,Wydad Fès/ wins,double,match,both,3goals,1.03,47.62,200.0,,,,,,,,,,Wydad Fès/ wins / double,Wydad Fès,,0,0,0,D,1,0,0
+2026-11-15,15:00,Spaeri,Iberia 1999,Georgia,Erovnuli Liga,Iberia 1999/ handicap,double,match,both,4goals,4.55,5.08,1.72,,,,,,,,,,Iberia 1999/ handicap / double / 4goals,Iberia 1999 only,,2,2,4,D,0,2,0
+2026-11-15,15:15,Granada CF,Las Palmas,Spain,Segunda Division,Granada/ handicap,double,match,both,4goals,2.16,4.93,3.0,,,,,,,,,,Granada/ handicap / double,Granada,,1,0,1,H,1,1,1
+2026-11-15,17:00,Yacoub El Mansour,USM Oujda,Morocco,Botola,Yacoub El Mansour/ handicap,double,match,both,3goals,2.03,4.33,3.6,,,,,,,,,,Yacoub El Mansour/ handicap / double / 3goals,Yacoub El Mansour / same,,0,0,0,D,1,0,0
+2026-11-15,17:30,Eldense,Sabadell,Spain,Segunda Division,Eldense/ handicap,under,not match,one,4goals,2.75,2.91,3.41,,,,,,,,,,,,,2,0,2,H,1,1,2
+2026-11-15,18:00,Leixoes,Chaves,Portugal,Segunda Liga,Leixões/ handicap,,match,one,3goals,1.32,6.99,10.2,,,,,,,,,,,,,2,0,2,H,1,1,2
+2026-11-15,20:00,Molynes,Portmore,Jamaica,National Premier League,Portmore United/ double,double,match,both,4goals,8.0,6.13,1.4,,,,,,,,,,Portmore United/ double / double,Portmore United,,2,5,7,A,0,2,3
 2026-11-15,21:00,Cobreloa,D. Puerto Montt,Chile,Primera B,Cobreloa/ handicap,double,match,both,4goals,1.36,5.38,12.35,,,,,,,,,,Cobreloa/ handicap / double / 4goals,Cobreloa only,,,,,,,,
-2026-11-15,21:00,Magallanes,Antofagasta,Chile,Primera B,Magallanes/ double,,not match,both,4goals,5.56,5.29,1.58,,,,,,,,,,Deportes Antofagasta/ double / double,Deportes Antofagasta / same,,,,,,,,
-2026-11-15,21:00,San Marcos de Arica,San Luis,Chile,Primera B,San Marcos/ handicap,,not match,both,4goals,3.3,2.59,3.22,,,,,,,,,,San Luis FC/ handicap / double / 4goals,San Luis FC / 4goals / same,,,,,,,,
+2026-11-15,21:00,Magallanes,Antofagasta,Chile,Primera B,Magallanes/ double,,not match,both,4goals,5.56,5.29,1.58,,,,,,,,,,Deportes Antofagasta/ double / double,Deportes Antofagasta / same,,2,3,5,A,0,2,1
+2026-11-15,21:00,San Marcos de Arica,San Luis,Chile,Primera B,San Marcos/ handicap,,not match,both,4goals,3.3,2.59,3.22,,,,,,,,,,San Luis FC/ handicap / double / 4goals,San Luis FC / 4goals / same,,0,1,1,A,1,1,1
 2026-11-15,23:30,Recoleta,Deportes Iquique,Chile,Primera B,Recoleta/ handicap,,not match,both,4goals,4.26,4.95,1.78,,,,,,,,,,Deportes Iquique/ handicap / double / 4goals,Deportes Iquique / 4goals / same,,,,,,,,
-2026-11-14,10:00,Livyi Bereg,Bukovyna,Ukraine,Premier League,Livyi Bereh/ handicap,,match,one,3goals,2.3,2.28,7.81,,,,,,,,,,,,,,,,,,,
+2026-11-14,10:00,Livyi Bereg,Bukovyna,Ukraine,Premier League,Livyi Bereh/ handicap,,match,one,3goals,2.3,2.28,7.81,,,,,,,,,,,,,0,3,3,A,0,1,3
 2026-11-14,11:00,Nairobi United,Mara Sugar,Kenya,Premier League,Nairobi United/ handicap,,not match,both,2goals or less,2.79,4.5,2.39,,,,,,,,,,,,,,,,,,,
-2026-11-14,12:00,Ellas Syrou,Panthrakikos,Greece,Super League 2,"Ellas Syros, handicap/ handicap",,not match,both,3goals,2.47,3.24,3.5,,,,,,,,,,,Ellas Syros only,,,,,,,,
-2026-11-14,12:00,APS Bomet,Bandari,Kenya,Premier League,APS Bomet / low/ handicap,,match,one,2goals or less,2.67,1.85,11.76,,,,,,,,,,,,,,,,,,,
-2026-11-14,12:00,Ulinzi Stars,Migori,Kenya,Premier League,"Migori Youth, handicap/ handicap",,not match,both,2goals or less,5.1,3.58,1.9,,,,,,,,,,Migori Youth/ handicap / double / 2goals,Migori Youth only,,,,,,,,
-2026-11-14,12:30,Exeter,Cheltenham,England,League Two,Exeter City/ handicap,,match,one,4goals,1.59,3.72,9.62,,,,,,,,,,,,,,,,,,,
-2026-11-14,12:45,Panserraikos,Karditsa,Greece,Super League 2,Panserraikos/ handicap,under,match,one,3goals,1.2,8.4,19.61,,,,,,,,,,,,,,,,,,,
-2026-11-14,13:00,Valladolid,Castellon,Spain,Segunda Division,Real Valladolid/ wins,,not match,both,4goals,10.0,6.62,1.33,,,,,,,,,,Castellón/ wins / double / 4goals,Castellón / same,,,,,,,,
-2026-11-14,13:00,AEL Larissa,Chrisoupolis,Greece,Super League 2,Larissa/ wins,double,not match,both,3goals,1.81,3.22,7.46,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Bristol Rovers,Chesterfield,England,League Two,Bristol Rovers/ handicap,under,not match,one,4goals,2.51,4.1,2.8,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Colchester,Gillingham,England,League Two,Gillingham / low/ handicap,,match,one,4goals,6.67,4.61,1.58,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Crewe,Newport,England,League Two,Crewe Alexandra/ handicap,under,not match,one,4goals,2.07,3.94,3.79,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Port Vale,Accrington,England,League Two,Port Vale/ handicap,under,match,one,4goals,2.49,3.08,3.65,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Rochdale,York City,England,League Two,Rochdale/ handicap,,not match,both,4goals,3.27,5.08,2.01,,,,,,,,,,York City/ handicap / double,York City only,,,,,,,,
+2026-11-14,12:00,Ellas Syrou,Panthrakikos,Greece,Super League 2,"Ellas Syros, handicap/ handicap",,not match,both,3goals,2.47,3.24,3.5,,,,,,,,,,,Ellas Syros only,,2,0,2,H,1,1,2
+2026-11-14,12:00,APS Bomet,Bandari,Kenya,Premier League,APS Bomet / low/ handicap,,match,one,2goals or less,2.67,1.85,11.76,,,,,,,,,,,,,2,1,3,H,0,2,1
+2026-11-14,12:00,Ulinzi Stars,Migori,Kenya,Premier League,"Migori Youth, handicap/ handicap",,not match,both,2goals or less,5.1,3.58,1.9,,,,,,,,,,Migori Youth/ handicap / double / 2goals,Migori Youth only,,1,1,2,D,1,2,0
+2026-11-14,12:30,Exeter,Cheltenham,England,League Two,Exeter City/ handicap,,match,one,4goals,1.59,3.72,9.62,,,,,,,,,,,,,1,0,1,H,1,1,1
+2026-11-14,12:45,Panserraikos,Karditsa,Greece,Super League 2,Panserraikos/ handicap,under,match,one,3goals,1.2,8.4,19.61,,,,,,,,,,,,,2,0,2,H,1,1,2
+2026-11-14,13:00,Valladolid,Castellon,Spain,Segunda Division,Real Valladolid/ wins,,not match,both,4goals,10.0,6.62,1.33,,,,,,,,,,Castellón/ wins / double / 4goals,Castellón / same,,0,1,1,A,1,1,1
+2026-11-14,13:00,AEL Larissa,Chrisoupolis,Greece,Super League 2,Larissa/ wins,double,not match,both,3goals,1.81,3.22,7.46,,,,,,,,,,,,,0,0,0,D,1,0,0
+2026-11-14,15:00,Bristol Rovers,Chesterfield,England,League Two,Bristol Rovers/ handicap,under,not match,one,4goals,2.51,4.1,2.8,,,,,,,,,,,,,0,2,2,A,1,1,2
+2026-11-14,15:00,Colchester,Gillingham,England,League Two,Gillingham / low/ handicap,,match,one,4goals,6.67,4.61,1.58,,,,,,,,,,,,,2,0,2,H,1,1,2
+2026-11-14,15:00,Crewe,Newport,England,League Two,Crewe Alexandra/ handicap,under,not match,one,4goals,2.07,3.94,3.79,,,,,,,,,,,,,2,2,4,D,0,2,0
+2026-11-14,15:00,Port Vale,Accrington,England,League Two,Port Vale/ handicap,under,match,one,4goals,2.49,3.08,3.65,,,,,,,,,,,,,4,2,6,H,0,2,2
+2026-11-14,15:00,Rochdale,York City,England,League Two,Rochdale/ handicap,,not match,both,4goals,3.27,5.08,2.01,,,,,,,,,,York City/ handicap / double,York City only,,0,1,1,A,1,1,1
 2026-11-14,15:00,Rotherham,Crawley,England,League Two,Rotherham United/ handicap,,not match,one,4goals,4.76,5.78,1.62,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Salford,Northampton,England,League Two,Salford City/ handicap,double,match,both,4goals,2.88,2.42,4.18,,,,,,,,,,Salford City/ handicap / double / 4goals,Salford City only,,,,,,,,
-2026-11-14,15:00,Shrewsbury,Oldham,England,League Two,Shrewsbury Town/ handicap,,match,one,4goals,2.49,2.96,3.85,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Swindon,Grimsby,England,League Two,Swindon Town/ handicap,,not match,both,4goals,3.12,4.29,2.24,,,,,,,,,,Grimsby Town/ handicap / double / 4goals,Grimsby Town only,,,,,,,,
+2026-11-14,15:00,Salford,Northampton,England,League Two,Salford City/ handicap,double,match,both,4goals,2.88,2.42,4.18,,,,,,,,,,Salford City/ handicap / double / 4goals,Salford City only,,1,1,2,D,1,2,0
+2026-11-14,15:00,Shrewsbury,Oldham,England,League Two,Shrewsbury Town/ handicap,,match,one,4goals,2.49,2.96,3.85,,,,,,,,,,,,,2,1,3,H,0,2,1
+2026-11-14,15:00,Swindon,Grimsby,England,League Two,Swindon Town/ handicap,,not match,both,4goals,3.12,4.29,2.24,,,,,,,,,,Grimsby Town/ handicap / double / 4goals,Grimsby Town only,,1,4,5,A,0,2,3
 2026-11-14,15:00,Walsall,Barnet,England,League Two,handicap /H/ handicap,,not match,one,4goals,5.56,5.38,1.58,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,AFC Wimbledon,Blackpool,England,League One,Blackpool / low/ handicap,,not match,one,4goals,3.65,2.13,3.89,2.67,3.36,2.52,-26.8,+57.7,-35.2,Home 📐 Draw ratio: -4.13 (SENT to Telegram),,,,,,,,,,,,
+2026-11-14,15:00,AFC Wimbledon,Blackpool,England,League One,Blackpool / low/ handicap,,not match,one,4goals,3.65,2.13,3.89,2.67,3.36,2.52,-26.8,+57.7,-35.2,Home 📐 Draw ratio: -4.13 (SENT to Telegram),,,,,,1,0,1,H,1,1,1
 2026-11-14,15:00,Bromley,Notts County,England,League One,Notts County/ double,double,match,both,4goals,11.36,5.32,1.38,,,,,,,,,,Notts County/ double / double,Notts County,,,,,,,,
 2026-11-14,15:00,Doncaster,Leyton Orient,England,League One,"Leyton Orient, handicap/ handicap",,match,both,4goals,8.7,3.44,1.69,,,,,,,,,,"Leyton Orient, handicap/ handicap / double / 4goals",Leyton Orient only,,,,,,,,
 2026-11-14,15:00,Leicester,Bradford City,England,League One,Bradford City / low/ handicap,,match,one,4goals,5.92,2.55,2.28,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Sheffield Wed,Plymouth,England,League One,Sheffield Wednesday/ handicap,double,match,both,4goals,1.65,4.98,5.18,2.31,3.57,2.8,+40.0,-28.3,-45.9,Away 2-handicap 📐 Draw ratio: 0.87 (not sent),,,Sheffield Wednesday/ handicap / double / 4goals,Sheffield Wednesday / same,,,,,,,,
+2026-11-14,15:00,Sheffield Wed,Plymouth,England,League One,Sheffield Wednesday/ handicap,double,match,both,4goals,1.65,4.98,5.18,2.31,3.57,2.8,+40.0,-28.3,-45.9,Away 2-handicap 📐 Draw ratio: 0.87 (not sent),,,Sheffield Wednesday/ handicap / double / 4goals,Sheffield Wednesday / same,,3,0,3,H,0,1,3
 2026-11-14,15:00,Stevenage,Mansfield,England,League One,Stevenage/ handicap,double,match,both,4goals,2.38,3.89,3.11,,,,,,,,,,Stevenage/ handicap / double,Stevenage / same,,,,,,,,
-2026-11-14,15:00,Stockport County,Reading,England,League One,Stockport County/ handicap,double,match,both,4goals,2.16,4.13,3.39,1.83,3.77,3.87,-15.3,-8.7,+14.2,Home 2-handicap 📐 Draw ratio: 0.32 (not sent),under,,Stockport County/ handicap / double / 4goals,Stockport County / 4goals / same,,,,,,,,
-2026-11-14,15:00,Wigan,Barnsley,England,League One,Wigan Athletic/ handicap,,not match,both,4goals,2.9,3.62,2.64,2.34,3.54,2.77,-19.3,-2.2,+4.9,Home 2-handicap 📐 Draw ratio: 0.09 (not sent),under,,,,,,,,,,,
+2026-11-14,15:00,Stockport County,Reading,England,League One,Stockport County/ handicap,double,match,both,4goals,2.16,4.13,3.39,1.83,3.77,3.87,-15.3,-8.7,+14.2,Home 2-handicap 📐 Draw ratio: 0.32 (not sent),under,,Stockport County/ handicap / double / 4goals,Stockport County / 4goals / same,,3,1,4,H,0,2,2
+2026-11-14,15:00,Wigan,Barnsley,England,League One,Wigan Athletic/ handicap,,not match,both,4goals,2.9,3.62,2.64,2.34,3.54,2.77,-19.3,-2.2,+4.9,Home 2-handicap 📐 Draw ratio: 0.09 (not sent),under,,,,,2,1,3,H,0,2,1
 2026-11-14,15:00,Wycombe,Huddersfield,England,League One,Huddersfield Town/ double,double,match,both,4goals,11.24,6.67,1.31,,,,,,,,,,Huddersfield Town/ double / double,Huddersfield Town,,,,,,,,
-2026-11-14,15:00,KAC Kenitra,Ittihad Khemisset,Morocco,Botola,"Ittihad Khemisset, handicap/ handicap",,match,one,3goals,15.15,3.19,1.61,,,,,,,,,,,,,,,,,,,
-2026-11-14,15:00,Mouloudia Oujda,Stade Marocain,Morocco,Botola,Stade Marocain / low/ handicap,,not match,both,3goals,5.52,3.98,1.76,,,,,,,,,,Stade Marocain/ handicap / double / 3goals,Stade Marocain / 3goals / same,,,,,,,,
-2026-11-14,15:00,US Boujaad,Chabab Benguerir,Morocco,Botola,US Boujaad/ double,,not match,both,3goals,4.03,4.59,1.87,,,,,,,,,,Chabab Ben Guerir/ double / double / 3goals,Chabab Ben Guerir / same,,,,,,,,
-2026-11-14,15:30,NAC Breda,FC Emmen,Netherlands,Eerste Divisie,handicap /H/ handicap,,not match,one,5 goals,3.56,5.21,1.9,,,,,,,,,,,,,,,,,,,
-2026-11-14,17:30,Almeria,Andorra,Spain,Segunda Division,Almería/ double,double,match,both,4goals,1.35,6.71,9.17,,,,,,,,,,Almería/ double / double,Almería,,,,,,,,
-2026-11-14,17:30,Mallorca,Cordoba,Spain,Segunda Division,Mallorca/ handicap,,not match,one,4goals,1.35,6.29,10.1,,,,,,,,,,,,,,,,,,,
-2026-11-14,17:30,Fleetwood,Tranmere,England,League Two,Fleetwood Town/ handicap,under,match,one,4goals,2.29,3.23,3.94,,,,,,,,,,,,,,,,,,,
-2026-11-14,19:00,Almere City,Helmond,Netherlands,Eerste Divisie,Almere City/ double,double,match,both,5 goals,1.43,5.59,8.06,,,,,,,,,,Almere City/ double / double,Almere City,,,,,,,,
-2026-11-14,19:00,Dordrecht,Heracles,Netherlands,Eerste Divisie,Heracles/ wins,double,match,both,5 goals,40.0,22.22,1.08,,,,,,,,,,Heracles/ wins / double,Heracles,,,,,,,,
-2026-11-14,19:00,Waalwijk,Den Bosch,Netherlands,Eerste Divisie,RKC Waalwijk/ handicap,under,not match,one,5 goals,2.2,4.55,3.08,,,,,,,,,,,,,,,,,,,
-2026-11-14,19:30,CRB,Ceara,Brazil,Serie B,CRB/ handicap,double,match,both,3goals,1.96,4.17,3.98,,,,,,,,,,CRB/ handicap / double,CRB / same,,,,,,,,
-2026-11-14,19:30,Criciuma,Novorizontino,Brazil,Serie B,Criciúma/ handicap,,not match,both,3goals,4.61,3.08,2.18,2.72,3.04,2.62,-41.0,-1.3,+20.2,Home 2-handicap 📐 Draw ratio: 0.06 (not sent),under,,Novorizontino/ handicap / double / 3goals,Novorizontino / 3goals / same,,,,,,,,
-2026-11-14,19:30,Fortaleza,Vila Nova FC,Brazil,Serie B,Fortaleza/ handicap,under,not match,one,3goals,2.27,3.52,3.62,2.33,3.17,3.0,+2.6,-9.9,-17.1,Away 2-handicap 📐 Draw ratio: 0.43 (not sent),under,,,,,,,,,,,
-2026-11-14,19:30,Juventude,Botafogo SP,Brazil,Serie B,Juventude/ handicap,double,match,both,3goals,2.11,2.67,6.58,1.35,4.54,8.78,-36.0,+70.0,+33.4,Home 2-handicap 📐 Draw ratio: -3.99 (SENT to Telegram),,,Juventude/ handicap / double / 3goals,Juventude only,,,,,,,,
-2026-11-14,19:30,Sport Recife,Goias,Brazil,Serie B,Sport Recife/ handicap,double,match,both,3goals,2.54,3.92,2.85,3.21,3.62,2.03,+26.4,-7.7,-28.8,Away 2-handicap 📐 Draw ratio: 0.30 (not sent),under,,Sport Recife/ handicap / double / 3goals,Sport Recife / 3goals / same,,,,,,,,
-2026-11-14,20:00,Oviedo,Girona,Spain,Segunda Division,handicap /H/ handicap,,match,both,4goals,4.27,2.95,2.34,,,,,,,,,,handicap /H/ handicap / double / 4goals,Girona,,,,,,,,
-2026-11-14,23:00,Charleston,Louisville City,USA,USL Championship,Charleston Battery/ handicap,,match,one,4goals,1.26,9.26,10.31,,,,,,,,,,,,,,,,,,,
-2026-11-14,23:30,Chapecoense-SC,Vasco,Brazil,Serie A,Chapecoense/ handicap,,match,both,4goals,5.92,5.85,1.52,6.44,4.54,1.42,+8.8,-22.4,-6.6,Away 📐 Draw ratio: 0.58 (not sent),under,,Chapecoense/ handicap / double,Vasco da Gama only,,,,,,,,
+2026-11-14,15:00,KAC Kenitra,Ittihad Khemisset,Morocco,Botola,"Ittihad Khemisset, handicap/ handicap",,match,one,3goals,15.15,3.19,1.61,,,,,,,,,,,,,0,0,0,D,1,0,0
+2026-11-14,15:00,Mouloudia Oujda,Stade Marocain,Morocco,Botola,Stade Marocain / low/ handicap,,not match,both,3goals,5.52,3.98,1.76,,,,,,,,,,Stade Marocain/ handicap / double / 3goals,Stade Marocain / 3goals / same,,3,0,3,H,0,1,3
+2026-11-14,15:00,US Boujaad,Chabab Benguerir,Morocco,Botola,US Boujaad/ double,,not match,both,3goals,4.03,4.59,1.87,,,,,,,,,,Chabab Ben Guerir/ double / double / 3goals,Chabab Ben Guerir / same,,1,0,1,H,1,1,1
+2026-11-14,15:30,NAC Breda,FC Emmen,Netherlands,Eerste Divisie,handicap /H/ handicap,,not match,one,5 goals,3.56,5.21,1.9,,,,,,,,,,,,,4,2,6,H,0,2,2
+2026-11-14,17:30,Almeria,Andorra,Spain,Segunda Division,Almería/ double,double,match,both,4goals,1.35,6.71,9.17,,,,,,,,,,Almería/ double / double,Almería,,2,1,3,H,0,2,1
+2026-11-14,17:30,Mallorca,Cordoba,Spain,Segunda Division,Mallorca/ handicap,,not match,one,4goals,1.35,6.29,10.1,,,,,,,,,,,,,3,3,6,D,0,2,0
+2026-11-14,17:30,Fleetwood,Tranmere,England,League Two,Fleetwood Town/ handicap,under,match,one,4goals,2.29,3.23,3.94,,,,,,,,,,,,,1,0,1,H,1,1,1
+2026-11-14,19:00,Almere City,Helmond,Netherlands,Eerste Divisie,Almere City/ double,double,match,both,5 goals,1.43,5.59,8.06,,,,,,,,,,Almere City/ double / double,Almere City,,6,1,7,H,0,2,5
+2026-11-14,19:00,Dordrecht,Heracles,Netherlands,Eerste Divisie,Heracles/ wins,double,match,both,5 goals,40.0,22.22,1.08,,,,,,,,,,Heracles/ wins / double,Heracles,,1,2,3,A,0,2,1
+2026-11-14,19:00,Waalwijk,Den Bosch,Netherlands,Eerste Divisie,RKC Waalwijk/ handicap,under,not match,one,5 goals,2.2,4.55,3.08,,,,,,,,,,,,,4,0,4,H,0,1,4
+2026-11-14,19:30,CRB,Ceara,Brazil,Serie B,CRB/ handicap,double,match,both,3goals,1.96,4.17,3.98,,,,,,,,,,CRB/ handicap / double,CRB / same,,1,1,2,D,1,2,0
+2026-11-14,19:30,Criciuma,Novorizontino,Brazil,Serie B,Criciúma/ handicap,,not match,both,3goals,4.61,3.08,2.18,2.72,3.04,2.62,-41.0,-1.3,+20.2,Home 2-handicap 📐 Draw ratio: 0.06 (not sent),under,,Novorizontino/ handicap / double / 3goals,Novorizontino / 3goals / same,,0,1,1,A,1,1,1
+2026-11-14,19:30,Fortaleza,Vila Nova FC,Brazil,Serie B,Fortaleza/ handicap,under,not match,one,3goals,2.27,3.52,3.62,2.33,3.17,3.0,+2.6,-9.9,-17.1,Away 2-handicap 📐 Draw ratio: 0.43 (not sent),under,,,,,1,0,1,H,1,1,1
+2026-11-14,19:30,Juventude,Botafogo SP,Brazil,Serie B,Juventude/ handicap,double,match,both,3goals,2.11,2.67,6.58,1.35,4.54,8.78,-36.0,+70.0,+33.4,Home 2-handicap 📐 Draw ratio: -3.99 (SENT to Telegram),,,Juventude/ handicap / double / 3goals,Juventude only,,2,0,2,H,1,1,2
+2026-11-14,19:30,Sport Recife,Goias,Brazil,Serie B,Sport Recife/ handicap,double,match,both,3goals,2.54,3.92,2.85,3.21,3.62,2.03,+26.4,-7.7,-28.8,Away 2-handicap 📐 Draw ratio: 0.30 (not sent),under,,Sport Recife/ handicap / double / 3goals,Sport Recife / 3goals / same,,3,0,3,H,0,1,3
+2026-11-14,20:00,Oviedo,Girona,Spain,Segunda Division,handicap /H/ handicap,,match,both,4goals,4.27,2.95,2.34,,,,,,,,,,handicap /H/ handicap / double / 4goals,Girona,,1,2,3,A,0,2,1
+2026-11-14,23:00,Charleston,Louisville City,USA,USL Championship,Charleston Battery/ handicap,,match,one,4goals,1.26,9.26,10.31,,,,,,,,,,,,,0,2,2,A,1,1,2
+2026-11-14,23:30,Chapecoense-SC,Vasco,Brazil,Serie A,Chapecoense/ handicap,,match,both,4goals,5.92,5.85,1.52,6.44,4.54,1.42,+8.8,-22.4,-6.6,Away 📐 Draw ratio: 0.58 (not sent),under,,Chapecoense/ handicap / double,Vasco da Gama only,,0,2,2,A,1,1,2
 2026-11-14,15:00,Luton,Cambridge Utd,England,League One,Luton Town/ handicap,double,match,both,4goals,2.18,3.88,3.53,,,,,,,,,,Luton Town/ handicap / double,Luton Town,,,,,,,,
 2026-11-13,15:00,Jezero,Buducnost,Montenegro,First League,Budućnost / low/ handicap,,not match,both,3goals,4.33,2.47,2.75,,,,,,,,,,,,,0,0,0,D,1,0,0
 2026-11-13,17:00,Saoura,Khenchela,Algeria,Ligue 1,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,3.41,1.41,,,,,,,,,,,,,,1,1,2,D,1,2,0

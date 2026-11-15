@@ -1,32 +1,32 @@
-2879 scored matches
+2938 scored matches
 
-Baseline: home not-lose 68%, away not-lose 56%
+Baseline: home not-lose 69%, away not-lose 56%
 
 Blog2 standard (Away + under) - 156 picks
   graded (assumed +N handicap): win 59, push 0, loss 97
   side won 38% | side did not lose 60%
-  under 2.5 hit: 40% (base 46%)
+  under 2.5 hit: 40% (base 47%)
   straight-win picks with market odds: 156, flat-stake return -5%
 
-DC signal 1 - 282 picks
-  graded (assumed +N handicap): win 204, push 28, loss 50
-  side won 27% | side did not lose 55%
-    Home 2-handicap: 87 (win 59, push 16, loss 12)
-    Away 2-handicap: 55 (win 46, push 5, loss 4)
+DC signal 1 - 284 picks
+  graded (assumed +N handicap): win 205, push 28, loss 51
+  side won 26% | side did not lose 55%
+    Home 2-handicap: 88 (win 60, push 16, loss 12)
+    Away 2-handicap: 56 (win 46, push 5, loss 5)
     Home win or draw: 54 (win 34, push 0, loss 20)
     Away 3-handicap: 33 (win 24, push 5, loss 4)
     Away win or draw: 29 (win 20, push 0, loss 9)
     Home 3-handicap: 24 (win 21, push 2, loss 1)
 
-DC signal 2 - 205 picks
-  graded (assumed +N handicap): win 178, push 15, loss 12
-  side won 45% | side did not lose 71%
+DC signal 2 - 209 picks
+  graded (assumed +N handicap): win 181, push 15, loss 13
+  side won 45% | side did not lose 70%
     Home 2-handicap: 70 (win 61, push 4, loss 5)
     Away 2-handicap: 35 (win 29, push 5, loss 1)
     Home 2-handicap 📐 Draw ratio: 0.01 (not sent): 3 (win 3, push 0, loss 0)
     Home 2-handicap 📐 Draw ratio: 0.81 (not sent): 3 (win 3, push 0, loss 0)
-    Home 2-handicap 📐 Draw ratio: 0.34 (not sent): 2 (win 2, push 0, loss 0)
-    Home 2-handicap 📐 Draw ratio: 0.44 (not sent): 2 (win 2, push 0, loss 0)
+    Home 2-handicap 📐 Draw ratio: 0.32 (not sent): 2 (win 2, push 0, loss 0)
+    Away 2-handicap 📐 Draw ratio: 0.43 (not sent): 2 (win 2, push 0, loss 0)
 
 DC signal 3 - 258 picks
   graded (assumed +N handicap): win 184, push 27, loss 47
@@ -37,4 +37,4 @@ DC signal 3 - 258 picks
     Home: 49 (win 28, push 0, loss 21)
     Away: 6 (win 1, push 0, loss 5)
 
-wrote 901 rows -> filter_picks.csv
+wrote 907 rows -> filter_picks.csv
