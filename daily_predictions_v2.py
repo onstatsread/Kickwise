@@ -37,6 +37,7 @@ from daily_predictions import (
     multiple_candidate_leg, build_daily_multiple_message,
     draw_ratio_check,
     pred2_list_card,
+    kwv1_card, KWV1_UNDER_MIN,
 )
 
 
@@ -160,6 +161,7 @@ def main():
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
     pred2_cards = []        # Prediction 2 List matches
+    kwv1_cards = []         # Kickwise V1 model list (probability, card)
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -383,6 +385,14 @@ def main():
             if _p2card:
                 pred2_cards.append(_p2card)
 
+
+            # Kickwise V1 model list — P(under 2.5) at or above KWV1_UNDER_MIN
+            _kp, _kcard = kwv1_card(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _kcard:
+                kwv1_cards.append((_kp, _kcard))
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -551,6 +561,21 @@ def main():
     else:
         print("\nℹ️ Prediction 2 list: no matches today.")
 
+    if kwv1_cards:
+        kwv1_cards.sort(key=lambda x: x[0], reverse=True)
+        kwv1_message = (
+            f"🤖 Kickwise V1 Model List — {today_display}\n"
+            f"{len(kwv1_cards)} match(es) with Under 2.5 probability of {KWV1_UNDER_MIN:.0%} or more, "
+            "strongest first\n"
+            "⚠️ Tested: 47-58% was no better than an average match; 62%+ went under about 65%. "
+            "A lean, not a bet — not for multiples.\n\n"
+            + "\n\n".join(c for _, c in kwv1_cards)
+        )
+        send_telegram_notification(kwv1_message, "kwv1")
+    else:
+        print("\nℹ️ Kickwise V1 list: no matches today (or model not available).")
+
 
 if __name__ == "__main__":
     main()
+    
