@@ -76,13 +76,13 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 # List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
 # UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
 # signals, standard = Kickwise Standard Picks, multiple = Daily Multiple,
-# dratio = Draw Ratio List, pred2 = Prediction 2 List.
+# dratio = Draw Ratio List, pred2 = Prediction 2 List, kwv1 = Kickwise V1 model list.
 # The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
 # still receives everything.
 # ============================================================
 MAX_EXTRA_BOTS = 10
 DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
-VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio", "pred2")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio", "pred2", "kwv1")
 
 
 def _load_extra_bots():
@@ -458,6 +458,84 @@ def pred2_list_card(pred, league_name, home, away, match_time):
             f"📋 B46: {b46}\n"
             f"🎯 Prediction 2: {pred2}   {dot} {name}\n"
             f"📈 O/U: {ou}")
+
+
+# ============================================================
+# KICKWISE V1 MODEL LIST — sends matches whose model probability of UNDER
+# 2.5 goals is at least KWV1_UNDER_MIN (47%).
+#
+# The model is the user's random forest (kickwise_random_forest_v1.joblib)
+# built on four columns: B46, B120, C120, D64 (raw strings, exactly as shown
+# on the Blog 1 card; blank/N-A -> "MISSING", like in training).
+# OPTIONAL: if the model file, scikit-learn, pandas or joblib is missing, the
+# list is skipped with one log line and nothing else is affected.
+#
+# HOW RELIABLE (walk-forward test, 2,347 matches the model had not seen):
+#   P(under) 47-58% ... went under 47-49% (no better than an average match)
+#   P(under) 62%+  ... went under 65%
+# so a probability near 47% is NOT an edge. It is a lean, not a bet, and
+# not suited to multiples. The Telegram message says so.
+# ============================================================
+KWV1_MODEL_FILE = os.environ.get("KWV1_MODEL_FILE", "kickwise_random_forest_v1.joblib")
+KWV1_UNDER_MIN = 0.47
+KWV1_FEATURES = ["B46", "B120", "C120", "D64"]
+_kwv1_state = {"model": None, "tried": False}
+
+
+def _kwv1_load_model():
+    if _kwv1_state["tried"]:
+        return _kwv1_state["model"]
+    _kwv1_state["tried"] = True
+    try:
+        import joblib
+        import pandas  # noqa: F401  (needed by the model's column transformer)
+        if not os.path.exists(KWV1_MODEL_FILE):
+            print(f"ℹ️ Kickwise V1 list skipped: model file {KWV1_MODEL_FILE!r} not found")
+            return None
+        _kwv1_state["model"] = joblib.load(KWV1_MODEL_FILE)
+        print("✅ Kickwise V1 model loaded")
+    except Exception as e:
+        print(f"ℹ️ Kickwise V1 list skipped: could not load model ({type(e).__name__}: {str(e)[:120]})")
+    return _kwv1_state["model"]
+
+
+def kwv1_probability(pred):
+    """P(under 2.5) from the model, or None when the model is unavailable."""
+    model = _kwv1_load_model()
+    if model is None:
+        return None
+    try:
+        import pandas as pd
+        raw = {
+            "B46": pred.get("b46"), "B120": pred.get("b120"),
+            "C120": pred.get("c120"), "D64": pred.get("d64"),
+        }
+        row = {}
+        for col, v in raw.items():
+            v = str(v if v is not None else "").strip()
+            row[col] = "MISSING" if v in ("", "N/A", "None", "nan") else v
+        frame = pd.DataFrame([row])[KWV1_FEATURES]
+        probs = model.predict_proba(frame)[0]
+        idx = list(model.classes_).index(1)
+        return float(probs[idx])
+    except Exception as e:
+        print(f"ℹ️ Kickwise V1 prediction failed for one match ({type(e).__name__})")
+        return None
+
+
+def kwv1_card(pred, league_name, home, away, match_time):
+    """Telegram card when P(under) >= KWV1_UNDER_MIN, else None."""
+    p = kwv1_probability(pred)
+    if p is None or p < KWV1_UNDER_MIN:
+        return None, None
+    ou = (pred.get("ou25_value_signal") or {}).get("result") or "—"
+    b46 = pred.get("b46") or pred.get("b46r") or "—"
+    card = (f"🕐 {match_time} | {league_name}\n"
+            f"👥 {home} vs {away}\n"
+            f"🤖 Under 2.5: {p:.0%} | Over 2.5: {1 - p:.0%}\n"
+            f"📋 B46: {b46}\n"
+            f"📈 O/U: {ou}")
+    return p, card
 
 
 def format_match_html(league_name, match, pred):
@@ -1358,6 +1436,7 @@ def main():
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
     pred2_cards = []        # Prediction 2 List matches
+    kwv1_cards = []         # Kickwise V1 model list (probability, card)
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -1579,6 +1658,14 @@ def main():
             if _p2card:
                 pred2_cards.append(_p2card)
 
+
+            # Kickwise V1 model list — P(under 2.5) at or above KWV1_UNDER_MIN
+            _kp, _kcard = kwv1_card(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _kcard:
+                kwv1_cards.append((_kp, _kcard))
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -1746,6 +1833,20 @@ def main():
         send_telegram_notification(pred2_message, "pred2")
     else:
         print("\nℹ️ Prediction 2 list: no matches today.")
+
+    if kwv1_cards:
+        kwv1_cards.sort(key=lambda x: x[0], reverse=True)
+        kwv1_message = (
+            f"🤖 Kickwise V1 Model List — {today_display}\n"
+            f"{len(kwv1_cards)} match(es) with Under 2.5 probability of {KWV1_UNDER_MIN:.0%} or more, "
+            "strongest first\n"
+            "⚠️ Tested: 47-58% was no better than an average match; 62%+ went under about 65%. "
+            "A lean, not a bet — not for multiples.\n\n"
+            + "\n\n".join(c for _, c in kwv1_cards)
+        )
+        send_telegram_notification(kwv1_message, "kwv1")
+    else:
+        print("\nℹ️ Kickwise V1 list: no matches today (or model not available).")
 
 if __name__ == "__main__":
     main()
