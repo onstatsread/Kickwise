@@ -1,13 +1,16 @@
 date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,val_H,val_D,val_A,decision,signal,ou_result,pred1,pred2,pred3,hg,ag,total,outcome,under25,teams_scored,margin
+2026-11-17,02:00,New Mexico,Sacramento Republic,USA,USL Championship,New Mexico United/ handicap,under,not match,one,4goals,2.92,3.09,2.99,,,,,,,,,,,,,1,2,3,A,0,2,1
+2026-11-17,11:30,Havadar SC,Mes Kerman,Iran,Azadegan League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,,,,,,,,
+2026-11-17,13:00,Kitara,Blacks Power,Uganda,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.43,3.31,,,,,,,,,,,,,,,,,,,,
 2026-11-16,00:00,New Mexico,Sacramento Republic,USA,USL Championship,New Mexico United/ handicap,under,not match,one,4goals,2.92,3.09,2.99,,,,,,,,,,,,,,,,,,,
-2026-11-16,11:30,Ario Eslamshahr,Saipa,Iran,Azadegan League,Saipa / low/ handicap,,not match,one,2goals or less,2.81,3.39,2.87,,,,,,,,,,,,,,,,,,,
+2026-11-16,11:30,Ario Eslamshahr,Saipa,Iran,Azadegan League,Saipa / low/ handicap,,not match,one,2goals or less,2.81,3.39,2.87,,,,,,,,,,,,,0,1,1,A,1,1,1
 2026-11-16,11:30,Havadar SC,Mes Kerman,Iran,Azadegan League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,,,,,,,,
-2026-11-16,11:30,Mes Rafsanjan,Shahin Bandar Ameri,Iran,Azadegan League,Mes Rafsanjan/ handicap,double,match,both,2goals or less,1.4,4.65,13.7,,,,,,,,,,Mes Rafsanjan/ handicap / double / 2goals,Mes Rafsanjan only,,,,,,,,
-2026-11-16,12:00,Marko,Zakynthos,Greece,Super League 2,Marko/ wins,double,not match,both,3goals,1.6,3.16,16.67,,,,,,,,,,Marko/ wins / double / 3goals,Marko / same,,,,,,,,
-2026-11-16,12:45,Panionios,Olympiacos Piraeus B,Greece,Super League 2,Panionios/ handicap,,not match,one,3goals,1.32,7.25,9.43,,,,,,,,,,,,,,,,,,,
-2026-11-16,13:00,Naft Gachsaran,Niroye Zamini,Iran,Azadegan League,Naft Gachsaran/ double,double,match,both,2goals or less,1.39,6.62,7.81,,,,,,,,,,Naft Gachsaran/ double / double / 2goals,Naft Gachsaran / 2goals or less,,,,,,,,
-2026-11-16,13:00,Pars Janoobi Jam,Novin Ahvaz,Iran,Azadegan League,"Pars Jonoubi Jam, handicap/ handicap",,match,both,2goals or less,2.71,3.56,2.86,,,,,,,,,,,Pars Jonoubi Jam only,,,,,,,,
-2026-11-16,13:00,Niki Volos,Pyrgos,Greece,Super League 2,"Niki Volos, handicap/ handicap",,not match,one,3goals,2.98,3.07,2.96,,,,,,,,,,,,,,,,,,,
+2026-11-16,11:30,Mes Rafsanjan,Shahin Bandar Ameri,Iran,Azadegan League,Mes Rafsanjan/ handicap,double,match,both,2goals or less,1.4,4.65,13.7,,,,,,,,,,Mes Rafsanjan/ handicap / double / 2goals,Mes Rafsanjan only,,1,0,1,H,1,1,1
+2026-11-16,12:00,Marko,Zakynthos,Greece,Super League 2,Marko/ wins,double,not match,both,3goals,1.6,3.16,16.67,,,,,,,,,,Marko/ wins / double / 3goals,Marko / same,,6,0,6,H,0,1,6
+2026-11-16,12:45,Panionios,Olympiacos Piraeus B,Greece,Super League 2,Panionios/ handicap,,not match,one,3goals,1.32,7.25,9.43,,,,,,,,,,,,,2,0,2,H,1,1,2
+2026-11-16,13:00,Naft Gachsaran,Niroye Zamini,Iran,Azadegan League,Naft Gachsaran/ double,double,match,both,2goals or less,1.39,6.62,7.81,,,,,,,,,,Naft Gachsaran/ double / double / 2goals,Naft Gachsaran / 2goals or less,,1,0,1,H,1,1,1
+2026-11-16,13:00,Pars Janoobi Jam,Novin Ahvaz,Iran,Azadegan League,"Pars Jonoubi Jam, handicap/ handicap",,match,both,2goals or less,2.71,3.56,2.86,,,,,,,,,,,Pars Jonoubi Jam only,,0,0,0,D,1,0,0
+2026-11-16,13:00,Niki Volos,Pyrgos,Greece,Super League 2,"Niki Volos, handicap/ handicap",,not match,one,3goals,2.98,3.07,2.96,,,,,,,,,,,,,2,1,3,H,0,2,1
 2026-11-15,02:00,Alianza FC,FAS El,Salvador,Primera Division,FAS/ handicap,double,match,both,4goals,3.09,4.57,2.19,,,,,,,,,,FAS/ handicap / double,FAS,,1,1,2,D,1,2,0
 2026-11-15,05:00,SKA Khabarovsk,Leningradets,Russia,First League,SKA Khabarovsk/ handicap,,match,one,4goals,1.47,5.21,7.87,,,,,,,,,,,,,1,0,1,H,1,1,1
 2026-11-15,10:00,Chelyabinsk,Veles Moscow,Russia,First League,Chelyabinsk/ handicap,,match,both,4goals,3.92,3.65,2.12,,,,,,,,,,Chelyabinsk/ handicap / double / 4goals,Veles,,4,2,6,H,0,2,2
@@ -29,10 +32,10 @@ date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mk
 2026-11-15,17:30,Eldense,Sabadell,Spain,Segunda Division,Eldense/ handicap,under,not match,one,4goals,2.75,2.91,3.41,,,,,,,,,,,,,2,0,2,H,1,1,2
 2026-11-15,18:00,Leixoes,Chaves,Portugal,Segunda Liga,Leixões/ handicap,,match,one,3goals,1.32,6.99,10.2,,,,,,,,,,,,,2,0,2,H,1,1,2
 2026-11-15,20:00,Molynes,Portmore,Jamaica,National Premier League,Portmore United/ double,double,match,both,4goals,8.0,6.13,1.4,,,,,,,,,,Portmore United/ double / double,Portmore United,,2,5,7,A,0,2,3
-2026-11-15,21:00,Cobreloa,D. Puerto Montt,Chile,Primera B,Cobreloa/ handicap,double,match,both,4goals,1.36,5.38,12.35,,,,,,,,,,Cobreloa/ handicap / double / 4goals,Cobreloa only,,,,,,,,
+2026-11-15,21:00,Cobreloa,D. Puerto Montt,Chile,Primera B,Cobreloa/ handicap,double,match,both,4goals,1.36,5.38,12.35,,,,,,,,,,Cobreloa/ handicap / double / 4goals,Cobreloa only,,3,0,3,H,0,1,3
 2026-11-15,21:00,Magallanes,Antofagasta,Chile,Primera B,Magallanes/ double,,not match,both,4goals,5.56,5.29,1.58,,,,,,,,,,Deportes Antofagasta/ double / double,Deportes Antofagasta / same,,2,3,5,A,0,2,1
 2026-11-15,21:00,San Marcos de Arica,San Luis,Chile,Primera B,San Marcos/ handicap,,not match,both,4goals,3.3,2.59,3.22,,,,,,,,,,San Luis FC/ handicap / double / 4goals,San Luis FC / 4goals / same,,0,1,1,A,1,1,1
-2026-11-15,23:30,Recoleta,Deportes Iquique,Chile,Primera B,Recoleta/ handicap,,not match,both,4goals,4.26,4.95,1.78,,,,,,,,,,Deportes Iquique/ handicap / double / 4goals,Deportes Iquique / 4goals / same,,,,,,,,
+2026-11-15,23:30,Recoleta,Deportes Iquique,Chile,Primera B,Recoleta/ handicap,,not match,both,4goals,4.26,4.95,1.78,,,,,,,,,,Deportes Iquique/ handicap / double / 4goals,Deportes Iquique / 4goals / same,,1,1,2,D,1,2,0
 2026-11-14,10:00,Livyi Bereg,Bukovyna,Ukraine,Premier League,Livyi Bereh/ handicap,,match,one,3goals,2.3,2.28,7.81,,,,,,,,,,,,,0,3,3,A,0,1,3
 2026-11-14,11:00,Nairobi United,Mara Sugar,Kenya,Premier League,Nairobi United/ handicap,,not match,both,2goals or less,2.79,4.5,2.39,,,,,,,,,,,,,,,,,,,
 2026-11-14,12:00,Ellas Syrou,Panthrakikos,Greece,Super League 2,"Ellas Syros, handicap/ handicap",,not match,both,3goals,2.47,3.24,3.5,,,,,,,,,,,Ellas Syros only,,2,0,2,H,1,1,2
