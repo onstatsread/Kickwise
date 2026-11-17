@@ -1,6 +1,0 @@
-# Pinned so the model trained in one workflow loads in the other
-scikit-learn==1.9.1
-numpy==2.5.4
-scipy==1.18.1
-pandas==3.0.6
-joblib==1.6.0
