@@ -24,7 +24,6 @@ jobs:
       GOAL_API_KEY: ${{ secrets.GOAL_API_KEY }}
       ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
       TELEGRAM_BOTS: ${{ secrets.TELEGRAM_BOTS }}
-      # add any other env vars your modules read (from Render's Environment tab)
 
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +37,13 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
+
+      - name: Install model libraries
+        run: pip install scikit-learn pandas joblib
+
+      - name: Train Kickwise V1 model
+        continue-on-error: true
+        run: python train_kickwise_v1.py
 
       - name: Install Playwright browser
         run: playwright install --with-deps chromium
