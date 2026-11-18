@@ -1,4 +1,11 @@
 date,time,home,away,country,league,D69,B120,C120,D64,B46,odds_H,odds_D,odds_A,mkt_H,mkt_D,mkt_A,val_H,val_D,val_A,decision,signal,ou_result,pred1,pred2,pred3
+2026-11-18,13:00,Mbarara City,Lugazi,Uganda,Premier League,Mbarara City/ handicap,,match,one,3goals,1.76,3.44,7.04,,,,,,,,,,,,
+2026-11-18,16:45,Constantine,Ben Aknoun,Algeria,Ligue 1,CS Constantine/ handicap,,not match,both,2goals or less,3.88,4.65,1.9,,,,,,,,,,Ben Aknoun/ handicap / double,Ben Aknoun only,
+2026-11-18,16:45,Temouchent,El Biar,Algeria,Ligue 1,JS El Biar / low/ handicap,,not match,one,2goals or less,8.13,6.1,1.4,,,,,,,,,,,,
+2026-11-18,17:00,Vipers,BUL,Uganda,Premier League,Vipers / low/ handicap,,not match,one,3goals,7.94,2.45,2.15,,,,,,,,,,,,
+2026-11-18,22:30,Coritiba,Santos,Brazil,Serie A,handicap /H/ handicap,,not match,one,4goals,4.46,4.69,1.78,3.27,3.46,2.06,-26.7,-26.2,+15.7,Home 2-handicap 📐 Draw ratio: 0.85 (not sent),,,,,
+2026-11-18,23:00,Remo,Chapecoense-SC,Brazil,Serie A,Remo/ handicap,double,match,both,4goals,2.02,3.66,4.29,1.55,4.19,4.97,-23.3,+14.5,+15.9,Home 2-handicap 📐 Draw ratio: -0.60 (SENT to Telegram),,,Remo/ handicap / double / 4goals,Remo,
+2026-11-18,23:30,Cruzeiro,Palmeiras,Brazil,Serie A,Cruzeiro/ double,,not match,both,4goals,6.45,4.2,1.65,2.72,3.38,2.39,-57.8,-19.5,+44.8,Home 2-handicap 📐 Draw ratio: 0.71 (not sent),,,Palmeiras/ double / double / 4goals,Palmeiras / same,
 2026-11-17,02:00,New Mexico,Sacramento Republic,USA,USL Championship,New Mexico United/ handicap,under,not match,one,4goals,2.92,3.09,2.99,,,,,,,,,,,,
 2026-11-17,11:30,Havadar SC,Mes Kerman,Iran,Azadegan League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,2goals or less,,,,,,,,,,,,,,,
 2026-11-17,13:00,Kitara,Blacks Power,Uganda,Premier League,#VALUE!,#VALUE! /#VALUE! /#VALUE!,#VALUE!,,3goals,1.43,3.31,,,,,,,,,,,,,
