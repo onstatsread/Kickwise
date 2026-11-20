@@ -1,4 +1,4 @@
-2949 scored matches
+2971 scored matches
 
 Baseline: home not-lose 69%, away not-lose 56%
 
@@ -8,12 +8,12 @@ Blog2 standard (Away + under) - 156 picks
   under 2.5 hit: 40% (base 47%)
   straight-win picks with market odds: 156, flat-stake return -5%
 
-DC signal 1 - 284 picks
-  graded (assumed +N handicap): win 205, push 28, loss 51
-  side won 26% | side did not lose 55%
+DC signal 1 - 285 picks
+  graded (assumed +N handicap): win 206, push 28, loss 51
+  side won 27% | side did not lose 55%
     Home 2-handicap: 88 (win 60, push 16, loss 12)
     Away 2-handicap: 56 (win 46, push 5, loss 5)
-    Home win or draw: 54 (win 34, push 0, loss 20)
+    Home win or draw: 55 (win 35, push 0, loss 20)
     Away 3-handicap: 33 (win 24, push 5, loss 4)
     Away win or draw: 29 (win 20, push 0, loss 9)
     Home 3-handicap: 24 (win 21, push 2, loss 1)
@@ -37,4 +37,4 @@ DC signal 3 - 258 picks
     Home: 49 (win 28, push 0, loss 21)
     Away: 6 (win 1, push 0, loss 5)
 
-wrote 907 rows -> filter_picks.csv
+wrote 908 rows -> filter_picks.csv
