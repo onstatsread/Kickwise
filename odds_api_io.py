@@ -474,23 +474,54 @@ def _extract_hda_from_odds(data: dict):
     }
 
 
+_OU_NAME_EXCLUDE = ("half", "1st", "2nd", "corner", "card", "booking", "team",
+                    "home", "away", "asian", "handicap", "player", "exact", "btts")
+
+
+def _is_total_goals_market(name) -> bool:
+    n = str(name or "").lower().strip()
+    if not n or any(x in n for x in _OU_NAME_EXCLUDE):
+        return False
+    return (
+        n in ("goals over/under", "over/under", "totals", "total goals", "total", "goals totals")
+        or ("over" in n and "under" in n)
+        or n.startswith("total")
+    )
+
+
+def _line_is_25(outcome: dict) -> bool:
+    for k in ("hdp", "line", "total", "point", "handicap"):
+        v = outcome.get(k)
+        if v is None:
+            continue
+        try:
+            return abs(float(v) - 2.5) < 1e-9
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
 def _extract_ou25_from_odds(data: dict):
-    """Reads the "Goals Over/Under" market; only the hdp == 2.5 line is used."""
+    """Reads the full-time total-goals Over/Under market; only the 2.5 line is used.
+    Market-name matching is tolerant because different bookmakers label it differently
+    (e.g. 'Goals Over/Under', 'Over/Under', 'Totals')."""
     over_odds, under_odds = [], []
 
     bookmakers = data.get("bookmakers")
     if not isinstance(bookmakers, dict):
         return None
 
+    seen_markets = {}
     for bm_name, markets in bookmakers.items():
         if not isinstance(markets, list):
             continue
+        seen_markets[bm_name] = [m.get("name") for m in markets if isinstance(m, dict)]
         for market in markets:
-            if market.get("name") != "Goals Over/Under":
+            if not isinstance(market, dict) or not _is_total_goals_market(market.get("name")):
                 continue
             for outcome in market.get("odds") or []:
                 try:
-                    if outcome.get("hdp") != 2.5:
+                    if not isinstance(outcome, dict) or not _line_is_25(outcome):
                         continue
                     o, u = outcome.get("over"), outcome.get("under")
                     if o: over_odds.append(float(o))
@@ -503,7 +534,7 @@ def _extract_ou25_from_odds(data: dict):
 
     o_odd, u_odd = avg(over_odds), avg(under_odds)
     if not o_odd:
-        print(f"  [odds_api_io] Could not find Goals Over/Under 2.5 market — raw shape: {str(data)[:2000]}")
+        print(f"  [odds_api_io] No O/U 2.5 found. Markets offered per bookmaker: {str(seen_markets)[:600]}")
         return None
 
     def pct(o):
