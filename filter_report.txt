@@ -1,6 +1,6 @@
-3030 scored matches
+3215 scored matches
 
-Baseline: home not-lose 69%, away not-lose 56%
+Baseline: home not-lose 68%, away not-lose 56%
 
 Blog2 standard (Away + under) - 156 picks
   graded (assumed +N handicap): win 59, push 0, loss 97
