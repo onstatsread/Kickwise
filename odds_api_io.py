@@ -199,17 +199,44 @@ async def _api_get(path: str, params: dict, timeout: float = 15.0):
 
 
 # Well-known recreational (non-sharp, non-exchange) bookmakers, in preference
-# order. The free plan excludes sharp/exchange books (a live 403 named "10BET").
+# order. Bet365 is PAID-ONLY on this account (live 403 "Not on your plan"), so
+# it is no longer first. Override with env ODDS_BOOKMAKERS="Unibet,Betway".
 PREFERRED_RECREATIONAL_BOOKMAKERS = [
-    "bet365", "unibet", "betway", "william hill", "1xbet",
-    "bwin", "betmgm", "draftkings", "betsson", "888sport",
+    "unibet", "betway", "william hill", "1xbet",
+    "bwin", "betmgm", "draftkings", "betsson", "888sport", "bet365",
 ]
+_env_bms = (os.environ.get("ODDS_BOOKMAKERS") or "").strip()
+if _env_bms:
+    PREFERRED_RECREATIONAL_BOOKMAKERS = [b.strip().lower() for b in _env_bms.split(",") if b.strip()]
+
+# Bookmakers the API told us (via 403) are not on our plan. Learned at runtime
+# so one restricted book can never again take down the whole request.
+_blocked_bookmakers: set = set()
+
+
+def _learn_blocked_bookmaker(resp) -> bool:
+    """On a 403 like 'Bet365 is only available on our paid plans', remember the
+    bookmaker so it is skipped. Returns True if something new was learned."""
+    if resp is None or resp.status_code != 403:
+        return False
+    m = re.search(r"([A-Za-z0-9][A-Za-z0-9 .&'-]*?) is only available", resp.text or "")
+    if not m:
+        print(f"  [odds_api_io] 403 but no bookmaker named — {resp.text[:200]}")
+        return False
+    name = m.group(1).strip().lower()
+    if name in _blocked_bookmakers:
+        return False
+    _blocked_bookmakers.add(name)
+    print(f"  [odds_api_io] '{name}' is not on this plan — excluded; retrying without it")
+    return True
 
 
 def _pick_recreational_bookmakers(all_bookmakers: list, n: int = 2) -> list:
     lower_map = {str(b).lower(): b for b in all_bookmakers}
     picked = []
     for pref in PREFERRED_RECREATIONAL_BOOKMAKERS:
+        if pref in _blocked_bookmakers:
+            continue
         if pref in lower_map and lower_map[pref] not in picked:
             picked.append(lower_map[pref])
         if len(picked) >= n:
@@ -512,13 +539,17 @@ async def _fetch_raw_odds_for_event(event_id) -> dict | None:
     if _event_recently_failed(key):
         return None
 
-    bookmakers_param = await _bookmakers_param()
-    if not bookmakers_param:
-        return None
-
-    resp = await _api_get("/odds", {"eventId": event_id, "bookmakers": bookmakers_param}, timeout=15.0)
-    if resp is None:
-        return None
+    resp = None
+    for _attempt in range(3):
+        bookmakers_param = await _bookmakers_param()
+        if not bookmakers_param:
+            return None
+        resp = await _api_get("/odds", {"eventId": event_id, "bookmakers": bookmakers_param}, timeout=15.0)
+        if resp is None:
+            return None
+        if resp.status_code == 403 and _learn_blocked_bookmaker(resp):
+            continue
+        break
     if resp.status_code == 200:
         try:
             data = resp.json()
@@ -576,11 +607,20 @@ async def prefetch_odds_for_matches(pairs) -> int:
         loaded = 0
         for i in range(0, len(ids), MULTI_BATCH_SIZE):
             chunk = ids[i:i + MULTI_BATCH_SIZE]
-            resp = await _api_get(
-                "/odds/multi",
-                {"eventIds": ",".join(str(x) for x in chunk), "bookmakers": bookmakers_param},
-                timeout=30.0,
-            )
+            resp = None
+            for _attempt in range(3):
+                resp = await _api_get(
+                    "/odds/multi",
+                    {"eventIds": ",".join(str(x) for x in chunk), "bookmakers": bookmakers_param},
+                    timeout=30.0,
+                )
+                if resp is not None and resp.status_code == 403 and _learn_blocked_bookmaker(resp):
+                    bookmakers_param = await _bookmakers_param()
+                    if not bookmakers_param:
+                        resp = None
+                        break
+                    continue
+                break
             if resp is None:
                 break                      # paused / over budget / connection failure
             if resp.status_code == 429:
