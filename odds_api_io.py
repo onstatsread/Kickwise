@@ -39,7 +39,9 @@ What changed:
 """
 
 import os
+import asyncio
 import re
+import threading
 import time
 import unicodedata
 from collections import deque
@@ -64,6 +66,16 @@ MULTI_BATCH_SIZE = 10                 # documented maximum for /odds/multi
 _events_cache: dict[str, tuple[float, list]] = {}
 EVENTS_CACHE_TTL = 2 * 60 * 60
 _events_fail_until = 0.0
+
+# Call-budget protection --------------------------------------------------
+# Batch prefetch (10 events per call) is the cheap path. Single-event /odds
+# calls cost 1 call each, so they are capped per hour and wait for any running
+# prefetch instead of racing it (the race was a main cause of burning 100/hr).
+SINGLE_CALL_CAP = int(os.environ.get("ODDS_API_IO_SINGLE_CAP", "25") or 25)
+PREFETCH_WAIT_SECONDS = 90
+_single_call_times: deque = deque()
+_prefetch_active = 0
+_prefetch_lock = threading.Lock()
 
 # Cache: the account's valid bookmaker list
 _bookmakers_cache: dict = {"data": None, "fetched_at": 0, "fail_until": 0.0}
@@ -570,11 +582,31 @@ async def _fetch_raw_odds_for_event(event_id) -> dict | None:
     if _event_recently_failed(key):
         return None
 
+    # A batch prefetch may be loading this event right now — wait for it
+    # instead of spending a separate call.
+    waited = 0
+    while _prefetch_active > 0 and waited < PREFETCH_WAIT_SECONDS:
+        await asyncio.sleep(1)
+        waited += 1
+        cached = _cache_get(key)
+        if cached is not None:
+            return cached
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+
     resp = None
     for _attempt in range(3):
         bookmakers_param = await _bookmakers_param()
         if not bookmakers_param:
             return None
+        _t = time.time()
+        while _single_call_times and _t - _single_call_times[0] > 3600:
+            _single_call_times.popleft()
+        if len(_single_call_times) >= SINGLE_CALL_CAP:
+            _log_blocked(f"single-event call cap ({SINGLE_CALL_CAP}/hour) reached — other odds sources used")
+            return None
+        _single_call_times.append(_t)
         resp = await _api_get("/odds", {"eventId": event_id, "bookmakers": bookmakers_param}, timeout=15.0)
         if resp is None:
             return None
@@ -606,6 +638,18 @@ async def _fetch_raw_odds_for_event(event_id) -> dict | None:
 
 
 async def prefetch_odds_for_matches(pairs) -> int:
+    """Wrapper: marks a prefetch as running so single-event lookups wait for it."""
+    global _prefetch_active
+    with _prefetch_lock:
+        _prefetch_active += 1
+    try:
+        return await _prefetch_odds_impl(pairs)
+    finally:
+        with _prefetch_lock:
+            _prefetch_active -= 1
+
+
+async def _prefetch_odds_impl(pairs) -> int:
     """
     Loads odds for many matches with as few requests as possible.
     pairs: list of (home_team, away_team). Events are matched with the same
@@ -631,6 +675,25 @@ async def prefetch_odds_for_matches(pairs) -> int:
                 continue
             seen.add(key)
             ids.append(eid)
+
+        # Busy-day protection: load the EARLIEST kick-offs first, and never plan more
+        # batch calls than the hourly budget has left (a 429 would pause everything).
+        date_of = {}
+        for ev in candidates:
+            try:
+                date_of[str(_extract_event_id(ev))] = str(ev.get("date") or "")
+            except Exception:
+                pass
+        ids.sort(key=lambda e: date_of.get(str(e), "9999"))
+        _now = time.time()
+        while _call_times and _now - _call_times[0] > 3600:
+            _call_times.popleft()
+        calls_left = max(0, HOURLY_BUDGET - len(_call_times) - 2)   # keep 2 spare
+        max_ids = calls_left * MULTI_BATCH_SIZE
+        if len(ids) > max_ids:
+            print(f"  [odds_api_io] Budget allows {calls_left} batch call(s) = {max_ids} events; "
+                  f"{len(ids) - max_ids} later kick-offs will use other odds sources this hour")
+            ids = ids[:max_ids]
 
         print(f"  [odds_api_io] Prefetch: {len(pairs)} matches -> {len(ids)} events to load "
               f"in {(len(ids) + MULTI_BATCH_SIZE - 1) // MULTI_BATCH_SIZE} request(s)")
