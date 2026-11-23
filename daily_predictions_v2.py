@@ -37,6 +37,7 @@ from daily_predictions import (
     multiple_candidate_leg, build_daily_multiple_message,
     draw_ratio_check,
     pred2_list_card,
+    fav2_candidate, build_fav2_message,
 )
 
 
@@ -160,6 +161,7 @@ def main():
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
     pred2_cards = []        # Prediction 2 List matches
+    fav2_items = []        # Favourite +2 Handicap List picks
 
     for m in all_matches:
         pred = get_prediction_v2(m["league_name"], m["fix"]["home"], m["fix"]["away"], date_str)
@@ -383,6 +385,13 @@ def main():
             if _p2card:
                 pred2_cards.append(_p2card)
 
+            # Favourite +2 Handicap List — good-sign / bad-sign score
+            _f2 = fav2_candidate(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _f2:
+                fav2_items.append(_f2)
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -550,6 +559,11 @@ def main():
         send_telegram_notification(pred2_message, "pred2")
     else:
         print("\nℹ️ Prediction 2 list: no matches today.")
+
+    if fav2_items:
+        send_telegram_notification(build_fav2_message(fav2_items, today_display), "fav2")
+    else:
+        print("\nℹ️ Favourite +2 list: no qualifying matches today.")
 
 
 if __name__ == "__main__":
