@@ -1,4 +1,4 @@
-3215 scored matches
+3306 scored matches
 
 Baseline: home not-lose 68%, away not-lose 56%
 
