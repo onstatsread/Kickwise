@@ -76,13 +76,13 @@ def _split_telegram_message(message, max_len=TELEGRAM_MAX_LEN - _TELEGRAM_SPLIT_
 # List keys: wl1 = Watch List 1, wl2 = Watch List 2, wl3 = Watch List 3
 # UNDER, wl4 = Watch List 4 OVER, dc1 / dc2 / dc3 = the Double Chance
 # signals, standard = Kickwise Standard Picks, multiple = Daily Multiple,
-# dratio = Draw Ratio List, pred2 = Prediction 2 List.
+# dratio = Draw Ratio List, pred2 = Prediction 2 List. fav2 = Favourite +2 Handicap List.
 # The main bot (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) is unchanged and
 # still receives everything.
 # ============================================================
 MAX_EXTRA_BOTS = 10
 DEFAULT_EXTRA_BOT_LISTS = ("wl1", "wl2", "wl3")
-VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio", "pred2")
+VALID_LIST_KEYS = ("wl1", "wl2", "wl3", "wl4", "dc1", "dc2", "dc3", "standard", "multiple", "dratio", "pred2", "fav2")
 
 
 def _load_extra_bots():
@@ -1280,6 +1280,171 @@ def check_watch_list_2(pred, side):
     return flags
 
 
+# ============================================================
+# FAVOURITE +2 HANDICAP LIST (good-sign / bad-sign score) — Nov 2026
+#
+# Backed on the model's FAVOURITE (the side with the lower model odds):
+# the favourite +2 handicap wins unless the favourite loses by 2+ goals.
+# Each match gets a score: +1 for every GOOD sign, -1 for every BAD sign.
+# A match is sent when favourite odds <= FAV2_MAX_FAV_ODDS and the score
+# is >= FAV2_MIN_SCORE.
+#
+# Backtest (3,326 scored matches, Sep 11 - Nov 22 2026; signs learned on
+# Sep 11 - Oct 24 only, then tested untouched on Oct 25 - Nov 22):
+#   qualifying picks hit 95.0% (train, 337 picks) and 94.5% (test, 325).
+#   Daily multiples: 2 legs ~91%, 3 legs ~86%, 4 legs ~82%.
+#   Score -3 matches only hit ~84% — that is the "avoid" group.
+# Small sample (68 days): re-test with new scores every 2-3 weeks.
+#
+# GOOD signs: B120 = double | B46 = 2goals or less | D69 ends in double
+#             or wins
+# BAD signs : B120 empty or under | C120 = not match | D64 = one |
+#             value_signal "under" | D69 ends in handicap
+# (a row where D69, C120 and D64 are ALL empty is a broken-formula row:
+#  B120 is then treated as neutral, not as a bad "empty" sign)
+# ============================================================
+FAV2_MAX_FAV_ODDS = 1.80
+FAV2_MIN_SCORE = 1
+FAV2_TIER_A_SCORE = 2        # score at/above this = Tier A
+FAV2_MAX_SANE_ODDS = 50.0    # ignore broken odds such as 500.00
+FAV2_MULTIPLE_LEGS = 3       # best legs suggested from Tier A
+
+
+def _fav2_txt(v):
+    """Text value, or '' when it is empty / N/A / a broken formula."""
+    if v is None:
+        return ""
+    s = str(v).strip()
+    if s.lower() in ("n/a", "none", "nan", "null", "-", "—") or "#value" in s.lower():
+        return ""
+    return s
+
+
+def fav2_evaluate(pred):
+    """Score one prediction. Returns a dict, or None when odds are unusable."""
+    odds = pred.get("odds") or pred.get("oddsr") or {}
+    oh, oa = odds.get("home_odds"), odds.get("away_odds")
+    if not isinstance(oh, (int, float)) or not isinstance(oa, (int, float)):
+        return None
+    if oh != oh or oa != oa:   # NaN
+        return None
+    if oh <= 0 or oa <= 0 or oh >= FAV2_MAX_SANE_ODDS or oa >= FAV2_MAX_SANE_ODDS:
+        return None
+
+    side = "home" if oh <= oa else "away"
+    fav_odds = min(oh, oa)
+
+    d69 = _fav2_txt(pred.get("d70"))
+    b120 = _fav2_txt(pred.get("b120")).lower()
+    c120 = _fav2_txt(pred.get("c120")).lower()
+    d64 = _fav2_txt(pred.get("d64")).lower()
+    b46 = _fav2_txt(pred.get("b46") or pred.get("b46r")).lower().replace(" ", "")
+    typ = d69.split("/")[-1].strip().lower() if d69 else ""
+    under_flag = bool((pred.get("value_signal") or {}).get("under"))
+
+    broken_row = not (d69 or c120 or d64)
+    if not b120 and not broken_row:
+        b120 = "blank"
+
+    good, bad = [], []
+    if b120 == "double":
+        good.append("B120 double")
+    if b46 == "2goalsorless":
+        good.append("B46 2goals or less")
+    if typ == "double":
+        good.append("D69 double")
+    if typ == "wins":
+        good.append("D69 wins")
+
+    if b120 == "blank":
+        bad.append("B120 empty")
+    if b120 == "under":
+        bad.append("B120 under")
+    if c120 == "not match":
+        bad.append("C120 not match")
+    if d64 == "one":
+        bad.append("D64 one")
+    if under_flag:
+        bad.append("Signal under")
+    if typ == "handicap":
+        bad.append("D69 handicap")
+
+    return {
+        "side": side, "fav_odds": fav_odds,
+        "score": len(good) - len(bad), "good": good, "bad": bad,
+    }
+
+
+def fav2_candidate(pred, league_name, home, away, match_time):
+    """Returns a pick dict if this match qualifies for the Favourite +2 list."""
+    try:
+        e = fav2_evaluate(pred)
+    except Exception as ex:
+        print(f"    ⚠️ fav2 check failed for {home} vs {away}: {type(ex).__name__}: {ex}")
+        return None
+    if not e or e["fav_odds"] > FAV2_MAX_FAV_ODDS or e["score"] < FAV2_MIN_SCORE:
+        return None
+    team = home if e["side"] == "home" else away
+    return {**e, "time": match_time, "league": league_name,
+            "home": home, "away": away, "team": team}
+
+
+def build_fav2_message(items, today_display):
+    items = sorted(items, key=lambda x: (-x["score"], x["fav_odds"]))
+    tier_a = [x for x in items if x["score"] >= FAV2_TIER_A_SCORE]
+    tier_b = [x for x in items if x["score"] < FAV2_TIER_A_SCORE]
+
+    def card(x):
+        lines = [
+            f"🕐 {x['time']} | {x['league']}",
+            f"👥 {x['home']} vs {x['away']}",
+            f"🛡️ {x['side'].title()} +2 handicap ({x['team']}) | "
+            f"model odds {x['fav_odds']:.2f} | score {x['score']:+d}",
+        ]
+        if x["good"]:
+            lines.append("➕ " + ", ".join(x["good"]))
+        if x["bad"]:
+            lines.append("➖ " + ", ".join(x["bad"]))
+        return "\n".join(lines)
+
+    parts = [
+        f"🛡️ Kickwise Favourite +2 Handicap — {today_display}\n"
+        f"{len(items)} pick(s): favourite +2 | model odds up to {FAV2_MAX_FAV_ODDS:.2f} "
+        f"| score {FAV2_MIN_SCORE:+d} or better\n"
+        "Backtest: about 95% per leg (Sep-Nov 2026)"
+    ]
+    parts.append(
+        f"🅰️ TIER A (score {FAV2_TIER_A_SCORE:+d} or more) — {len(tier_a)} pick(s)\n\n"
+        + "\n\n".join(card(x) for x in tier_a)
+        if tier_a else "🅰️ TIER A — none today"
+    )
+    parts.append(
+        f"🅱️ TIER B (score {FAV2_MIN_SCORE:+d}) — {len(tier_b)} pick(s)\n\n"
+        + "\n\n".join(card(x) for x in tier_b)
+        if tier_b else "🅱️ TIER B — none today"
+    )
+
+    legs, per_league = [], {}
+    for x in sorted(tier_a, key=lambda x: x["fav_odds"]):
+        if per_league.get(x["league"], 0) >= 2:
+            continue
+        per_league[x["league"]] = per_league.get(x["league"], 0) + 1
+        legs.append(x)
+        if len(legs) == FAV2_MULTIPLE_LEGS:
+            break
+    if len(legs) >= 2:
+        parts.append(
+            f"🎰 Best {len(legs)} legs (Tier A, lowest model odds)\n"
+            + "\n".join(f"• {x['team']} +2 ({x['home']} vs {x['away']})" for x in legs)
+            + "\nBacktest: 2 legs ~91%, 3 legs ~86% all winning."
+        )
+    parts.append(
+        "⚠️ Not a guarantee. The 5% that lose are usually favourites that concede "
+        "3+ goals. Compare each leg with your bookmaker's real +2 price first."
+    )
+    return "\n\n".join(parts)
+
+
 def post_to_blogger(access_token, blog_id, title, content):
     resp = requests.post(
         f"https://www.googleapis.com/blogger/v3/blogs/{blog_id}/posts/",
@@ -1358,6 +1523,7 @@ def main():
     multiple_legs = []      # Daily Multiple eligible legs
     drawratio_cards = []    # Draw Ratio List matches
     pred2_cards = []        # Prediction 2 List matches
+    fav2_items = []        # Favourite +2 Handicap List picks
 
     for m in all_matches:
         pred = get_prediction(m["code"], m["fix"]["home"], m["fix"]["away"])
@@ -1579,6 +1745,13 @@ def main():
             if _p2card:
                 pred2_cards.append(_p2card)
 
+            # Favourite +2 Handicap List — good-sign / bad-sign score
+            _f2 = fav2_candidate(
+                pred, m["league_name"], m["fix"]["home"], m["fix"]["away"], match_time,
+            )
+            if _f2:
+                fav2_items.append(_f2)
+
     if total_matches == 0:
         print("No matches found today.")
         return
@@ -1746,6 +1919,11 @@ def main():
         send_telegram_notification(pred2_message, "pred2")
     else:
         print("\nℹ️ Prediction 2 list: no matches today.")
+
+    if fav2_items:
+        send_telegram_notification(build_fav2_message(fav2_items, today_display), "fav2")
+    else:
+        print("\nℹ️ Favourite +2 list: no qualifying matches today.")
 
 if __name__ == "__main__":
     main()
