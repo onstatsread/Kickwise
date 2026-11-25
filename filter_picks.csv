@@ -1,4 +1,8 @@
 stream,date,home,away,label,score,result
+Blog2 standard (Away + under),2026-11-24,L.R. Vicenza,Carrarese,Away,0-1,win
+Blog2 standard (Away + under),2026-11-24,Blackpool,Leicester,Away,1-1,loss
+Blog2 standard (Away + under),2026-11-23,Shkendija,Sileks North,Away,1-1,loss
+Blog2 standard (Away + under),2026-11-23,Wieczysta Krakow,Motor Lublin,Away,2-1,loss
 Blog2 standard (Away + under),2026-10-26,Istra 1961,Hajduk Split,Away,2-2,loss
 Blog2 standard (Away + under),2026-10-26,CSKA Sofia,Ludogorets,Away,2-0,loss
 Blog2 standard (Away + under),2026-10-26,Mosta,Hibernians,Away,2-2,loss
@@ -155,6 +159,12 @@ Blog2 standard (Away + under),2026-09-13,A. Italiano,O'Higgins,Away,1-0,loss
 Blog2 standard (Away + under),2026-09-12,Chapecoense-SC,Internacional,Away,1-2,win
 Blog2 standard (Away + under),2026-09-11,Galway,Bohemians,Away,2-3,win
 Blog2 standard (Away + under),2026-09-11,Shelbourne,Derry City,Away,0-1,win
+DC signal 1,2026-11-24,Cesena,Ascoli,Home win or draw,5-1,win
+DC signal 1,2026-11-24,Bristol City,Wrexham,Home win or draw,1-1,win
+DC signal 1,2026-11-24,Cardiff,Preston,Away 3-handicap,0-4,win
+DC signal 1,2026-11-24,Blackpool,Leicester,Home 3-handicap,1-1,win
+DC signal 1,2026-11-23,Kabylie,MC Alger,Away 2-handicap,1-1,win
+DC signal 1,2026-11-23,Brentford,Everton,Away 2-handicap,4-0,loss
 DC signal 1,2026-11-20,Kashima Antlers,Shimizu S-Pulse,Away 3-handicap,1-1,win
 DC signal 1,2026-11-20,Barnsley,Sheffield Wed,Home 2-handicap,1-2,win
 DC signal 1,2026-11-18,Cruzeiro,Palmeiras,Home win or draw,2-1,win
@@ -442,6 +452,11 @@ DC signal 1,2026-09-15,Indy Eleven,Brooklyn,Away 3-handicap,4-0,loss
 DC signal 1,2026-09-14,Meshakhte Tkibuli,Rustavi,Home 3-handicap,0-1,win
 DC signal 1,2026-09-14,Orebro,Nordic United,Home win or draw,1-1,win
 DC signal 1,2026-09-12,Manta,Aucas,Home 2-handicap,0-0,win
+DC signal 2,2026-11-24,L.R. Vicenza,Carrarese,Home 2-handicap 📐 Draw ratio: 0.83 (not sent),0-1,win
+DC signal 2,2026-11-24,Stevenage,Sheffield Wed,Away 2-handicap 📐 Draw ratio: 0.45 (not sent),0-0,win
+DC signal 2,2026-11-24,Santos,Gremio,Home 2-handicap 📐 Draw ratio: -1.08 (SENT to Telegram),0-2,push
+DC signal 2,2026-11-23,Brondby,Midtjylland,Home 2-handicap 📐 Draw ratio: 0.60 (not sent),0-2,push
+DC signal 2,2026-11-23,Sochaux,Dunkerque,Home 2-handicap 📐 Draw ratio: 0.51 (not sent),2-3,win
 DC signal 2,2026-11-14,Stockport County,Reading,Home 2-handicap 📐 Draw ratio: 0.32 (not sent),3-1,win
 DC signal 2,2026-11-14,Wigan,Barnsley,Home 2-handicap 📐 Draw ratio: 0.09 (not sent),2-1,win
 DC signal 2,2026-11-14,Fortaleza,Vila Nova FC,Away 2-handicap 📐 Draw ratio: 0.43 (not sent),1-0,win
@@ -651,6 +666,14 @@ DC signal 2,2026-09-14,Norrby,Varberg,Home 2-handicap,1-2,win
 DC signal 2,2026-09-14,Waterford,Derry City,Away 2-handicap,2-2,win
 DC signal 2,2026-09-13,Magallanes,D. Puerto Montt,Home 2-handicap,2-0,win
 DC signal 2,2026-09-12,Brooklyn,Miami FC,Home 2-handicap,1-1,win
+DC signal 3,2026-11-24,Cesena,Ascoli,Home 2-handicap,5-1,win
+DC signal 3,2026-11-24,Entella,Verona,Home 2-handicap,2-1,win
+DC signal 3,2026-11-24,Palermo,Sudtirol,Away 2-handicap,4-1,loss
+DC signal 3,2026-11-24,Bristol City,Wrexham,Home 2-handicap,1-1,win
+DC signal 3,2026-11-24,Cardiff,Preston,Away 2-handicap,0-4,win
+DC signal 3,2026-11-24,Bradford City,Barnsley,Home,3-0,win
+DC signal 3,2026-11-24,Santos,Gremio,Home,0-2,loss
+DC signal 3,2026-11-23,Sochaux,Dunkerque,Home 2-handicap,2-3,win
 DC signal 3,2026-10-26,Iberia 1999,Torpedo Kutaisi,Home,3-2,win
 DC signal 3,2026-10-26,Boulogne,Reims,Home 2-handicap,1-1,win
 DC signal 3,2026-10-25,Estoril,Moreirense,Home,1-3,loss
